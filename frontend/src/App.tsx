@@ -16,6 +16,7 @@ import { ChromeExtensionPage } from './components/ChromeExtensionPage';
 import { CaseHistory } from './components/CaseHistory';
 import { ReportExportModal } from './components/ReportExportModal';
 import { AboutModal } from './components/AboutModal';
+import { HackerTransitionOverlay } from './components/HackerTransitionOverlay';
 
 import type {
   RiskScoreReport,
@@ -55,6 +56,7 @@ export function App() {
   const [benchmarkSamples, setBenchmarkSamples] = useState<BenchmarkSample[]>([]);
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isTransitioningToScanner, setIsTransitioningToScanner] = useState<boolean>(false);
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(DEFAULT_PIPELINE_STEPS);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
@@ -101,6 +103,10 @@ export function App() {
     } catch (err) {
       console.warn('Initial data load error:', err);
     }
+  };
+
+  const handleLaunchScanner = () => {
+    setIsTransitioningToScanner(true);
   };
 
   const handleScan = async (url: string, deep: boolean = true, forceRefresh: boolean = false) => {
@@ -205,12 +211,28 @@ export function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: '40px', position: 'relative' }}>
+      {/* Full-Screen Animated Hacker Ingress Transition */}
+      {isTransitioningToScanner && (
+        <HackerTransitionOverlay
+          onComplete={() => {
+            setIsTransitioningToScanner(false);
+            setActiveTab('scanner');
+          }}
+        />
+      )}
+
       {/* Hacker Cascading Matrix & Binary Rain Canvas (Adapts to Light / Dark) */}
       <MatrixBackground opacity={0.32} themeMode={theme} />
 
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => {
+          if (tab === 'scanner' && activeTab !== 'scanner') {
+            handleLaunchScanner();
+          } else {
+            setActiveTab(tab);
+          }
+        }}
         caseCount={cases.length}
         theme={theme}
         toggleTheme={toggleTheme}
@@ -222,7 +244,7 @@ export function App() {
         {/* Tab 1: Product Landing & Feature Showcase */}
         {activeTab === 'overview' && (
           <LandingPage
-            onLaunchScanner={() => setActiveTab('scanner')}
+            onLaunchScanner={handleLaunchScanner}
             onOpenExtension={() => setActiveTab('extension')}
             onOpenDiscovery={() => setActiveTab('discovery')}
           />
