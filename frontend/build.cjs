@@ -1,0 +1,8 @@
+const fs = require('fs');
+const cp = require('child_process');
+
+if (fs.existsSync('frontend')) {
+  cp.execSync('cd frontend && npm install && npm run build && cp -r dist ../dist 2>/dev/null || true', { stdio: 'inherit' });
+} else {
+  cp.execSync('npm install && npm run build', { stdio: 'inherit' });
+}
