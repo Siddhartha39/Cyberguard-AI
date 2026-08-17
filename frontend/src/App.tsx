@@ -17,6 +17,7 @@ import { CaseHistory } from './components/CaseHistory';
 import { ReportExportModal } from './components/ReportExportModal';
 import { AboutModal } from './components/AboutModal';
 import { HackerTransitionOverlay } from './components/HackerTransitionOverlay';
+import { HackerScanTerminal } from './components/HackerScanTerminal';
 
 import type {
   RiskScoreReport,
@@ -51,6 +52,7 @@ export function App() {
   });
 
   const [report, setReport] = useState<RiskScoreReport | null>(null);
+  const [currentScanningUrl, setCurrentScanningUrl] = useState<string>('');
   const [cases, setCases] = useState<CaseSummary[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [benchmarkSamples, setBenchmarkSamples] = useState<BenchmarkSample[]>([]);
@@ -111,6 +113,7 @@ export function App() {
 
   const handleScan = async (url: string, deep: boolean = true, forceRefresh: boolean = false) => {
     setIsLoading(true);
+    setCurrentScanningUrl(url);
     setErrorMessage(null);
     setReport(null);
     setActiveTab('scanner');
@@ -258,6 +261,11 @@ export function App() {
               isLoading={isLoading}
               benchmarkSamples={benchmarkSamples}
             />
+
+            {/* Live Hacker Telemetry Terminal (Displays during active scanning) */}
+            {isLoading && (
+              <HackerScanTerminal targetUrl={currentScanningUrl} />
+            )}
 
             {(isLoading || report) && (
               <PipelineStepper
