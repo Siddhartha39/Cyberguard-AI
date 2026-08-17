@@ -33,22 +33,22 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
     <div className="glass-panel" style={{ padding: '24px', margin: '0 24px 20px 24px' }}>
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Main Input Row */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {/* Main Input Row (Stacks vertically on mobile) */}
+          <div className="scanner-input-row" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{
               flex: 1,
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(17, 24, 39, 0.9)',
-              border: '1px solid rgba(75, 85, 99, 0.4)',
+              background: 'var(--code-box-bg)',
+              border: '1px solid var(--border-color)',
               borderRadius: '10px',
               padding: '0 16px',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
             }}>
-              <Search size={20} color="#9ca3af" />
+              <Search size={18} color="var(--text-muted)" />
               <input
                 type="text"
-                placeholder="Enter suspect URL or your own domain to audit (e.g. campuskart.shop or login-paypal.xyz)"
+                placeholder="Enter domain to audit (e.g. campuskart.shop or login-paypal.xyz)"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={isLoading}
@@ -58,8 +58,8 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: '#f3f4f6',
-                  fontSize: '0.95rem',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem',
                   padding: '14px 12px'
                 }}
               />
@@ -67,7 +67,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
                 <button
                   type="button"
                   onClick={() => setUrl('')}
-                  style={{ background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '0.8rem' }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
                 >
                   Clear
                 </button>
@@ -77,32 +77,35 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
             <button
               type="submit"
               disabled={isLoading || !url.trim()}
+              className="scanner-submit-btn"
               style={{
                 background: isLoading ? '#374151' : 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
-                padding: '0 24px',
+                padding: '0 22px',
                 height: '48px',
                 fontWeight: 700,
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
                 cursor: isLoading || !url.trim() ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 boxShadow: isLoading ? 'none' : '0 0 18px rgba(2, 132, 199, 0.4)',
-                transition: 'all 0.15s'
+                transition: 'all 0.15s',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               {isLoading ? (
                 <>
-                  <RefreshCw size={18} className="radar-spinner" />
+                  <RefreshCw size={17} className="radar-spinner" />
                   <span>Auditing Security...</span>
                 </>
               ) : (
                 <>
-                  <Play size={18} fill="#ffffff" />
-                  <span>Execute Full Inspection</span>
+                  <Play size={17} fill="#ffffff" />
+                  <span>Execute Inspection</span>
                 </>
               )}
             </button>
@@ -111,10 +114,10 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
           {/* Options & Benchmark Dropdown Bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', paddingTop: '4px' }}>
             {/* Quick Benchmark Presets */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#38bdf8', fontWeight: 600 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
                 <Sparkles size={14} />
-                <span>Simulated Attack Benchmark Scenarios:</span>
+                <span>Presets:</span>
                 <InfoTooltip
                   title="Benchmark Scenarios"
                   description="Pre-configured high-fidelity test samples showcasing various attack archetypes (Credential harvesters, O365 portals, Punycode Cyrillic attacks, Legitimate infrastructure)."
@@ -125,17 +128,18 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
                 value={selectedSample}
                 onChange={(e) => handleSelectSample(e.target.value)}
                 style={{
-                  background: 'rgba(31, 41, 55, 0.8)',
-                  border: '1px solid rgba(75, 85, 99, 0.5)',
-                  color: '#f3f4f6',
+                  background: 'var(--code-box-bg)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
                   borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '0.8rem',
+                  padding: '6px 10px',
+                  fontSize: '0.78rem',
                   outline: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  maxWidth: '280px'
                 }}
               >
-                <option value="">Select Pre-Configured Benchmark Target...</option>
+                <option value="">Select Pre-Configured Benchmark...</option>
                 {benchmarkSamples.map((sample) => (
                   <option key={sample.id} value={sample.id}>
                     [{sample.category}] {sample.name}
@@ -145,18 +149,18 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
             </div>
 
             {/* Analysis Mode Toggles */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#d1d5db', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={deepAnalysis}
                   onChange={(e) => setDeepAnalysis(e.target.checked)}
                   style={{ accentColor: '#0284c7' }}
                 />
-                <span>Headless Sandbox & Security Audit</span>
+                <span>Headless Sandbox Audit</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#9ca3af', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={forceRefresh}

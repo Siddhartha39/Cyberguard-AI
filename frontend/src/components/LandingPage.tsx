@@ -83,6 +83,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       quote: 'Security Grades (A+ to F) + Actionable Developer Fixes',
       quoteColor: '#f59e0b',
       quoteBorder: '#f59e0b',
+      actionText: 'Audit Your Own Domain',
+      onAction: onLaunchScanner,
       tooltip: {
         title: 'Website Exploitability Audit',
         description: 'Inspects HTTP security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options) and DNS records (SPF, DMARC) to calculate an executive security grade.',
@@ -99,34 +101,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       icon: <Activity size={22} color="#f97316" />,
       iconBg: 'rgba(249, 115, 22, 0.12)',
       iconBorder: 'rgba(249, 115, 22, 0.4)',
-      quote: 'Pre-indexing domains < 30 days old for rapid threat triage',
+      quote: '< 10ms lexical triage + one-click escalation sandbox',
       quoteColor: '#f97316',
       quoteBorder: '#f97316',
-      actionText: 'Explore Discovery Stream',
+      actionText: 'Explore NRD Stream',
       onAction: onOpenDiscovery,
       tooltip: {
-        title: 'NRD Telemetry Feed',
-        description: 'Continuously monitors fresh DNS and Certificate Transparency records, computing character entropy and brand typosquatting scores.',
-        securityImpact: 'Allows SOC teams to block malicious infrastructure before phishing emails reach user inboxes.',
-        goodVsBad: 'High entropy with known brand keywords flags immediate escalation.'
+        title: 'Newly Registered Domain (NRD) Pipeline',
+        description: 'Ingests real-time domain creation feeds. Over 70% of zero-day attacks occur on domains under 30 days old. Filters malicious targets via sub-10ms lexical heuristics.',
+        securityImpact: 'Enables SOC teams to block malicious infrastructure before phishing emails reach inboxes.',
+        goodVsBad: 'Candidate domains with high lexical threat scores are escalated for instant Playwright sandbox inspection.'
       }
     },
     {
       id: 'chrome-ext',
-      title: 'Real-Time Browser Extension',
-      subtitle: 'Manifest V3 Defense Shield',
-      badge: 'ACTIVE SHIELD',
-      description: 'Lightweight Manifest V3 browser extension running silent real-time threat evaluation across active tabs with active badge indicators and threat popups.',
+      title: 'Real-Time Chrome Browser Extension',
+      subtitle: 'Endpoint Client Protection',
+      badge: 'ENDPOINT AGENT',
+      description: 'Manifest V3 sidecar auditing active tabs in real-time. Displays threat warning banners, visual trust gauges, and seamless 1-click inspection routing.',
       icon: <Puzzle size={22} color="#c084fc" />,
-      iconBg: 'rgba(168, 85, 247, 0.12)',
-      iconBorder: 'rgba(168, 85, 247, 0.4)',
-      quote: 'Direct protection & 1-click SOC deep dive from browser',
+      iconBg: 'rgba(192, 132, 252, 0.12)',
+      iconBorder: 'rgba(192, 132, 252, 0.4)',
+      quote: 'Active browser background monitoring & instant badge telemetry',
       quoteColor: '#c084fc',
       quoteBorder: '#c084fc',
-      actionText: 'Download & Setup Extension',
+      actionText: 'Download Extension',
       onAction: onOpenExtension,
       tooltip: {
-        title: 'Manifest V3 Chrome Extension',
+        title: 'Real-Time Chrome Browser Extension',
         description: 'Browser sidecar that audits active tabs in real-time. Features badge alerts, threat warnings, and direct 1-click launch to the CyberGuard AI command center.',
         securityImpact: 'Endpoints receive instantaneous zero-hour protection against deceptive links.',
         goodVsBad: 'Green shield = verified safe; Red shield = malicious credential harvester intercepted.'
@@ -138,7 +140,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     <div style={{ padding: '0 24px 40px 24px' }}>
       {/* Hero Section */}
       <div className="glass-panel" style={{
-        padding: '50px 36px',
+        padding: '44px 28px',
         marginBottom: '28px',
         background: 'var(--hero-bg)',
         border: '1px solid var(--border-color)',
@@ -147,7 +149,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         overflow: 'hidden'
       }}>
         {/* Hacker Badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 240, 255, 0.12)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '6px 18px', fontSize: '0.8rem', color: 'var(--accent-cyan)', fontWeight: 800, letterSpacing: '0.08em', marginBottom: '20px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 240, 255, 0.12)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '6px 16px', fontSize: '0.75rem', color: 'var(--accent-cyan)', fontWeight: 800, letterSpacing: '0.08em', marginBottom: '18px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-green)', display: 'inline-block' }}></span>
           <span className="mono cyber-font">CYBER COMMAND TERMINAL // CORE V2.0</span>
           <InfoTooltip
@@ -157,16 +159,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           />
         </div>
 
-        <h1 className="cyber-font neon-cyan-glow" style={{ fontSize: '2.3rem', fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1.25, maxWidth: '900px', margin: '0 auto 16px auto', color: 'var(--text-primary)' }}>
+        <h1 className="cyber-font neon-cyan-glow" style={{ fontSize: 'clamp(1.4rem, 4vw, 2.3rem)', fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1.25, maxWidth: '900px', margin: '0 auto 16px auto', color: 'var(--text-primary)' }}>
           AI-POWERED PHISHING INTELLIGENCE &amp; ATTACK-CHAIN FORENSICS
         </h1>
 
-        <p style={{ fontSize: '1.02rem', color: 'var(--text-secondary)', maxWidth: '740px', margin: '0 auto 30px auto', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 'clamp(0.88rem, 2vw, 1.02rem)', color: 'var(--text-secondary)', maxWidth: '740px', margin: '0 auto 26px auto', lineHeight: 1.55 }}>
           Zero-trust cyber defense platform detecting brand-spoofing lookalikes, reconstructing step-by-step forensic attack paths, and auditing web infrastructure exploitability.
         </p>
 
         {/* Hero CTAs */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <div className="hero-action-buttons" style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
           <button
             onClick={onLaunchScanner}
             style={{
@@ -174,18 +176,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               color: '#070a10',
               border: 'none',
               borderRadius: '10px',
-              padding: '14px 28px',
+              padding: '12px 24px',
               fontWeight: 800,
-              fontSize: '1rem',
+              fontSize: '0.92rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
               boxShadow: '0 0 25px rgba(0, 240, 255, 0.4)',
               transition: 'all 0.2s'
             }}
           >
-            <Radar size={20} />
+            <Radar size={18} />
             <span className="cyber-font" style={{ letterSpacing: '0.04em' }}>LAUNCH LIVE SCANNER</span>
           </button>
 
@@ -196,25 +198,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               color: 'var(--accent-cyan)',
               border: '1px solid var(--border-color)',
               borderRadius: '10px',
-              padding: '14px 28px',
+              padding: '12px 24px',
               fontWeight: 700,
-              fontSize: '1rem',
+              fontSize: '0.92rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
               boxShadow: 'var(--panel-shadow)'
             }}
           >
-            <Puzzle size={20} color="var(--accent-cyan)" />
+            <Puzzle size={18} color="var(--accent-cyan)" />
             <span className="cyber-font" style={{ letterSpacing: '0.04em' }}>GET BROWSER SHIELD</span>
           </button>
         </div>
 
         {/* Telemetry Status Bar with Tooltips */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', maxWidth: '900px', margin: '40px auto 0 auto', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', maxWidth: '900px', margin: '32px auto 0 auto', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
           <div>
-            <div className="mono cyber-font neon-cyan-glow" style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <div className="mono cyber-font neon-cyan-glow" style={{ fontSize: '1.25rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span>0.0 – 100</span>
               <InfoTooltip
                 title="Calibrated Risk Index"
@@ -222,10 +224,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 position="top"
               />
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>CALIBRATED RISK INDEX</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>CALIBRATED RISK INDEX</div>
           </div>
           <div>
-            <div className="mono cyber-font neon-green-glow" style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <div className="mono cyber-font neon-green-glow" style={{ fontSize: '1.25rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span>7-STAGE</span>
               <InfoTooltip
                 title="7-Stage Attack Graph"
@@ -233,10 +235,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 position="top"
               />
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>ATTACK-CHAIN GRAPH</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>ATTACK-CHAIN GRAPH</div>
           </div>
           <div>
-            <div className="mono cyber-font" style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <div className="mono cyber-font" style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span>&lt; 30 DAYS</span>
               <InfoTooltip
                 title="Newly Registered Domains (NRD)"
@@ -244,10 +246,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 position="top"
               />
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>NRD EARLY WARNING</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>NRD EARLY WARNING</div>
           </div>
           <div>
-            <div className="mono cyber-font" style={{ fontSize: '1.35rem', fontWeight: 900, color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <div className="mono cyber-font" style={{ fontSize: '1.25rem', fontWeight: 900, color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span>GEMINI AI</span>
               <InfoTooltip
                 title="Gemini AI Exploit Explainer"
@@ -255,14 +257,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 position="top"
               />
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>EXPLOITABILITY AUDITING</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>EXPLOITABILITY AUDITING</div>
           </div>
         </div>
       </div>
 
       {/* Cyber Defense Capabilities Grid Header */}
-      <h2 className="cyber-font neon-cyan-glow" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.05em', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Terminal size={22} color="var(--accent-cyan)" />
+      <h2 className="cyber-font neon-cyan-glow" style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: '0.04em', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <Terminal size={20} color="var(--accent-cyan)" />
         <span>CYBER DEFENSE &amp; INTELLIGENCE CAPABILITIES</span>
         <InfoTooltip
           title="Cyber Defense Capabilities Suite"
@@ -272,14 +274,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </h2>
 
       {/* Clean 6-Card Cyber Grid with Info Tooltips */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
+      <div className="feature-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '18px' }}>
         {capabilityCards.map((card) => (
           <div
             key={card.id}
             className="glass-panel"
             style={{
-              padding: '24px',
-              borderRadius: '14px',
+              padding: '22px',
+              borderRadius: '12px',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -293,7 +295,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <div style={{
                     background: card.iconBg,
                     border: `1px solid ${card.iconBorder}`,
-                    padding: '10px',
+                    padding: '8px',
                     borderRadius: '10px',
                     display: 'flex',
                     alignItems: 'center',
@@ -302,8 +304,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {card.icon}
                   </div>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}>
                         {card.title}
                       </h3>
                       <InfoTooltip
@@ -314,25 +316,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         position="bottom"
                       />
                     </div>
-                    <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                       {card.subtitle}
                     </div>
                   </div>
                 </div>
 
                 <span className="mono badge-info" style={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.6rem',
                   fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  letterSpacing: '0.05em'
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  letterSpacing: '0.04em'
                 }}>
                   {card.badge}
                 </span>
               </div>
 
               {/* Description */}
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '16px' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px' }}>
                 {card.description}
               </p>
             </div>
@@ -342,13 +344,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div
                 className="mono"
                 style={{
-                  fontSize: '0.73rem',
+                  fontSize: '0.72rem',
                   color: card.quoteColor,
                   background: 'var(--code-box-bg)',
                   padding: '8px 12px',
                   borderRadius: '6px',
                   borderLeft: `3px solid ${card.quoteBorder}`,
-                  marginBottom: card.actionText ? '12px' : '0'
+                  marginBottom: card.actionText ? '10px' : '0'
                 }}
               >
                 {card.quote}
@@ -363,7 +365,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     alignItems: 'center',
                     gap: '6px',
                     color: 'var(--accent-cyan)',
-                    fontSize: '0.78rem',
+                    fontSize: '0.76rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     marginTop: '8px'
