@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Info, X } from 'lucide-react';
 
 interface InfoTooltipProps {
@@ -14,58 +14,78 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
   description,
   securityImpact,
   goodVsBad,
-  position = 'bottom'
+  position = 'top'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const getPositionStyle = () => {
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const getPositionStyle = (): React.CSSProperties => {
     switch (position) {
-      case 'top':
+      case 'bottom':
         return {
-          bottom: '100%',
+          top: 'calc(100% + 10px)',
           left: '50%',
-          transform: 'translateX(-50%)',
-          marginBottom: '8px'
+          transform: 'translateX(-50%)'
         };
       case 'right':
         return {
           top: '50%',
-          left: '100%',
-          transform: 'translateY(-50%)',
-          marginLeft: '8px'
+          left: 'calc(100% + 10px)',
+          transform: 'translateY(-50%)'
         };
       case 'left':
         return {
           top: '50%',
-          right: '100%',
-          transform: 'translateY(-50%)',
-          marginRight: '8px'
+          right: 'calc(100% + 10px)',
+          transform: 'translateY(-50%)'
         };
-      case 'bottom':
+      case 'top':
       default:
         return {
-          top: '100%',
+          bottom: 'calc(100% + 10px)',
           left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: '8px'
+          transform: 'translateX(-50%)'
         };
     }
   };
 
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+    <div
+      ref={tooltipRef}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        zIndex: isOpen ? 999999 : 'auto'
+      }}
+    >
       <button
         type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          setIsOpen((prev) => !prev);
         }}
         onMouseEnter={() => setIsOpen(true)}
         title={`Click to learn about: ${title}`}
         style={{
-          background: 'rgba(6, 182, 212, 0.15)',
-          border: '1px solid var(--border-color)',
+          background: 'rgba(6, 182, 212, 0.18)',
+          border: '1px solid var(--border-focus)',
           borderRadius: '50%',
           width: '18px',
           height: '18px',
@@ -76,6 +96,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
           color: 'var(--accent-cyan)',
           padding: 0,
           marginLeft: '6px',
+          flexShrink: 0,
           transition: 'all 0.15s'
         }}
       >
@@ -86,25 +107,29 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
         <div
           onClick={(e) => e.stopPropagation()}
           onMouseLeave={() => setIsOpen(false)}
+          className="glass-panel"
           style={{
             position: 'absolute',
             ...getPositionStyle(),
-            width: '290px',
+            width: '310px',
+            maxWidth: '85vw',
             background: 'var(--bg-card)',
-            backdropFilter: 'blur(16px)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid var(--border-focus)',
-            borderRadius: '10px',
-            padding: '12px 14px',
-            boxShadow: 'var(--panel-shadow)',
-            zIndex: 99999,
-            fontSize: '0.78rem',
+            borderRadius: '12px',
+            padding: '14px 16px',
+            boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.25)',
+            zIndex: 9999999,
+            fontSize: '0.8rem',
             color: 'var(--text-primary)',
-            lineHeight: 1.45,
+            lineHeight: 1.5,
             textAlign: 'left'
           }}
         >
+          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
-            <span style={{ fontWeight: 800, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontWeight: 800, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
               ℹ️ {title}
             </span>
             <button
@@ -118,19 +143,19 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
             </button>
           </div>
 
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>{description}</p>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.78rem' }}>{description}</p>
 
           {securityImpact && (
-            <div style={{ background: 'var(--code-box-bg)', padding: '6px 8px', borderRadius: '6px', marginBottom: '6px', fontSize: '0.72rem' }}>
+            <div style={{ background: 'var(--code-box-bg)', padding: '6px 10px', borderRadius: '6px', marginBottom: '6px', fontSize: '0.72rem', borderLeft: '3px solid #f59e0b' }}>
               <strong style={{ color: '#f59e0b' }}>Cyber Impact: </strong>
               <span style={{ color: 'var(--text-primary)' }}>{securityImpact}</span>
             </div>
           )}
 
           {goodVsBad && (
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', background: 'var(--code-box-bg)', padding: '6px 10px', borderRadius: '6px', borderLeft: '3px solid var(--accent-green)' }}>
               <strong style={{ color: 'var(--accent-green)' }}>Verdict Guide: </strong>
-              <span>{goodVsBad}</span>
+              <span style={{ color: 'var(--text-primary)' }}>{goodVsBad}</span>
             </div>
           )}
         </div>

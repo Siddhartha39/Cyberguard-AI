@@ -34,7 +34,7 @@ export const RiskSummaryCard: React.FC<RiskSummaryCardProps> = ({ report, onOpen
   const strokeDashoffset = circumference - (report.overall_risk_score / 100) * circumference;
 
   return (
-    <div className={`glass-panel ${glowClass}`} style={{ padding: '24px', margin: '0 24px 20px 24px' }}>
+    <div className={`glass-panel ${glowClass}`} style={{ padding: '24px', margin: '0 24px 20px 24px', position: 'relative', zIndex: 30 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '28px', alignItems: 'center' }}>
         {/* Risk Score Gauge */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
@@ -61,10 +61,10 @@ export const RiskSummaryCard: React.FC<RiskSummaryCardProps> = ({ report, onOpen
             />
           </svg>
           <div style={{ position: 'absolute', top: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f3f4f6' }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
               {report.overall_risk_score.toFixed(0)}
             </span>
-            <span style={{ fontSize: '0.65rem', color: '#9ca3af', fontWeight: 600, letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>
               / 100 RISK
             </span>
           </div>
@@ -83,117 +83,124 @@ export const RiskSummaryCard: React.FC<RiskSummaryCardProps> = ({ report, onOpen
               description="A multi-signal probabilistic score (0-100) calculated by combining lexical ML, domain age, DNS/TLS records, credential forms, and brand contradiction factors."
               securityImpact="0-35 indicates safe benign services; 70-100 indicates active phishing or malicious credential traps."
               goodVsBad="Green (Low) = Safe to visit. Red (High) = Block and do NOT enter credentials."
+              position="top"
             />
 
-            <span className="mono" style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+            <span className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Confidence: {(report.confidence * 100).toFixed(0)}%
             </span>
 
-            <span className="mono" style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+            <span className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               Case ID: {report.case_id}
             </span>
           </div>
 
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f3f4f6', marginBottom: '6px' }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
             {report.canonical_domain}
           </div>
 
-          <div style={{ fontSize: '0.85rem', color: '#d1d5db', background: 'rgba(31, 41, 55, 0.6)', padding: '8px 12px', borderRadius: '8px', borderLeft: `3px solid ${verdictColor}`, marginBottom: '14px' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', background: 'var(--code-box-bg)', padding: '8px 12px', borderRadius: '8px', borderLeft: `3px solid ${verdictColor}`, marginBottom: '14px' }}>
             <strong>Recommended Security Action:</strong> {report.recommended_action}
           </div>
 
-          {/* Sub-Score Vector Progress Bars */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+          {/* Sub-Score Vector Progress Bars (Tooltips Pop Upward) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '14px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#9ca3af', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span>URL Lexical ML</span>
                   <InfoTooltip
                     title="URL Lexical ML Vector"
                     description="Analyzes character Shannon entropy, brand keywords in subdomains, length ratios, and suspicious TLD patterns."
                     securityImpact="High lexical entropy often indicates random string generation or deceptive lookalike paths."
+                    position="top"
                   />
                 </div>
                 <span className="mono">{(report.score_lexical * 100).toFixed(0)}%</span>
               </div>
               <div style={{ height: '5px', background: 'rgba(75, 85, 99, 0.4)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${report.score_lexical * 100}%`, height: '100%', background: '#38bdf8' }} />
+                <div style={{ width: `${Math.min(100, report.score_lexical * 100)}%`, height: '100%', background: '#38bdf8' }} />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#9ca3af', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span>Infrastructure</span>
                   <InfoTooltip
                     title="Domain & Infrastructure Score"
                     description="Evaluates domain registration age via RDAP/WHOIS, TLS certificate issuer, and DNS hierarchy."
                     securityImpact="Newly Registered Domains (< 30 days old) or missing MX records represent primary phishing precursors."
+                    position="top"
                   />
                 </div>
                 <span className="mono">{(report.score_infrastructure * 100).toFixed(0)}%</span>
               </div>
               <div style={{ height: '5px', background: 'rgba(75, 85, 99, 0.4)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${report.score_infrastructure * 100}%`, height: '100%', background: '#f59e0b' }} />
+                <div style={{ width: `${Math.min(100, report.score_infrastructure * 100)}%`, height: '100%', background: '#f59e0b' }} />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#9ca3af', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span>Content / DOM</span>
                   <InfoTooltip
                     title="DOM & Form Behavior Score"
                     description="Detects interactive password inputs, credit card fields, cross-origin form action dispatch, and obfuscated JavaScript."
                     securityImpact="Password inputs on unrecognized domains indicate credential harvesting."
+                    position="top"
                   />
                 </div>
                 <span className="mono">{(report.score_content_behavior * 100).toFixed(0)}%</span>
               </div>
               <div style={{ height: '5px', background: 'rgba(75, 85, 99, 0.4)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${report.score_content_behavior * 100}%`, height: '100%', background: '#ec4899' }} />
+                <div style={{ width: `${Math.min(100, report.score_content_behavior * 100)}%`, height: '100%', background: '#ef4444' }} />
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: '#9ca3af', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span>Visual / Brand</span>
                   <InfoTooltip
-                    title="Visual & Brand Contradiction Score"
-                    description="Compares page logo perceptual hashes and trademarks against authorized brand infrastructure."
-                    securityImpact="High score indicates an unauthorized lookalike domain pretending to be a bank or tech company."
+                    title="Visual Brand & Logo Similarity"
+                    description="Computes perceptual hash (pHash) on the rendered landing DOM against official brand catalogs to detect deceptive lookalikes."
+                    securityImpact="High visual similarity combined with an unauthorized domain triggers Brand-Domain Contradiction."
+                    position="top"
                   />
                 </div>
                 <span className="mono">{(report.score_visual_brand * 100).toFixed(0)}%</span>
               </div>
               <div style={{ height: '5px', background: 'rgba(75, 85, 99, 0.4)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${report.score_visual_brand * 100}%`, height: '100%', background: '#8b5cf6' }} />
+                <div style={{ width: `${Math.min(100, report.score_visual_brand * 100)}%`, height: '100%', background: '#c084fc' }} />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Export & Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* Action Button */}
+        <div>
           <button
             onClick={onOpenExport}
             style={{
-              padding: '10px 16px',
-              background: 'rgba(31, 41, 55, 0.9)',
-              border: '1px solid rgba(75, 85, 99, 0.5)',
-              borderRadius: '8px',
-              color: '#38bdf8',
-              fontWeight: 600,
+              background: 'linear-gradient(135deg, #0284c7 0%, #1e1b4b 100%)',
+              color: '#ffffff',
+              border: '1px solid rgba(56, 189, 248, 0.5)',
+              borderRadius: '10px',
+              padding: '12px 18px',
+              fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
+              boxShadow: '0 0 15px rgba(2, 132, 199, 0.3)',
               transition: 'all 0.15s'
             }}
           >
-            <FileText size={16} /> Forensic Report
+            <FileText size={16} />
+            <span>Export Forensic Report</span>
           </button>
         </div>
       </div>
