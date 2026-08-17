@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "build": "node build.cjs",
+    "build": "cd frontend && npm install && npm run build && cp -r dist ../dist 2>/dev/null || true",
     "preview": "npm --prefix frontend run preview"
   }
 }

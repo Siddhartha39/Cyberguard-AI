@@ -1,5 +1,0 @@
-{
-  "buildCommand": "node build.cjs",
-  "outputDirectory": "dist",
-  "framework": "vite"
-}
