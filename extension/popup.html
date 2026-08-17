@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CyberGuard AI Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="CyberGuard" width="22" height="22">
+      <span>CYBERGUARD AI</span>
+    </div>
+    <span id="badge" class="badge badge-safe">SCANNING</span>
+  </div>
+
+  <div class="domain-card">
+    <div class="label">CURRENT ACTIVE DOMAIN</div>
+    <div id="domainName" class="domain mono">Loading...</div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <div class="metric-val mono" id="riskScore">--</div>
+      <div class="metric-lbl">RISK INDEX</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-val mono" id="secGrade">--</div>
+      <div class="metric-lbl">SECURITY GRADE</div>
+    </div>
+  </div>
+
+  <div id="alertBox" class="alert-box" style="display: none;">
+    <strong id="alertTitle">Threat Warning</strong>
+    <p id="alertDesc"></p>
+  </div>
+
+  <div class="recs-card">
+    <div class="label">AI INTELLIGENCE BRIEF</div>
+    <div id="aiSummary" class="text-sm">Analyzing active tab telemetry...</div>
+  </div>
+
+  <div class="actions">
+    <button id="deepScanBtn" class="btn btn-primary">Open SOC Deep Inspection</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

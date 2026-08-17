@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap');
+
+:root {
+  /* Dark Theme (Default) */
+  --bg-primary: #070a10;
+  --bg-secondary: #0d131f;
+  --bg-card: rgba(13, 19, 31, 0.88);
+  --bg-card-hover: rgba(17, 24, 39, 0.94);
+  --border-color: rgba(56, 189, 248, 0.25);
+  --border-focus: #38bdf8;
+  
+  --accent-cyan: #00f0ff;
+  --accent-green: #00ff88;
+  --accent-blue: #3b82f6;
+  --threat-critical: #ef4444;
+  --threat-high: #f97316;
+  --threat-medium: #eab308;
+  --threat-safe: #10b981;
+  
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  --panel-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  --panel-shadow-hover: 0 12px 40px 0 rgba(0, 0, 0, 0.7), 0 0 15px rgba(6, 182, 212, 0.15);
+  --hero-bg: radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.12) 0%, rgba(13, 19, 31, 0.96) 80%);
+  --code-box-bg: rgba(0, 0, 0, 0.55);
+  --nav-bar-bg: rgba(13, 19, 31, 0.85);
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Light Theme */
+[data-theme="light"], body.light-theme {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: #ffffff;
+  --border-color: #cbd5e1;
+  --border-focus: #0284c7;
+
+  --accent-cyan: #0284c7;
+  --accent-green: #16a34a;
+  --accent-blue: #2563eb;
+  --threat-critical: #dc2626;
+  --threat-high: #ea580c;
+  --threat-medium: #d97706;
+  --threat-safe: #16a34a;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  --panel-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --panel-shadow-hover: 0 15px 30px -5px rgba(2, 132, 199, 0.15), 0 0 0 1px rgba(2, 132, 199, 0.3);
+  --hero-bg: radial-gradient(circle at 50% 20%, rgba(224, 242, 254, 0.8) 0%, #ffffff 80%);
+  --code-box-bg: #f1f5f9;
+  --nav-bar-bg: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cyber-font {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Glass card styling */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--panel-shadow);
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.glass-panel:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--panel-shadow-hover);
+}
+
+/* Cyber Glow Text Styles */
+.neon-cyan-glow {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.neon-green-glow {
+  color: var(--accent-green);
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+
+.neon-red-glow {
+  color: var(--threat-critical);
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+}
+
+[data-theme="light"] .neon-cyan-glow,
+body.light-theme .neon-cyan-glow {
+  color: #0369a1;
+  text-shadow: none;
+}
+
+[data-theme="light"] .neon-green-glow,
+body.light-theme .neon-green-glow {
+  color: #15803d;
+  text-shadow: none;
+}
+
+[data-theme="light"] .neon-red-glow,
+body.light-theme .neon-red-glow {
+  color: #b91c1c;
+  text-shadow: none;
+}
+
+/* Cyber Glitch Effect */
+@keyframes glitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 2px) }
+  40% { transform: translate(-2px, -2px) }
+  60% { transform: translate(2px, 2px) }
+  80% { transform: translate(2px, -2px) }
+  100% { transform: translate(0) }
+}
+
+.cyber-glitch:hover {
+  animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+}
+
+/* CRT Scanlines Overlay */
+.cyber-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.15) 50%
+  );
+  background-size: 100% 4px;
+  opacity: 0.5;
+}
+
+[data-theme="light"] .cyber-scanlines,
+body.light-theme .cyber-scanlines {
+  display: none;
+}
+
+.glow-danger {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+  border-color: var(--threat-critical) !important;
+}
+
+.glow-warning {
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.25);
+  border-color: var(--threat-high) !important;
+}
+
+.glow-safe {
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
+  border-color: var(--threat-safe) !important;
+}
+
+/* Badges - Dark Theme */
+.badge-critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.badge-medium {
+  background: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.badge-safe {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge-info {
+  background: rgba(6, 182, 212, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+/* Badges - Light Theme */
+[data-theme="light"] .badge-critical,
+body.light-theme .badge-critical {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+[data-theme="light"] .badge-high,
+body.light-theme .badge-high {
+  background: #ffedd5;
+  color: #ea580c;
+  border: 1px solid #fdba74;
+}
+
+[data-theme="light"] .badge-medium,
+body.light-theme .badge-medium {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+[data-theme="light"] .badge-safe,
+body.light-theme .badge-safe {
+  background: #dcfce7;
+  color: #16a34a;
+  border: 1px solid #86efac;
+}
+
+[data-theme="light"] .badge-info,
+body.light-theme .badge-info {
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
+/* Radar pulse animation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-spinner {
+  animation: radar-sweep 2s linear infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.7);
+}

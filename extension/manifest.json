@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "CyberGuard AI - Real-Time Phishing & Threat Shield",
+  "version": "2.0.0",
+  "description": "Explainable Real-Time Phishing Domain Intelligence, Brand Contradiction Detection, and Website Security Auditing.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
