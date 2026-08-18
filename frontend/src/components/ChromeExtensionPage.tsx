@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { Download, Sparkles, Terminal, Puzzle } from 'lucide-react';
+import { Download, Sparkles, Terminal, Puzzle, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export const ChromeExtensionPage: React.FC = () => {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = () => {
     setDownloading(true);
-    window.location.href = 'http://localhost:8000/api/extension/download';
-    setTimeout(() => setDownloading(false), 2000);
+    const link = document.createElement('a');
+    link.href = '/CyberGuard-AI-Chrome-Extension.zip';
+    link.download = 'CyberGuard-AI-Chrome-Extension.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => setDownloading(false), 1500);
   };
 
   return (
@@ -20,11 +25,11 @@ export const ChromeExtensionPage: React.FC = () => {
             <span>REAL-TIME BROWSER DEFENSE (MANIFEST V3)</span>
           </div>
 
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f3f4f6', lineHeight: 1.25, marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.25, marginBottom: '12px' }}>
             CyberGuard AI Chrome Extension
           </h2>
 
-          <p style={{ fontSize: '0.9rem', color: '#9ca3af', lineHeight: 1.6, marginBottom: '24px' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
             Install the lightweight browser extension to get instant early-warning alerts whenever you visit suspect lookalike domains, credential phishing traps, or unsecured web servers.
           </p>
 
@@ -43,7 +48,8 @@ export const ChromeExtensionPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 0 20px rgba(2, 132, 199, 0.5)'
+                boxShadow: '0 0 20px rgba(2, 132, 199, 0.5)',
+                transition: 'all 0.15s'
               }}
             >
               <Download size={18} />
@@ -52,74 +58,88 @@ export const ChromeExtensionPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Mockup Box */}
+        {/* Live Extension Mockup Box */}
         <div style={{
-          background: '#0d131f',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
+          background: 'var(--code-box-bg)',
+          border: '1px solid var(--border-color)',
           borderRadius: '12px',
           padding: '18px',
-          boxShadow: '0 16px 40px rgba(0,0,0,0.8), 0 0 20px rgba(6, 182, 212, 0.2)'
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(75, 85, 99, 0.4)', paddingBottom: '8px', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8' }}>
-              <Puzzle size={16} color="#06b6d4" />
-              <span>CYBERGUARD REAL-TIME POPUP</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: '#0284c7', padding: '6px', borderRadius: '6px', color: '#ffffff' }}>
+                <Puzzle size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>CyberGuard AI</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>v2.0 Active Shield</div>
+              </div>
             </div>
-            <span className="badge-safe mono" style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px' }}>
-              ACTIVE SHIELD
+            <span style={{ fontSize: '0.7rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+              ● SHIELD ACTIVE
             </span>
           </div>
 
-          <div style={{ background: 'rgba(17, 24, 39, 0.8)', padding: '10px', borderRadius: '6px', marginBottom: '10px', fontSize: '0.75rem' }}>
-            <div style={{ color: '#9ca3af', fontSize: '0.65rem' }}>CURRENT TAB</div>
-            <div className="mono" style={{ color: '#f3f4f6', fontWeight: 700 }}>https://login-paypal-security-verification.xyz</div>
+          <div style={{ background: 'rgba(0, 0, 0, 0.4)', borderRadius: '8px', padding: '12px', marginBottom: '12px', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Active Tab Evaluated</div>
+            <div className="mono" style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+              https://campuskart.shop
+            </div>
           </div>
 
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', borderLeft: '3px solid #ef4444', padding: '8px 10px', borderRadius: '4px', marginBottom: '10px', fontSize: '0.75rem', color: '#fca5a5' }}>
-            <strong>CRITICAL CONTRADICTION:</strong> Imitates 'PayPal' on unauthorized .xyz domain.
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 600 }}>RISK SCORE</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981' }}>15.6 / 100</div>
+            </div>
+            <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.65rem', color: '#38bdf8', fontWeight: 600 }}>VERDICT</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38bdf8' }}>BENIGN</div>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
-            <div style={{ background: 'rgba(17, 24, 39, 0.8)', padding: '8px', borderRadius: '6px' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ef4444' }}>88/100</div>
-              <div style={{ fontSize: '0.6rem', color: '#9ca3af' }}>PHISHING RISK</div>
-            </div>
-            <div style={{ background: 'rgba(17, 24, 39, 0.8)', padding: '8px', borderRadius: '6px' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38bdf8' }}>GRADE F</div>
-              <div style={{ fontSize: '0.6rem', color: '#9ca3af' }}>SECURITY POSTURE</div>
-            </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CheckCircle2 size={13} color="#10b981" />
+            <span>Passive background scanner monitoring tab navigation</span>
           </div>
         </div>
       </div>
 
-      {/* 3-Step Setup Guide */}
+      {/* 3-Step Setup Instructions */}
       <div>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f3f4f6', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Terminal size={20} color="#06b6d4" />
-          <span>Quick 3-Step Installation Guide (Chrome / Brave / Edge)</span>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Terminal size={18} color="#38bdf8" />
+          <span>3-Step Installation Guide</span>
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-          <div style={{ background: 'rgba(17, 24, 39, 0.7)', border: '1px solid rgba(75, 85, 99, 0.3)', borderRadius: '10px', padding: '18px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', marginBottom: '6px' }}>STEP 01</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f3f4f6', marginBottom: '6px' }}>Unzip the Package</h4>
-            <p style={{ fontSize: '0.8rem', color: '#9ca3af', lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--code-box-bg)', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', marginBottom: '12px' }}>
+              1
+            </div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>Download & Unzip</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Click the download button above and extract the downloaded <code className="mono" style={{ color: '#38bdf8' }}>CyberGuard-AI-Chrome-Extension.zip</code> file onto your computer.
             </p>
           </div>
 
-          <div style={{ background: 'rgba(17, 24, 39, 0.7)', border: '1px solid rgba(75, 85, 99, 0.3)', borderRadius: '10px', padding: '18px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', marginBottom: '6px' }}>STEP 02</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f3f4f6', marginBottom: '6px' }}>Open Extensions Page</h4>
-            <p style={{ fontSize: '0.8rem', color: '#9ca3af', lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--code-box-bg)', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', marginBottom: '12px' }}>
+              2
+            </div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>Open Extensions Page</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Open Chrome and navigate to <code className="mono" style={{ color: '#38bdf8' }}>chrome://extensions</code>, then toggle on <strong>Developer mode</strong> in the top-right corner.
             </p>
           </div>
 
-          <div style={{ background: 'rgba(17, 24, 39, 0.7)', border: '1px solid rgba(75, 85, 99, 0.3)', borderRadius: '10px', padding: '18px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', marginBottom: '6px' }}>STEP 03</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f3f4f6', marginBottom: '6px' }}>Click "Load Unpacked"</h4>
-            <p style={{ fontSize: '0.8rem', color: '#9ca3af', lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--code-box-bg)', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', marginBottom: '12px' }}>
+              3
+            </div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>Load Unpacked</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Click <strong>"Load unpacked"</strong> in the top-left and select the unzipped <code className="mono" style={{ color: '#38bdf8' }}>extension</code> directory. CyberGuard is now protecting your browser!
             </p>
           </div>
