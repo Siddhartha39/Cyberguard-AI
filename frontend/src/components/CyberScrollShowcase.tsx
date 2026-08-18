@@ -1,52 +1,49 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
-import { Shield, Lock, Terminal, Cpu, Eye, Zap, Database, Cloud, Globe } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Shield, Lock, Terminal, Cpu, Eye, Zap, Database, Globe } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 type CharacterProps = {
   char: string;
   index: number;
   centerIndex: number;
-  scrollYProgress: MotionValue<number>;
+  scrollYProgress: any;
+  colorClass?: string;
 };
 
-const CharacterV1: React.FC<CharacterProps> = ({
+const CharacterV1 = ({
   char,
   index,
   centerIndex,
   scrollYProgress,
-}) => {
+  colorClass = 'text-orange-500',
+}: CharacterProps) => {
   const isSpace = char === ' ';
   const distanceFromCenter = index - centerIndex;
 
   const x = useTransform(
     scrollYProgress,
-    [0, 0.6],
-    [distanceFromCenter * 45, 0]
+    [0, 0.5],
+    [distanceFromCenter * 50, 0]
   );
   const rotateX = useTransform(
     scrollYProgress,
-    [0, 0.6],
-    [distanceFromCenter * 35, 0]
-  );
-  const opacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.6],
-    [0.3, 0.8, 1]
+    [0, 0.5],
+    [distanceFromCenter * 50, 0]
   );
 
   return (
     <motion.span
       className={cn(
-        'inline-block font-black tracking-tight',
-        isSpace && 'w-3 md:w-5'
+        'inline-block font-black uppercase transition-colors',
+        colorClass,
+        isSpace && 'w-3 md:w-6'
       )}
       style={{
         x,
         rotateX,
-        opacity,
-        color: index % 2 === 0 ? 'var(--accent-cyan)' : 'var(--text-primary)',
-        textShadow: index % 2 === 0 ? '0 0 25px rgba(0, 240, 255, 0.5)' : 'none',
+        color: '#f97316', // Vibrant Orange from screenshot
+        textShadow: '0 0 30px rgba(249, 115, 22, 0.45)',
       }}
     >
       {char}
@@ -54,65 +51,52 @@ const CharacterV1: React.FC<CharacterProps> = ({
   );
 };
 
-interface TechBadgeProps {
-  icon: React.ReactNode;
-  name: string;
-  index: number;
-  centerIndex: number;
-  scrollYProgress: MotionValue<number>;
-}
-
-const TechBadge: React.FC<TechBadgeProps> = ({
+const CharacterV3 = ({
   icon,
-  name,
+  label,
   index,
   centerIndex,
   scrollYProgress,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  index: number;
+  centerIndex: number;
+  scrollYProgress: any;
 }) => {
   const distanceFromCenter = index - centerIndex;
 
   const x = useTransform(
     scrollYProgress,
-    [0, 0.65],
-    [distanceFromCenter * 70, 0]
+    [0, 0.5],
+    [distanceFromCenter * 90, 0]
   );
   const rotate = useTransform(
     scrollYProgress,
-    [0, 0.65],
-    [distanceFromCenter * 25, 0]
+    [0, 0.5],
+    [distanceFromCenter * 45, 0]
   );
   const y = useTransform(
     scrollYProgress,
-    [0, 0.65],
-    [Math.abs(distanceFromCenter) * 30, 0]
+    [0, 0.5],
+    [-Math.abs(distanceFromCenter) * 25, 0]
   );
-  const scale = useTransform(scrollYProgress, [0, 0.65], [0.75, 1]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.65], [0.2, 0.7, 1]);
+  const scale = useTransform(scrollYProgress, [0, 0.5], [0.75, 1]);
 
   return (
     <motion.div
-      className="glass-panel"
+      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cyan-500/30 bg-slate-900/80 backdrop-blur-md shadow-lg shadow-cyan-500/10 mx-2 my-1.5"
       style={{
         x,
-        y,
         rotate,
+        y,
         scale,
-        opacity,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '10px 18px',
-        borderRadius: '14px',
-        border: '1px solid var(--border-focus)',
-        background: 'var(--bg-card)',
-        boxShadow: 'var(--panel-shadow)',
-        margin: '6px',
-        userSelect: 'none',
+        transformOrigin: 'center',
       }}
     >
-      <span style={{ color: 'var(--accent-cyan)' }}>{icon}</span>
-      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-        {name}
+      <span className="text-cyan-400">{icon}</span>
+      <span className="text-xs md:text-sm font-bold text-slate-100 uppercase tracking-wider">
+        {label}
       </span>
     </motion.div>
   );
@@ -126,187 +110,128 @@ export const CyberScrollShowcase: React.FC<{ onLaunchScanner: () => void }> = ({
 
   const { scrollYProgress: scroll1 } = useScroll({
     target: targetRef1,
-    offset: ['start end', 'end start'],
   });
 
   const { scrollYProgress: scroll2 } = useScroll({
     target: targetRef2,
-    offset: ['start end', 'end start'],
   });
 
-  const text1 = 'ZERO-DAY THREAT RADAR';
-  const characters1 = text1.split('');
-  const centerIndex1 = Math.floor(characters1.length / 2);
+  const text = 'ZERO-DAY THREAT RADAR';
+  const characters = text.split('');
+  const centerIndex = Math.floor(characters.length / 2);
 
-  const techStack = [
-    { name: 'Playwright Sandbox', icon: <Terminal size={16} /> },
-    { name: 'Random Forest ML', icon: <Cpu size={16} /> },
-    { name: 'Authoritative RDAP', icon: <Globe size={16} /> },
-    { name: 'Google DNS (DoH)', icon: <Database size={16} /> },
-    { name: 'Visual pHash Vision', icon: <Eye size={16} /> },
-    { name: 'Manifest V3 Extension', icon: <Zap size={16} /> },
-    { name: 'Gemini AI Insights', icon: <Lock size={16} /> },
+  const secStack = [
+    { label: 'Playwright Sandbox', icon: <Terminal size={18} /> },
+    { label: 'Random Forest ML', icon: <Cpu size={18} /> },
+    { label: 'Authoritative RDAP', icon: <Globe size={18} /> },
+    { label: 'Google DNS (DoH)', icon: <Database size={18} /> },
+    { label: 'Visual pHash Vision', icon: <Eye size={18} /> },
+    { label: 'Manifest V3 Shield', icon: <Zap size={18} /> },
+    { label: 'Gemini AI Insights', icon: <Lock size={18} /> },
   ];
-  const centerIndexTech = Math.floor(techStack.length / 2);
+  const iconCenterIndex = Math.floor(secStack.length / 2);
 
   return (
-    <section style={{ width: '100%', overflow: 'hidden', padding: '40px 0' }}>
-      {/* 3D Character Explosion Section */}
+    <div className="w-full relative select-none">
+      {/* Indicator Prompt */}
+      <div className="text-center pt-8 pb-4">
+        <span className="inline-block text-xs uppercase font-extrabold tracking-widest text-orange-400 bg-orange-500/10 border border-orange-500/30 px-4 py-1.5 rounded-full">
+          ↓ Scroll down to trigger 3D kinetic text distortion
+        </span>
+      </div>
+
+      {/* Section 1: 3D Character Transform Animation (Exact Skiper31 implementation) */}
       <div
         ref={targetRef1}
-        style={{
-          position: 'relative',
-          minHeight: '60vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
-          perspective: '1000px',
-        }}
+        className="relative box-border flex h-[180vh] items-start justify-center overflow-hidden p-[2vw]"
       >
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <span
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              letterSpacing: '0.15em',
-              color: 'var(--accent-cyan)',
-              textTransform: 'uppercase',
-              background: 'rgba(6, 182, 212, 0.15)',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              border: '1px solid var(--border-focus)',
-            }}
-          >
-            ✦ SCROLL TO EXPERIENCE 3D THREAT TELEMETRY
-          </span>
-        </div>
-
         <div
+          className="sticky top-1/2 -translate-y-1/2 w-full max-w-6xl text-center text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold uppercase tracking-tighter"
           style={{
-            textAlign: 'center',
-            fontSize: 'clamp(2rem, 5.5vw, 4.5rem)',
-            lineHeight: 1.15,
-            perspective: '600px',
+            perspective: '500px',
           }}
         >
-          {characters1.map((char, index) => (
+          {characters.map((char, index) => (
             <CharacterV1
               key={index}
               char={char}
               index={index}
-              centerIndex={centerIndex1}
+              centerIndex={centerIndex}
               scrollYProgress={scroll1}
             />
           ))}
         </div>
-
-        <p
-          style={{
-            fontSize: '1rem',
-            color: 'var(--text-secondary)',
-            maxWidth: '580px',
-            textAlign: 'center',
-            marginTop: '16px',
-            lineHeight: 1.6,
-          }}
-        >
-          Multi-modal intelligence pipeline analyzing unknown links across 24 lexical features, visual brand hashes, and live registrar telemetry in under 15ms.
-        </p>
       </div>
 
-      {/* Tech Stack Convergence Section */}
+      {/* Section 2: Security Stack Convergence */}
       <div
         ref={targetRef2}
-        style={{
-          position: 'relative',
-          minHeight: '65vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
-        }}
+        className="relative -mt-[60vh] box-border flex h-[180vh] flex-col items-center justify-start overflow-hidden p-[2vw]"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-          <Bracket />
-          <h3
+        <div className="sticky top-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-full max-w-5xl text-center">
+          <p className="flex items-center justify-center gap-3 text-lg md:text-2xl font-bold tracking-tight text-white mb-8">
+            <Bracket className="h-10 md:h-12 text-orange-500" />
+            <span className="font-bold tracking-wide uppercase text-slate-100">
+              INTEGRATE WITH YOUR CYBER DEFENSE STACK
+            </span>
+            <Bracket className="h-10 md:h-12 scale-x-[-1] text-orange-500" />
+          </p>
+
+          <div
+            className="w-full flex flex-wrap justify-center items-center max-w-4xl"
             style={{
-              fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)',
-              fontWeight: 800,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-              margin: 0,
+              perspective: '500px',
             }}
           >
-            Integrated Threat Defense Matrix
-          </h3>
-          <Bracket flip />
-        </div>
+            {secStack.map((item, index) => (
+              <CharacterV3
+                key={index}
+                icon={item.icon}
+                label={item.label}
+                index={index}
+                centerIndex={iconCenterIndex}
+                scrollYProgress={scroll2}
+              />
+            ))}
+          </div>
 
-        <div
-          style={{
-            maxWidth: '900px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignItems: 'center',
-            perspective: '700px',
-            padding: '10px',
-          }}
-        >
-          {techStack.map((item, index) => (
-            <TechBadge
-              key={index}
-              name={item.name}
-              icon={item.icon}
-              index={index}
-              centerIndex={centerIndexTech}
-              scrollYProgress={scroll2}
-            />
-          ))}
-        </div>
-
-        <div style={{ marginTop: '28px' }}>
-          <button
-            onClick={onLaunchScanner}
-            style={{
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 32px',
-              fontWeight: 800,
-              fontSize: '1rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: '0 0 25px rgba(2, 132, 199, 0.5)',
-              transition: 'all 0.2s',
-            }}
-          >
-            <Shield size={18} />
-            <span>Launch Live Security Scanner</span>
-          </button>
+          <div className="mt-10">
+            <button
+              onClick={onLaunchScanner}
+              style={{
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '14px 32px',
+                fontWeight: 800,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                boxShadow: '0 0 30px rgba(234, 88, 12, 0.5)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Shield size={18} />
+              <span>Launch Live Security Scanner</span>
+            </button>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-const Bracket = ({ flip = false }: { flip?: boolean }) => {
+const Bracket = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 27 78"
-      style={{
-        height: '32px',
-        transform: flip ? 'scaleX(-1)' : 'none',
-        color: 'var(--accent-cyan)',
-      }}
+      className={className}
+      style={{ display: 'inline-block' }}
     >
       <path
         fill="currentColor"
