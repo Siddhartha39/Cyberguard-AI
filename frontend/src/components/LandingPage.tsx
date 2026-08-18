@@ -1,7 +1,6 @@
 import React from 'react';
 import { Radar, Terminal, AlertTriangle, GitCommit, Layers, Lock, Activity, Puzzle, ArrowRight } from 'lucide-react';
 import { InfoTooltip } from './InfoTooltip';
-import { CyberScrollShowcase } from './CyberScrollShowcase';
 
 interface LandingPageProps {
   onLaunchScanner: () => void;
@@ -262,9 +261,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </div>
-
-      {/* 3D Kinetic Scroll Showcase Component */}
-      <CyberScrollShowcase onLaunchScanner={onLaunchScanner} />
 
       {/* Cyber Defense Capabilities Grid Header */}
       <h2 className="cyber-font neon-cyan-glow" style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: '0.04em', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
