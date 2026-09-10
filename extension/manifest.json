@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "CyberGuard AI - Real-Time Phishing & Threat Shield",
-  "version": "2.0.0",
-  "description": "Explainable Real-Time Phishing Domain Intelligence, Brand Contradiction Detection, and Website Security Auditing.",
+  "version": "2.1.0",
+  "description": "Explainable Real-Time Phishing Domain Intelligence, Automatic Background Threat Shield, and Website Security Auditing.",
   "permissions": [
     "activeTab",
     "storage",
-    "tabs"
+    "tabs",
+    "notifications"
   ],
   "host_permissions": [
     "http://*/*",
