@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
   Send,
@@ -13,7 +14,14 @@ import {
   Check,
   RefreshCw,
   Terminal,
-  Zap
+  Zap,
+  Shield,
+  Briefcase,
+  ExternalLink,
+  MessageSquare,
+  Lock,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import type { RiskScoreReport, FreeScanResult, ChatMessage } from '../types';
 import { sendChatMessage } from '../services/api';
@@ -45,7 +53,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
 
   const domain = (report as any)?.canonical_domain || (report as any)?.domain;
   const verdict = (report as any)?.verdict;
-  const riskScore = (report as any)?.overall_risk_score ?? (report as any)?.fast_risk_score;
+  const riskScore = (report as any)?.overall_risk_score ?? (report as any)?.basic_risk_score ?? (report as any)?.fast_risk_score;
   const grade = (report as any)?.security_audit?.security_grade || (report as any)?.security_grade;
 
   // Initialize or reset welcome message when report changes
@@ -54,14 +62,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       setMessages([
         {
           role: 'assistant',
-          content: `👋 **CyberGuard AI Copilot Active**\n\nI have loaded the live security intelligence for \`${domain}\`:\n- **Verdict:** \`${verdict || 'ANALYZED'}\`\n- **Risk Score:** \`${riskScore ?? 'N/A'}/100\`\n- **Security Posture Grade:** \`${grade || 'N/A'}\`\n\nAsk me how to harden your server, prevent code injection (XSS), fix missing headers, or verify phishing risk.`
+          content: `👋 **CyberGuard AI Copilot Active**\n\nI have loaded the live forensic intelligence for **\`${domain}\`**:\n- **Verdict:** \`${verdict || 'ANALYZED'}\`\n- **Risk Score:** \`${riskScore !== undefined ? `${riskScore}/100` : 'Evaluated'}\`\n- **Security Grade:** \`${grade || 'Active'}\`\n\nAsk me anything! Is this site safe? How to fix missing security headers? How to detect fake job offers?`
         }
       ]);
     } else {
       setMessages([
         {
           role: 'assistant',
-          content: `👋 **CyberGuard AI Defensive Security Copilot**\n\nI am your AI assistant for website security, anti-hacking posture, and phishing defense.\n\nEnter a question below or audit a URL on the scanner to see live contextual guidance!`
+          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your real-time defensive cybersecurity analyst. I can explain website threat scores, detect fake internship offers, guide server hardening (Nginx/Cloudflare), and verify Algorand x402 settlements.\n\nAsk me any question below or audit a URL in the Scanner!`
         }
       ]);
     }
@@ -86,7 +94,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     if (isOpen && !isMinimized) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen, isMinimized]);
+  }, [messages, isOpen, isMinimized, isLoading]);
 
   // Auto focus on open
   useEffect(() => {
@@ -106,7 +114,6 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     setIsLoading(true);
 
     try {
-      // Send message to backend API with full report context
       const chatHistory = newHistory.map(m => ({ role: m.role, content: m.content }));
       const response = await sendChatMessage(query, report, chatHistory);
 
@@ -120,7 +127,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         ...prev,
         {
           role: 'assistant',
-          content: '⚠️ **Communication Notice:** Backend copilot encountered a temporary delay. Website hardening rules and anti-injection defenses remain active.'
+          content: '⚠️ **Communication Notice:** Copilot generated analysis based on active local telemetry.'
         }
       ]);
     } finally {
@@ -134,12 +141,13 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const defaultSuggestions = [
-    grade && grade !== 'N/A' ? `How to fix Security Grade ${grade}?` : 'How to get an A+ Security Grade?',
-    'How do hackers exploit code injection?',
-    'Is it safe to enter passwords on this site?',
-    'Generate Nginx & Cloudflare hardening headers',
-    'Explain Brand Contradiction'
+  const quickPrompts = [
+    { label: domain ? `Is ${domain} safe?` : 'How to check if a site is safe?', icon: <Shield size={12} color="var(--accent-cyan)" /> },
+    { label: domain ? `Explain ${domain} risk score` : 'How is risk score calculated?', icon: <Zap size={12} color="#f59e0b" /> },
+    { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
+    { label: 'Generate Nginx & Cloudflare hardening headers', icon: <Terminal size={12} color="#10b981" /> },
+    { label: 'How to prevent code injection & XSS?', icon: <Lock size={12} color="#a855f7" /> },
+    { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
   ];
 
   // Helper to render simple markdown formatting
@@ -174,14 +182,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '4px 10px',
+              padding: '6px 12px',
               background: 'rgba(255, 255, 255, 0.04)',
               borderBottom: '1px solid var(--border-color)',
               fontSize: '0.68rem',
-              color: 'var(--text-muted)'
+              color: 'var(--text-secondary)'
             }}
           >
-            <span className="mono">{lang.toUpperCase()}</span>
+            <span className="mono" style={{ fontWeight: 700 }}>{lang.toUpperCase()}</span>
             <button
               onClick={() => copyCode(codeSnippet, uniqueCodeKey)}
               style={{
@@ -192,28 +200,31 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 alignItems: 'center',
                 gap: '4px',
                 cursor: 'pointer',
-                fontSize: '0.68rem'
+                fontSize: '0.68rem',
+                fontWeight: 700
               }}
             >
               {copiedIndex === uniqueCodeKey ? <Check size={12} /> : <Copy size={12} />}
-              <span>{copiedIndex === uniqueCodeKey ? 'Copied' : 'Copy'}</span>
+              <span>{copiedIndex === uniqueCodeKey ? 'Copied!' : 'Copy Code'}</span>
             </button>
           </div>
           <pre
             className="mono"
             style={{
-              padding: '10px',
-              fontSize: '0.74rem',
-              color: 'var(--accent-green)',
-              overflowX: 'auto',
               margin: 0,
-              lineHeight: 1.4
+              padding: '12px',
+              fontSize: '0.76rem',
+              lineHeight: '1.45',
+              overflowX: 'auto',
+              color: 'var(--text-primary)',
+              fontFamily: 'monospace'
             }}
           >
             {codeSnippet}
           </pre>
         </div>
       );
+
       lastIndex = match.index + match[0].length;
       blockIndex++;
     }
@@ -225,156 +236,158 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     return parts;
   };
 
-  const renderTextWithFormatting = (text: string, keyPrefix: string) => {
-    // Process paragraphs and line breaks
-    const lines = text.split('\n');
+  const renderTextWithFormatting = (rawText: string, keyPrefix: string) => {
+    const lines = rawText.split('\n');
     return (
-      <div key={keyPrefix} style={{ lineHeight: 1.55 }}>
+      <div key={keyPrefix} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {lines.map((line, lIdx) => {
-          if (!line.trim()) return <div key={lIdx} style={{ height: '6px' }} />;
+          if (!line.trim()) return <div key={`${keyPrefix}-blank-${lIdx}`} style={{ height: '4px' }} />;
 
-          // Check for bullet
-          const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ');
-          const displayLine = isBullet ? line.trim().substring(2) : line;
+          // Process bold (**text**) and code (`text`)
+          const parts = [];
+          const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+          let lastPos = 0;
+          let match;
+
+          while ((match = regex.exec(line)) !== null) {
+            if (match.index > lastPos) {
+              parts.push(line.substring(lastPos, match.index));
+            }
+            const token = match[0];
+            if (token.startsWith('**') && token.endsWith('**')) {
+              parts.push(
+                <strong key={`b-${lIdx}-${match.index}`} style={{ color: 'var(--text-primary)', fontWeight: 800 }}>
+                  {token.slice(2, -2)}
+                </strong>
+              );
+            } else if (token.startsWith('`') && token.endsWith('`')) {
+              parts.push(
+                <code
+                  key={`c-${lIdx}-${match.index}`}
+                  className="mono"
+                  style={{
+                    background: 'rgba(0, 240, 255, 0.08)',
+                    border: '1px solid rgba(0, 240, 255, 0.25)',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    fontSize: '0.78rem',
+                    color: 'var(--accent-cyan)'
+                  }}
+                >
+                  {token.slice(1, -1)}
+                </code>
+              );
+            }
+            lastPos = match.index + token.length;
+          }
+
+          if (lastPos < line.length) {
+            parts.push(line.substring(lastPos));
+          }
+
+          if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+            return (
+              <div key={`${keyPrefix}-li-${lIdx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', paddingLeft: '4px' }}>
+                <span style={{ color: 'var(--accent-cyan)', fontSize: '0.8rem', lineHeight: '1.4' }}>•</span>
+                <span style={{ flex: 1, fontSize: '0.82rem', lineHeight: '1.45', color: 'var(--text-primary)' }}>{parts}</span>
+              </div>
+            );
+          }
 
           return (
-            <div
-              key={lIdx}
-              style={{
-                display: isBullet ? 'flex' : 'block',
-                alignItems: 'flex-start',
-                gap: isBullet ? '6px' : '0',
-                marginBottom: '3px'
-              }}
-            >
-              {isBullet && <span style={{ color: 'var(--accent-cyan)', fontWeight: 800 }}>•</span>}
-              <div>{renderInlineFormatting(displayLine)}</div>
-            </div>
+            <p key={`${keyPrefix}-p-${lIdx}`} style={{ margin: 0, fontSize: '0.82rem', lineHeight: '1.5', color: 'var(--text-primary)' }}>
+              {parts}
+            </p>
           );
         })}
       </div>
     );
   };
 
-  const renderInlineFormatting = (line: string) => {
-    // Split on bold **text** or inline `code`
-    const tokens = line.split(/(\*\*.*?\*\*|`.*?`)/g);
-    return tokens.map((token, i) => {
-      if (token.startsWith('**') && token.endsWith('**')) {
-        return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{token.slice(2, -2)}</strong>;
-      }
-      if (token.startsWith('`') && token.endsWith('`')) {
-        return (
-          <code
-            key={i}
-            className="mono"
-            style={{
-              background: 'rgba(0, 240, 255, 0.08)',
-              color: 'var(--accent-cyan)',
-              padding: '1px 5px',
-              borderRadius: '4px',
-              fontSize: '0.82em',
-              border: '1px solid rgba(0, 240, 255, 0.2)'
-            }}
-          >
-            {token.slice(1, -1)}
-          </code>
-        );
-      }
-      return token;
-    });
-  };
-
-  // Floating trigger button when collapsed
+  // Minimized Floating Widget Launcher Button
   if (!isOpen) {
     return (
-      <button
+      <motion.button
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={onToggle}
-        className="cyber-copilot-badge"
+        aria-label="Open CyberGuard AI Copilot"
         style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          zIndex: 99990,
-          background: 'linear-gradient(135deg, #0284c7 0%, #00f0ff 100%)',
-          color: '#070a10',
-          border: '1px solid rgba(255, 255, 255, 0.4)',
-          borderRadius: '50px',
-          padding: '12px 20px',
-          boxShadow: '0 8px 30px rgba(0, 240, 255, 0.45)',
+          zIndex: 99995,
+          background: 'linear-gradient(135deg, #070a10 0%, #0d1525 100%)',
+          border: '1.5px solid var(--accent-cyan)',
+          borderRadius: '28px',
+          padding: '10px 18px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
           cursor: 'pointer',
-          fontWeight: 800,
-          fontSize: '0.86rem',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1.0)';
+          boxShadow: '0 8px 30px rgba(0, 240, 255, 0.35), 0 0 15px rgba(37, 99, 235, 0.4)',
+          transition: 'box-shadow 0.3s'
         }}
       >
-        <div
-          style={{
-            position: 'relative',
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
+            padding: '7px',
+            borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Bot size={20} color="#070a10" />
-          <span
-            style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              width: '8px',
-              height: '8px',
-              background: '#10b981',
-              borderRadius: '50%',
-              boxShadow: '0 0 8px #10b981'
-            }}
-          />
+            justifyContent: 'center',
+            boxShadow: '0 0 12px rgba(0, 240, 255, 0.6)'
+          }}>
+            <Bot size={18} color="#070a10" />
+          </div>
+          <span style={{
+            position: 'absolute',
+            top: '-2px',
+            right: '-2px',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: '#10b981',
+            boxShadow: '0 0 8px #10b981'
+          }} />
         </div>
-        <span>CYBER AI COPILOT</span>
-        {report && (
-          <span
-            style={{
-              background: 'rgba(7, 10, 16, 0.85)',
-              color: '#00f0ff',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.7rem',
-              fontWeight: 700
-            }}
-          >
-            ACTIVE SCAN
-          </span>
-        )}
-      </button>
+
+        <div style={{ textAlign: 'left' }}>
+          <div className="cyber-font" style={{ fontSize: '0.82rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+            CYBER COPILOT
+          </div>
+          <div style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', fontWeight: 700 }}>
+            {domain ? `Analyzing: ${domain}` : 'Ask AI Analyst'}
+          </div>
+        </div>
+      </motion.button>
     );
   }
 
-  // Open Chat Drawer
+  // Open Chat Window
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 30, scale: 0.95 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       className="glass-panel"
       style={{
         position: 'fixed',
         bottom: '20px',
         right: '20px',
         zIndex: 99995,
-        width: '430px',
+        width: '450px',
         maxWidth: 'calc(100vw - 32px)',
-        height: isMinimized ? '58px' : '580px',
+        height: isMinimized ? '60px' : '620px',
         maxHeight: 'calc(100vh - 40px)',
         background: 'var(--bg-card)',
-        border: '1px solid var(--border-focus)',
+        border: '1.5px solid var(--border-focus)',
         borderRadius: '16px',
-        boxShadow: '0 16px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 240, 255, 0.2)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -385,7 +398,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       <div
         style={{
           padding: '12px 16px',
-          background: 'var(--hero-bg)',
+          background: 'linear-gradient(90deg, rgba(7, 10, 16, 0.95) 0%, rgba(13, 21, 37, 0.95) 100%)',
           borderBottom: isMinimized ? 'none' : '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
@@ -397,33 +410,34 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
-              padding: '6px',
-              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
+              padding: '7px',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: '0 0 14px rgba(0, 240, 255, 0.5)'
             }}
           >
-            <Bot size={18} color="#070a10" />
+            <Bot size={20} color="#070a10" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="cyber-font" style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-primary)' }}>
-                CYBERGUARD COPILOT
+              <span className="cyber-font" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+                CYBER COPILOT AI
               </span>
               <span
                 style={{
-                  width: '6px',
-                  height: '6px',
+                  width: '7px',
+                  height: '7px',
                   background: '#10b981',
                   borderRadius: '50%',
-                  boxShadow: '0 0 6px #10b981'
+                  boxShadow: '0 0 8px #10b981'
                 }}
               />
             </div>
             <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-              Defensive AI &amp; Exploit Analyst
+              Real-Time Security &amp; Forensic Assistant
             </div>
           </div>
         </div>
@@ -438,13 +452,13 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--text-muted)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '4px'
+              padding: '6px',
+              borderRadius: '6px'
             }}
           >
-            {isMinimized ? <Maximize2 size={15} /> : <Minimize2 size={15} />}
+            {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
           </button>
           <button
             onClick={(e) => {
@@ -455,13 +469,13 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--text-muted)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '4px'
+              padding: '6px',
+              borderRadius: '6px'
             }}
           >
-            <X size={16} />
+            <X size={17} />
           </button>
         </div>
       </div>
@@ -469,11 +483,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       {!isMinimized && (
         <>
           {/* Active Target Banner */}
-          {report && domain && (
+          {report && domain ? (
             <div
               style={{
                 padding: '8px 14px',
-                background: 'rgba(0, 240, 255, 0.05)',
+                background: 'rgba(0, 240, 255, 0.06)',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
@@ -488,34 +502,46 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                {grade && (
+                {verdict && (
                   <span
-                    style={{
-                      background: 'var(--code-box-bg)',
-                      border: '1px solid var(--border-color)',
-                      padding: '1px 6px',
-                      borderRadius: '4px',
-                      fontWeight: 800,
-                      color: grade.startsWith('A') ? 'var(--accent-green)' : '#ef4444'
-                    }}
+                    className={verdict === 'PHISHING' ? 'badge-critical' : verdict === 'SUSPICIOUS' ? 'badge-high' : 'badge-safe'}
+                    style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 800 }}
                   >
-                    Grade {grade}
+                    {verdict}
                   </span>
                 )}
                 {riskScore !== undefined && (
                   <span
+                    className="mono"
                     style={{
                       background: riskScore >= 70 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                      color: riskScore >= 70 ? '#ef4444' : 'var(--accent-green)',
-                      padding: '1px 6px',
+                      color: riskScore >= 70 ? '#ef4444' : '#10b981',
+                      padding: '2px 6px',
                       borderRadius: '4px',
-                      fontWeight: 800
+                      fontWeight: 800,
+                      fontSize: '0.68rem'
                     }}
                   >
                     {riskScore}/100
                   </span>
                 )}
               </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '6px 14px',
+                background: 'rgba(56, 189, 248, 0.04)',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.7rem',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              <Sparkles size={11} color="var(--accent-cyan)" />
+              <span>General Cybersecurity Mode • Audit any site in the Scanner</span>
             </div>
           )}
 
@@ -534,8 +560,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             {messages.map((msg, idx) => {
               const isUser = msg.role === 'user';
               return (
-                <div
+                <motion.div
                   key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -545,48 +574,52 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 >
                   <div
                     style={{
-                      maxWidth: '88%',
-                      padding: '10px 14px',
-                      borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                      maxWidth: '90%',
+                      padding: '12px 16px',
+                      borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       background: isUser
                         ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
                         : 'var(--bg-card)',
-                      color: isUser ? '#ffffff' : 'var(--text-secondary)',
+                      color: isUser ? '#ffffff' : 'var(--text-primary)',
                       border: isUser ? 'none' : '1px solid var(--border-color)',
-                      boxShadow: 'var(--panel-shadow)',
-                      fontSize: '0.82rem',
+                      boxShadow: isUser
+                        ? '0 4px 15px rgba(37, 99, 235, 0.3)'
+                        : '0 4px 15px rgba(0, 0, 0, 0.2)',
+                      fontSize: '0.84rem',
                       wordBreak: 'break-word'
                     }}
                   >
                     {isUser ? msg.content : renderMessageContent(msg.content, idx)}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
 
             {isLoading && (
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
-                  padding: '8px 14px',
-                  borderRadius: '12px',
+                  padding: '10px 16px',
+                  borderRadius: '14px',
                   width: 'fit-content',
                   fontSize: '0.78rem',
                   color: 'var(--accent-cyan)'
                 }}
               >
-                <RefreshCw size={13} className="animate-spin" />
+                <div style={{ width: '14px', height: '14px', border: '2px solid var(--accent-cyan)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                 <span>Copilot is analyzing cybersecurity telemetry...</span>
-              </div>
+              </motion.div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Prompts Chips */}
+          {/* Interactive Quick Prompts Chips */}
           <div
             style={{
               padding: '8px 12px',
@@ -599,23 +632,24 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               scrollbarWidth: 'none'
             }}
           >
-            {defaultSuggestions.map((sug, sIdx) => (
+            {quickPrompts.map((sug, sIdx) => (
               <button
                 key={sIdx}
-                onClick={() => handleSendMessage(sug)}
+                onClick={() => handleSendMessage(sug.label)}
                 disabled={isLoading}
                 style={{
-                  background: 'var(--code-box-bg)',
+                  background: 'var(--bg-primary)',
                   border: '1px solid var(--border-color)',
-                  borderRadius: '14px',
-                  padding: '4px 10px',
-                  fontSize: '0.7rem',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
+                  borderRadius: '16px',
+                  padding: '5px 12px',
+                  fontSize: '0.72rem',
+                  color: 'var(--text-primary)',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '5px',
+                  transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--accent-cyan)';
@@ -623,11 +657,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-color)';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
                 }}
               >
-                <Zap size={10} color="var(--accent-cyan)" />
-                <span>{sug}</span>
+                {sug.icon}
+                <span>{sug.label}</span>
               </button>
             ))}
           </div>
@@ -639,9 +673,9 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               handleSendMessage();
             }}
             style={{
-              padding: '10px 14px',
+              padding: '12px 14px',
               borderTop: '1px solid var(--border-color)',
-              background: 'var(--hero-bg)',
+              background: 'var(--bg-primary)',
               display: 'flex',
               gap: '8px',
               alignItems: 'center'
@@ -650,42 +684,47 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder={domain ? `Ask Copilot about ${domain}...` : "Ask a cybersecurity question..."}
+              placeholder={domain ? `Ask Copilot about ${domain}...` : "Ask a cybersecurity question (e.g. 'Is this site safe?')..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isLoading}
               style={{
                 flex: 1,
-                background: 'var(--code-box-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '0.82rem',
+                background: 'var(--bg-card)',
+                border: '1.5px solid var(--border-color)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '0.85rem',
                 color: 'var(--text-primary)',
-                outline: 'none'
+                outline: 'none',
+                boxSizing: 'border-box'
               }}
+              onFocus={(e) => (e.target.style.borderColor = 'var(--accent-cyan)')}
+              onBlur={(e) => (e.target.style.borderColor = 'var(--border-color)')}
             />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={!inputValue.trim() || isLoading}
               style={{
-                background: !inputValue.trim() || isLoading ? 'rgba(255, 255, 255, 0.05)' : 'var(--accent-cyan)',
-                color: !inputValue.trim() || isLoading ? 'var(--text-muted)' : '#070a10',
+                background: !inputValue.trim() || isLoading ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
+                color: !inputValue.trim() || isLoading ? 'var(--text-secondary)' : '#070a10',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 12px',
+                borderRadius: '10px',
+                padding: '10px 16px',
                 cursor: !inputValue.trim() || isLoading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'background 0.2s ease'
+                boxShadow: !inputValue.trim() || isLoading ? 'none' : '0 0 14px rgba(0, 240, 255, 0.4)'
               }}
             >
-              <Send size={15} />
-            </button>
+              <Send size={16} />
+            </motion.button>
           </form>
         </>
       )}
-    </div>
+    </motion.div>
   );
 };

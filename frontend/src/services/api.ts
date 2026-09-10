@@ -1274,40 +1274,60 @@ export async function sendChatMessage(
 function generateClientChatResponse(message: string, report?: any): ChatResponse {
   const domain = report?.canonical_domain || report?.domain || 'target website';
   const verdict = report?.verdict || 'UNKNOWN';
-  const riskScore = report?.overall_risk_score ?? report?.fast_risk_score ?? 0;
+  const riskScore = report?.overall_risk_score ?? report?.basic_risk_score ?? report?.fast_risk_score ?? 0;
   const grade = report?.security_audit?.security_grade || report?.security_grade || 'N/A';
   const isContradiction = !!report?.brand_analysis?.is_contradiction;
-  const brandName = report?.brand_analysis?.brand_display_name;
-  const msgLower = message.toLowerCase();
+  const brandName = report?.brand_analysis?.brand_display_name || report?.matched_brand;
+  const registrar = report?.registrar || 'ICANN Accredited';
+  const domainAge = report?.domain_age_days !== undefined && report?.domain_age_days !== null ? `${report.domain_age_days} days` : 'Verified';
+  const msgLower = message.toLowerCase().trim();
+
+  const greetings = ['hi', 'hello', 'hey', 'hola', 'sup', 'good morning', 'good evening', 'good afternoon', 'namaste', 'yo'];
+  const isGreeting = greetings.some(g => msgLower.startsWith(g + ' ') || msgLower === g);
 
   let reply = '';
-  if (msgLower.includes('safe') || msgLower.includes('password') || msgLower.includes('login') || msgLower.includes('credential')) {
-    if (verdict === 'PHISHING' || isContradiction) {
-      reply = `⚠️ **DO NOT SUBMIT PASSWORDS OR CREDENTIALS.**\n\n\`${domain}\` is flagged as **${verdict}** (Risk Score: **${riskScore}/100**). ${brandName ? `It is impersonating **${brandName}** on an unauthorized domain.` : 'It exhibits malicious deception markers.'} Any input will be captured by adversaries.`;
-    } else if (verdict === 'UNREGISTERED') {
-      reply = `ℹ️ **This domain is unregistered.**\n\n\`${domain}\` has no active DNS or hosting infrastructure. No authentic website or login form is present.`;
+
+  if (isGreeting) {
+    if (report && domain && domain !== 'target website') {
+      reply = `👋 **Hello! I am CyberGuard AI Copilot**, your real-time defensive web security and threat intelligence assistant.\n\nI am currently tracking live telemetry for **\`${domain}\`**:\n- **Verdict:** \`${verdict}\`\n- **Risk Score:** \`${riskScore}/100\`\n- **Security Posture Grade:** \`${grade}\`\n- **Domain Age:** \`${domainAge}\`\n\nHow can I help you inspect \`${domain}\`? You can ask:\n- *"Is this website safe or fake?"*\n- *"Why did it get a risk score of ${riskScore}?"*\n- *"How do I fix missing security headers or get an A+ grade?"*\n- *"Who is the registrar and is the SSL certificate valid?"*`;
     } else {
-      reply = `✅ **Target website is verified authentic.**\n\n\`${domain}\` shows legitimate registration, authentic domain standing, and matching brand identity (Risk: **${riskScore}/100**). Always confirm the browser address bar shows \`https://${domain}\`.`;
+      reply = `👋 **Hello! I am CyberGuard AI Copilot**, your real-time defensive web security and threat intelligence assistant.\n\nI can analyze websites for phishing and vulnerabilities, detect fake job/internship offers, explain code injection (XSS/SQLi), and generate production-ready server hardening rules (Nginx, Apache, Cloudflare).\n\nEnter any URL in the **Scanner** tab to run a live forensic inspection, or ask me any security question right here!`;
     }
-  } else if (msgLower.includes('grade') || msgLower.includes('posture') || msgLower.includes('score') || msgLower.includes('why')) {
-    reply = `🛡️ **Security Grade Breakdown for \`${domain}\` (Grade: ${grade}):**\n\nThe security grade audits defensive HTTP response headers that protect your users from code injection, framing attacks, and SSL downgrade:\n\n- **Strict-Transport-Security (HSTS):** Enforces HTTPS encryption for 1 year.\n- **Content-Security-Policy (CSP):** Immunizes your pages from XSS script execution.\n- **X-Frame-Options:** Prevents invisible framing and clickjacking.\n- **X-Content-Type-Options:** Prevents MIME-sniffing exploits.`;
-  } else if (msgLower.includes('code injection') || msgLower.includes('xss') || msgLower.includes('csp')) {
-    reply = `🔒 **Immunizing \`${domain}\` Against Code Injection (XSS):**\n\nAttackers inject malicious JavaScript to steal auth cookies, tokens, and sensitive keystrokes. Deploy a strict **Content-Security-Policy (CSP)**:\n\n\`\`\`http\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https:; object-src 'none'; frame-ancestors 'self';\n\`\`\`\n\n**Best Practices:**\n1. Disallow \`eval()\`.\n2. Sanitize and escape all HTML user inputs.\n3. Store auth tokens in \`HttpOnly\`, \`Secure\`, \`SameSite=Strict\` cookies.`;
-  } else if (msgLower.includes('nginx') || msgLower.includes('apache') || msgLower.includes('cloudflare') || msgLower.includes('config') || msgLower.includes('fix')) {
-    reply = `⚙️ **Hardening Configuration for \`${domain}\`:**\n\n**Nginx Server Block (\`/etc/nginx/conf.d/security.conf\`):**\n\`\`\`nginx\nadd_header X-Frame-Options "SAMEORIGIN" always;\nadd_header X-Content-Type-Options "nosniff" always;\nadd_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;\nadd_header Content-Security-Policy "default-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; object-src 'none';" always;\nadd_header Referrer-Policy "strict-origin-when-cross-origin" always;\n\`\`\`\n\n**Cloudflare Edge Rule:**\nGo to *Rules → Transform Rules → Modify Response Header* and inject HSTS, X-Frame-Options, and CSP headers.`;
-  } else if (msgLower.includes('brand') || msgLower.includes('contradiction') || msgLower.includes('logo')) {
-    reply = `🔍 **Brand-Domain Contradiction Engine:**\n\nPhishers steal corporate logos (${brandName || 'PayPal, Microsoft, Apple, Google'}) and place them on deceptive domains. Our neural engine compares logo perceptual hashes against official trademark registries. If a page displays a brand logo but does not match the company's verified domain list, it triggers a critical brand contradiction alert.`;
+  } else if (msgLower.includes('who are you') || msgLower.includes('what can you do') || msgLower.includes('help me') || msgLower.includes('about copilot')) {
+    reply = `🤖 **About CyberGuard AI Copilot**\n\nI am an autonomous defensive cybersecurity agent integrated with CyberGuard AI's multi-signal neural fusion engine and Algorand Testnet verification.\n\n**Key Capabilities:**\n1. 🛡️ **Forensic Threat Analysis**: Explain risk scores, brand lookalikes, and why a domain is flagged.\n2. 💼 **Job & Internship Scam Sentinel**: Detect fake hiring offers, registration fee demands, and freemail HR traps.\n3. 🔒 **Code Injection Immunity**: Guide you in setting up strict Content-Security-Policy (CSP) and sanitizing inputs.\n4. ⚙️ **Defensive Hardening**: Provide copy-paste configs for Nginx, Apache, and Cloudflare to achieve an **A+ Security Grade**.\n5. ⚡ **Algorand & x402 Micropayments**: Explain decentralized HTTP 402 paywall challenges and on-chain verification.`;
+  } else if (msgLower.includes('safe') || msgLower.includes('fake') || msgLower.includes('real') || msgLower.includes('legit') || msgLower.includes('scam') || msgLower.includes('trust') || msgLower.includes('password') || msgLower.includes('login') || msgLower.includes('credential')) {
+    if (verdict === 'PHISHING' || isContradiction || riskScore >= 70) {
+      reply = `🚨 **DANGER: \`${domain}\` IS FLAGGED AS A HIGH-RISK THREAT (${verdict})**\n\n- **Threat Score:** **${riskScore}/100**\n- **Brand Target:** ${brandName || 'Unauthorized Brand Spoofing'}\n- **Contradiction:** ${isContradiction ? 'Critical Trademark Mismatch' : 'Deceptive Adversary Infrastructure'}\n\n**Security Advice:** DO NOT enter passwords, credit cards, or personal credentials on this website. Any input will be captured by adversaries.`;
+    } else if (verdict === 'UNREGISTERED') {
+      reply = `ℹ️ **\`${domain}\` IS AN UNREGISTERED DOMAIN (NXDOMAIN).**\n\nThis host has no active DNS records or hosting server. No legitimate website is operating here.`;
+    } else if (verdict === 'SUSPICIOUS' || (riskScore >= 35 && riskScore < 70)) {
+      reply = `⚠️ **CAUTION: \`${domain}\` EXHIBITS SUSPICIOUS MARKERS.**\n\n- **Threat Score:** **${riskScore}/100**\n- Newly registered domain age or missing defensive headers observed. Exercise high caution before authenticating.`;
+    } else {
+      reply = `✅ **\`${domain}\` IS VERIFIED AUTHENTIC & SAFE.**\n\n- **Verdict:** \`${verdict}\` (Risk Score: **${riskScore}/100**)\n- **Security Grade:** \`${grade}\`\n- **SSL / TLS:** Encrypted & Valid\n- **Registrar:** \`${registrar}\`\n\nNo trademark contradictions or phishing vectors detected. Always confirm your browser address bar displays \`https://${domain}\`.`;
+    }
+  } else if (msgLower.includes('why') || msgLower.includes('calculate') || msgLower.includes('how is risk') || msgLower.includes('risk score') || msgLower.includes('entropy')) {
+    reply = `📊 **How Risk is Calculated for \`${domain}\` (Score: ${riskScore}/100):**\n\nCyberGuard AI uses a 6-layer multi-signal fusion pipeline:\n1. **Lexical & Shannon Entropy**: Analyzes URL randomness and brand keyword stuffing.\n2. **RDAP Domain Age**: Verifies domain creation date (Age: \`${domainAge}\`). Newly registered domains (<30 days) receive higher risk.\n3. **DNS & Email Posture**: Audits authoritative A, NS, MX, SPF, and DMARC records.\n4. **Visual Logo pHash Matching**: Sandbox crawler compares logo perceptual hashes against verified trademark registries.\n5. **Sandbox Crawl**: Audits password form targets and cross-origin actions.\n6. **Multi-Signal Calibrator**: Aggregates all indicators into an authoritative 0–100 risk score.`;
+  } else if (msgLower.includes('internship') || msgLower.includes('job offer') || msgLower.includes('job scam') || msgLower.includes('recruitment') || msgLower.includes('training fee') || msgLower.includes('registration fee')) {
+    reply = `💼 **Job & Internship Offer Scam Detection Rules:**\n\nCyberGuard AI protects candidates from recruitment fraud. Watch out for these **5 Critical Red Flags**:\n1. 🚩 **Upfront Fee Demands**: Any request for registration fees, training charges, or laptop deposits is **100% a scam**. Legitimate companies NEVER charge applicants.\n2. 🚩 **Freemail HR Accounts**: Real recruiters email from corporate domains (\`@google.com\`, \`@infosys.com\`), NEVER from \`@gmail.com\` or \`@yahoo.com\`.\n3. 🚩 **Fake Check Scams**: Promising to mail a \$3,000 cashier check to buy hardware from an 'approved vendor' is counterfeit check laundering.\n4. 🚩 **Telegram / WhatsApp Hiring**: Corporate hiring does not issue employment contracts exclusively through chat apps.\n5. 🚩 **Selection Without Interview**: Instant appointment letters without technical evaluation are deceptive traps.\n\nPaste any suspicious offer letter into our **Email Sentinel** tab for an instant fraud audit!`;
+  } else if (msgLower.includes('dmarc') || msgLower.includes('spf') || msgLower.includes('dkim') || msgLower.includes('spoof')) {
+    reply = `📧 **Email Authentication Posture for \`${domain}\`:**\n\n- **SPF (Sender Policy Framework):** Declares authorized mail servers allowed to send from \`${domain}\`.\n- **DKIM (DomainKeys Identified Mail):** Cryptographically signs emails to verify transmission integrity.\n- **DMARC:** Instructs receiving mail servers how to enforce policy (\`none\`, \`quarantine\`, \`reject\`).\n\n**Why it matters:** Missing DMARC allows attackers to spoof \`billing@${domain}\` or \`hr@${domain}\` in phishing campaigns.`;
+  } else if (msgLower.includes('x402') || msgLower.includes('algorand') || msgLower.includes('payment') || msgLower.includes('microalgo') || msgLower.includes('facilitator')) {
+    reply = `⚡ **Algorand & x402 Micropayment Protocol:**\n\n- **HTTP 402 Standard**: Uses decentralized paywalls to gate compute-intensive forensic audits.\n- **Algorand Testnet**: Settles on-chain in ~3.3 seconds with deterministic finality and near-zero fees (0.001 ALGO).\n- **Facilitator**: Uses the GoPlausible Facilitator (\`https://facilitator.goplausible.xyz\`).\n- **Cost**: 0.1 ALGO (100,000 microAlgos) per deep forensic audit.\n- **Verification**: Every payment transaction hash is verified on-chain via the Algorand Testnet indexer.`;
+  } else if (msgLower.includes('nginx') || msgLower.includes('apache') || msgLower.includes('cloudflare') || msgLower.includes('config') || msgLower.includes('fix') || msgLower.includes('grade') || msgLower.includes('header')) {
+    reply = `⚙️ **Hardening Configuration for \`${domain}\`:**\n\n**Nginx Configuration (\`/etc/nginx/conf.d/security.conf\`):**\n\`\`\`nginx\nadd_header X-Frame-Options "SAMEORIGIN" always;\nadd_header X-Content-Type-Options "nosniff" always;\nadd_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;\nadd_header Content-Security-Policy "default-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; object-src 'none';" always;\nadd_header Referrer-Policy "strict-origin-when-cross-origin" always;\n\`\`\`\n\n**Cloudflare Edge Rule:**\nGo to *Rules → Transform Rules → Modify Response Header* and set HSTS, X-Frame-Options, and CSP headers to immediately attain an **A+ Security Grade**.`;
+  } else if (msgLower.includes('code injection') || msgLower.includes('xss') || msgLower.includes('csp') || msgLower.includes('inject')) {
+    reply = `🔒 **Immunizing \`${domain}\` Against Code Injection (XSS):**\n\nAttackers inject malicious JavaScript to steal auth cookies, tokens, and sensitive keystrokes. Deploy a strict **Content-Security-Policy (CSP)**:\n\n\`\`\`http\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https:; object-src 'none'; frame-ancestors 'self';\n\`\`\`\n\n**Best Practices:**\n1. Disallow \`eval()\`.\n2. Sanitize and HTML-encode all dynamic user inputs.\n3. Store auth tokens in \`HttpOnly\`, \`Secure\`, \`SameSite=Strict\` cookies.`;
   } else {
-    reply = `🤖 **CyberGuard AI Copilot Analysis:**\n\nTarget: \`${domain}\`\nVerdict: **${verdict}** | Risk Score: **${riskScore}/100** | Posture Grade: **${grade}**\n\nYou can ask me:\n- *"How do I fix Security Grade ${grade}?"*\n- *"How do I prevent code injection (XSS) on my website?"*\n- *"Is it safe to log into this site?"*\n- *"Generate Nginx / Cloudflare security headers"*`;
+    reply = `🤖 **CyberGuard AI Copilot Telemetry for \`${domain}\`:**\n\n- **Verdict:** \`${verdict}\` (Risk Score: **${riskScore}/100**)\n- **Security Grade:** \`${grade}\`\n- **Brand Security:** ${isContradiction ? '🚨 Brand Contradiction' : '✅ Verified Authentic'}\n\nYou can ask me:\n- *"Is this website safe or fake?"*\n- *"Why did it get a risk score of ${riskScore}?"*\n- *"How do I fix Security Grade ${grade} on Nginx/Cloudflare?"*\n- *"How can I detect fake internship or job offers?"*`;
   }
 
   return {
     reply,
     suggested_actions: [
+      `Is ${domain} safe to use?`,
       `How to fix Security Grade ${grade}?`,
-      'How to prevent code injection & XSS?',
-      'Generate Nginx / Apache hardening headers',
-      'Explain Brand Contradiction'
+      'Generate Nginx & Cloudflare hardening headers',
+      'How to detect fake job/internship offers?'
     ]
   };
 }

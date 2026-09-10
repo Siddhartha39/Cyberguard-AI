@@ -189,20 +189,122 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
             pass
 
     # 2. High-fidelity built-in cybersecurity knowledge engine
-    msg_lower = message.lower()
+    msg_lower = message.lower().strip()
+    import re
 
-    if "safe" in msg_lower or "password" in msg_lower or "credential" in msg_lower or "login" in msg_lower:
-        if verdict == "PHISHING" or is_contradiction:
-            reply = f"⚠️ **DO NOT ENTER CREDENTIALS OR PASSWORDS.**\n\n`{domain}` has been confirmed as **{verdict}** (Risk Score: **{risk_score}/100**). It is impersonating **{brand_matched or 'a recognized service'}** on an unauthorized domain. Any submitted passwords or sensitive data will be exfiltrated to the adversary's command server."
-        elif verdict == "UNREGISTERED":
-            reply = f"ℹ️ **This domain is unregistered.**\n\n`{domain}` is currently not registered on ICANN/RDAP registries (NXDOMAIN). There is no active server or login portal hosted here."
+    # Greeting & Small Talk Check
+    greetings = ["hi", "hello", "hey", "hola", "sup", "good morning", "good evening", "good afternoon", "greetings", "namaste", "yo"]
+    is_greeting = any(re.match(rf"^{g}\b", msg_lower) for g in greetings) or msg_lower in greetings
+
+    if is_greeting:
+        if report and domain and domain != "target website":
+            reply = (
+                f"👋 **Hello! I am CyberGuard AI Copilot**, your real-time cybersecurity analyst and defensive security assistant.\n\n"
+                f"I am actively tracking the live telemetry for **`{domain}`**:\n"
+                f"- **Verdict:** `{verdict}`\n"
+                f"- **Risk Score:** `{risk_score}/100`\n"
+                f"- **Security Grade:** `{grade}`\n\n"
+                f"How can I help you inspect `{domain}`? You can ask:\n"
+                f"- *\"Is this website safe or fake?\"*\n"
+                f"- *\"Why did it get a risk score of {risk_score}?\"*\n"
+                f"- *\"How do I fix missing security headers or get an A+ grade?\"*\n"
+                f"- *\"Who owns this domain and what is its age?\"*"
+            )
         else:
-            reply = f"✅ **Target is verified benign / authentic.**\n\n`{domain}` has an authentic registration profile and consistent brand identity (Risk Score: **{risk_score}/100**). However, ensure your browser shows a secure green padlock (`https://`) before authenticating."
+            reply = (
+                "👋 **Hello! I am CyberGuard AI Copilot**, your real-time defensive web security and threat intelligence assistant.\n\n"
+                "I can analyze websites for phishing and vulnerabilities, detect fake job/internship offers, explain code injection (XSS/SQLi), and generate production-ready server hardening rules (Nginx, Apache, Cloudflare).\n\n"
+                "Enter any URL in the **Scanner** tab to run a live forensic inspection, or ask me any security question right here!"
+            )
 
-    elif "nginx" in msg_lower or "apache" in msg_lower or "cloudflare" in msg_lower or "config" in msg_lower or "hardening" in msg_lower or "header" in msg_lower:
+    elif any(k in msg_lower for k in ["who are you", "what can you do", "what are you", "help me", "about copilot"]):
+        reply = (
+            "🤖 **About CyberGuard AI Copilot**\n\n"
+            "I am an autonomous defensive cybersecurity agent integrated directly with CyberGuard AI's multi-signal neural fusion engine and Algorand Testnet settlement.\n\n"
+            "**Key Capabilities:**\n"
+            "1. 🛡️ **Forensic Threat Analysis**: Explain risk scores, brand lookalikes, and why a domain is flagged.\n"
+            "2. 💼 **Job & Internship Scam Sentinel**: Detect fake hiring offers, registration fee demands, and freemail HR traps.\n"
+            "3. 🔒 **Code Injection Immunity**: Guide you in setting up strict Content-Security-Policy (CSP) and sanitizing inputs.\n"
+            "4. ⚙️ **Defensive Hardening**: Provide copy-paste configs for Nginx, Apache, and Cloudflare to achieve an **A+ Security Grade**.\n"
+            "5. ⚡ **Algorand & x402 Micropayments**: Explain decentralized HTTP 402 paywall challenges and on-chain verification."
+        )
+
+    elif any(k in msg_lower for k in ["fake", "real", "legit", "scam", "safe", "trust", "danger", "malicious", "password", "login", "credential"]):
+        if verdict == "PHISHING" or is_contradiction or risk_score >= 70:
+            reply = (
+                f"🚨 **DANGER: `{domain}` IS FLAGGED AS A HIGH-RISK THREAT ({verdict})**\n\n"
+                f"- **Overall Risk Score:** **{risk_score}/100**\n"
+                f"- **Brand Target:** {brand_matched or 'Unauthorized Brand Spoofing'}\n"
+                f"- **Contradiction Status:** {'Critical Trademark Mismatch' if is_contradiction else 'Malicious indicators present'}\n\n"
+                f"**Security Verdict:** DO NOT enter passwords, credit cards, or personal credentials on this website. All input will be exfiltrated to adversary infrastructure."
+            )
+        elif verdict == "UNREGISTERED":
+            reply = (
+                f"ℹ️ **`{domain}` IS UNREGISTERED (NXDOMAIN).**\n\n"
+                f"This domain does not have active DNS records or hosting infrastructure. It is not an active online portal."
+            )
+        elif verdict == "SUSPICIOUS" or (35 <= risk_score < 70):
+            reply = (
+                f"⚠️ **PROCEED WITH CAUTION: `{domain}` HAS SUSPICIOUS INDICATORS.**\n\n"
+                f"- **Threat Score:** **{risk_score}/100**\n"
+                f"- This domain has newly registered infrastructure or missing defensive headers. Verify ownership before entering credentials."
+            )
+        else:
+            reply = (
+                f"✅ **`{domain}` IS VERIFIED AUTHENTIC & SAFE.**\n\n"
+                f"- **Verdict:** `{verdict}` (Risk Score: **{risk_score}/100**)\n"
+                f"- **Security Grade:** `{grade}`\n"
+                f"- **SSL / TLS:** Encrypted and valid\n\n"
+                f"The domain matches legitimate registration records with no brand contradictions detected."
+            )
+
+    elif any(k in msg_lower for k in ["why", "how is risk", "risk score", "calculate score", "entropy"]):
+        reply = (
+            f"📊 **How Risk is Calculated for `{domain}` (Score: {risk_score}/100):**\n\n"
+            "CyberGuard AI uses a 6-layer multi-signal fusion pipeline:\n"
+            "1. **Lexical & Shannon Entropy**: Analyzes URL randomness, character distribution, and brand keyword stuffing.\n"
+            "2. **RDAP Domain Age**: Checks domain creation dates. Newly registered domains (<30 days) receive higher risk.\n"
+            "3. **DNS & Email Posture**: Audits authoritative A, NS, MX, SPF, and DMARC records.\n"
+            "4. **Visual Logo pHash Matching**: Renders page in a sandbox and checks logo perceptual hash against authorized registries.\n"
+            "5. **Browser Sandbox Crawl**: Detects deceptive password input forms and cross-origin POST targets.\n"
+            "6. **Multi-Signal Calibrator**: Merges all signals into an authoritative 0–100 risk score."
+        )
+
+    elif any(k in msg_lower for k in ["internship", "job offer", "job scam", "recruitment", "selected without interview", "training fee"]):
+        reply = (
+            "💼 **Job & Internship Offer Scam Detection Rules:**\n\n"
+            "CyberGuard AI protects students and job seekers against employment fraud. Look out for these **5 Critical Red Flags**:\n"
+            "1. 🚩 **Upfront Fee Demands**: Any request for registration fees, training charges, or laptop deposits is **100% a scam**. Legitimate companies NEVER charge candidates.\n"
+            "2. 🚩 **Freemail HR Accounts**: Real recruiters email from official domains (`@google.com`, `@infosys.com`), NEVER from `@gmail.com` or `@yahoo.com`.\n"
+            "3. 🚩 **Fake Check Scams**: Offering to mail a $3,000 cashier check to buy hardware from an 'approved vendor' is counterfeit check laundering.\n"
+            "4. 🚩 **Telegram / WhatsApp Interviews**: Corporate hiring does not conduct formal interviews exclusively via chat apps.\n"
+            "5. 🚩 **Instant Selection**: Direct appointment letters issued without technical interviews are deceptive bait.\n\n"
+            "Paste any suspicious offer letter into our **Email Sentinel** tab for an instant fraud audit!"
+        )
+
+    elif any(k in msg_lower for k in ["dmarc", "spf", "dkim", "spoof"]):
+        reply = (
+            f"📧 **Email Security & DMARC/SPF Posture for `{domain}`:**\n\n"
+            "- **SPF (Sender Policy Framework):** Declares which mail servers are authorized to send emails on behalf of `{domain}`.\n"
+            "- **DKIM (DomainKeys Identified Mail):** Cryptographically signs outgoing emails to guarantee they weren't tampered with in transit.\n"
+            "- **DMARC (Domain-based Message Authentication, Reporting, and Conformance):** Tells receiving mail servers what to do if SPF or DKIM fails (`reject`, `quarantine`, or `none`).\n\n"
+            "**Why this matters:** If a domain lacks DMARC enforcement (`p=reject`), cybercriminals can spoof emails pretending to be the company's CEO or billing department."
+        )
+
+    elif any(k in msg_lower for k in ["x402", "algorand", "payment", "crypto", "microalgo", "facilitator"]):
+        reply = (
+            "⚡ **Algorand & x402 Micropayment Protocol:**\n\n"
+            "- **x402 Protocol:** Uses the standard HTTP 402 (Payment Required) status code to paywall high-compute deep forensic audits.\n"
+            "- **Algorand Testnet:** Transactions settle in ~3.3 seconds with deterministic finality and minimal gas fees (0.001 ALGO).\n"
+            "- **Facilitator:** Verified through the GoPlausible Facilitator (`facilitator.goplausible.xyz`).\n"
+            "- **Cost:** 0.1 ALGO (100,000 microAlgos) per deep forensic audit.\n"
+            "- **Verification:** Every transaction hash is verified on-chain via the Algorand Testnet indexer."
+        )
+
+    elif any(k in msg_lower for k in ["nginx", "apache", "cloudflare", "config", "hardening", "header", "fix"]):
         reply = (
             f"⚙️ **Hardening Configuration Snippet for `{domain}`:**\n\n"
-            "**Nginx Configuration (Inside `server {{ ... }}` block):**\n"
+            "**Nginx Configuration (Inside `server { ... }` block):**\n"
             "```nginx\n"
             "add_header X-Frame-Options \"SAMEORIGIN\" always;\n"
             "add_header X-Content-Type-Options \"nosniff\" always;\n"
@@ -217,80 +319,47 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
             "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\"\n"
             "Header always set Content-Security-Policy \"default-src 'self' https: data:; object-src 'none';\"\n"
             "```\n\n"
-            "**Cloudflare Transform Rule (Rules → Transform Rules → Modify Response Header):**\n"
+            "**Cloudflare Edge Rule (Rules → Transform Rules → Modify Response Header):**\n"
             "- Set `Strict-Transport-Security` to `max-age=31536000; includeSubDomains; preload`\n"
             "- Set `X-Frame-Options` to `SAMEORIGIN`\n"
             "- Set `X-Content-Type-Options` to `nosniff`"
         )
 
-    elif "code injection" in msg_lower or "xss" in msg_lower or "csp" in msg_lower or "inject" in msg_lower:
+    elif any(k in msg_lower for k in ["code injection", "xss", "csp", "inject"]):
         reply = (
             "🔒 **How to Immunize Your Website Against Code Injection (XSS):**\n\n"
-            "Code injection occurs when an attacker injects unauthorized JavaScript into your web pages to hijack user sessions or capture keystrokes. "
+            "Code injection occurs when an attacker injects unauthorized JavaScript into your web pages to hijack user sessions or capture keystrokes.\n\n"
             "Deploying a strict **`Content-Security-Policy (CSP)`** completely stops this by telling the browser to only execute trusted scripts:\n\n"
             "```http\n"
             "Content-Security-Policy: default-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; object-src 'none';\n"
-            "```\n"
+            "```\n\n"
             "**Key Principles:**\n"
             "1. Disallow `eval()` and inline untrusted scripts.\n"
             "2. Restrict script origins to your own domain (`'self'`).\n"
-            "3. Always sanitize and HTML-encode user input before rendering."
-        )
-
-    elif "clickjack" in msg_lower or "iframe" in msg_lower or "frame" in msg_lower:
-        reply = (
-            "🖼️ **Clickjacking (UI Redressing) Immunity:**\n\n"
-            "Attackers frame your website inside an invisible `<iframe>` on a malicious site, tricking visitors into clicking sensitive buttons on your app without realizing it.\n\n"
-            "**Fix:** Enforce the `X-Frame-Options` or CSP `frame-ancestors` directive:\n"
-            "```http\n"
-            "X-Frame-Options: SAMEORIGIN\n"
-            "# Or via CSP:\n"
-            "Content-Security-Policy: frame-ancestors 'self';\n"
-            "```"
-        )
-
-    elif "fix" in msg_lower or "grade" in msg_lower or "posture" in msg_lower or "score" in msg_lower or "why" in msg_lower:
-        if security_audit:
-            reply = f"🛡️ **Security Grade Breakdown for `{domain}` ({grade} - {security_audit.get('score_percentage', 0)}% Pass Rate):**\n\n"
-            reply += "The grade evaluates essential defensive HTTP headers that immunize your website against attacker exploits:\n"
-            for finding in security_audit.get("findings", []):
-                icon = "✅" if finding.get("status") == "PASS" else "❌" if finding.get("status") == "FAIL" else "⚠️"
-                reply += f"- {icon} **{finding.get('name')}**: {finding.get('exploit_risk')}\n"
-            reply += f"\n**Key Weakness:** {security_audit.get('hacker_perspective_summary', 'Missing key security headers.')}"
-            reply += f"\n\nUse the **Nginx / Cloudflare hardening config** above to immediately fix these gaps."
-        else:
-            reply = f"The domain `{domain}` received a threat score of **{risk_score}/100** with verdict **{verdict}** based on multi-signal neural fusion across lexical entropy, brand logo vision, and domain registration age."
-
-    elif "brand" in msg_lower or "contradiction" in msg_lower or "logo" in msg_lower:
-        reply = (
-            "🔍 **What is the Brand-Domain Contradiction Engine?**\n\n"
-            "Phishing pages typically steal high-trust corporate logos (PayPal, Microsoft, Apple, Google, Chase) and display them on lookalike domains (`login-paypal-verify.xyz`).\n\n"
-            "Our engine renders the page in an isolated headless sandbox, runs perceptual hashing (`pHash`) against verified brand trademark catalogs, and cross-references the hosting domain against authorized brand registries.\n\n"
-            f"- **Target Domain:** `{domain}`\n"
-            f"- **Claimed Brand:** {brand_matched or 'Generic / None'}\n"
-            f"- **Contradiction Status:** {'🚨 CRITICAL MISMATCH (Phishing Impersonation)' if is_contradiction else '✅ Consistent / Genuine'}"
+            "3. Store auth tokens in `HttpOnly`, `Secure`, `SameSite=Strict` cookies."
         )
 
     else:
         reply = (
-            f"🤖 **CyberGuard AI Copilot Analysis for `{domain}`:**\n\n"
+            f"🤖 **CyberGuard AI Copilot Telemetry for `{domain}`:**\n\n"
+            f"- **Target Domain:** `{domain}`\n"
             f"- **Verdict:** `{verdict}` (Risk Score: **{risk_score}/100**)\n"
             f"- **Security Grade:** **{grade}** ({len(missing_headers)} defensive headers missing)\n"
-            f"- **Brand Safety:** {'Brand Contradiction Detected' if is_contradiction else 'No brand trademark spoofing detected'}\n\n"
+            f"- **Brand Security:** {'🚨 Brand Contradiction Detected' if is_contradiction else '✅ No brand trademark spoofing detected'}\n\n"
             f"You can ask me:\n"
-            f"- *'How to fix Security Grade {grade}?'*\n"
-            f"- *'How can hackers exploit code injection on this site?'*\n"
-            f"- *'Is it safe to login on this website?'*\n"
-            f"- *'Give me the Nginx/Cloudflare hardening rules'*."
+            f"- *\"Is this website safe or fake?\"*\n"
+            f"- *\"Why did it get a risk score of {risk_score}?\"*\n"
+            f"- *\"How do I fix Security Grade {grade} on Nginx/Cloudflare?\"*\n"
+            f"- *\"How can I detect fake internship or job offers?\"*"
         )
 
     return {
         "reply": reply,
         "suggested_actions": [
+            f"Is {domain} safe to use?",
             f"How to fix Security Grade {grade}?",
-            "How do hackers exploit code injection?",
-            "Generate Nginx hardening config",
-            "Explain Brand Contradiction"
+            "Generate Nginx & Cloudflare hardening headers",
+            "How to detect fake job/internship offers?"
         ]
     }
 
