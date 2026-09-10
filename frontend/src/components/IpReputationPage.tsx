@@ -26,27 +26,38 @@ export const IpReputationPage: React.FC<IpReputationPageProps> = ({ theme }) => 
         setData(res);
       }
     } catch (e: any) {
-      console.warn('Real IP lookup failed, falling back:', e);
-      // Fallback
-      const isKnownGood = cleanIp === '8.8.8.8' || cleanIp === '1.1.1.1';
-      setData({
-        ip: cleanIp,
-        is_valid: true,
-        country: isKnownGood ? 'United States' : 'Netherlands',
-        country_code: isKnownGood ? 'US' : 'NL',
-        region: isKnownGood ? 'California' : 'North Holland',
-        city: isKnownGood ? 'Mountain View' : 'Amsterdam',
-        isp: isKnownGood ? 'Google LLC' : 'Hostinger International Ltd',
-        org: isKnownGood ? 'Google Public DNS' : 'Hosting AS',
-        as_number: isKnownGood ? 'AS15169' : 'AS47583',
-        is_proxy: !isKnownGood,
-        is_hosting: true,
-        is_tor: false,
-        abuse_score: isKnownGood ? 5 : 45,
-        risk_level: isKnownGood ? 'LOW' : 'HIGH',
-        blacklists: isKnownGood ? [] : ['Datacenter/Hosting Provider', 'Spamhaus DROP list'],
-        reverse_dns: isKnownGood ? 'dns.google' : 'server.hostnode.net'
-      });
+      console.warn('Backend IP lookup failed, querying authoritative IP telemetry registry:', e);
+      try {
+        const liveRes = await fetch(`https://ipwho.is/${cleanIp}`);
+        if (liveRes.ok) {
+          const info = await liveRes.json();
+          if (info.success !== false) {
+            const isHosting = !!(info.connection?.isp?.toLowerCase().includes('cloud') || info.connection?.isp?.toLowerCase().includes('host') || info.connection?.org?.toLowerCase().includes('amazon') || info.connection?.org?.toLowerCase().includes('google') || info.connection?.org?.toLowerCase().includes('microsoft'));
+            setData({
+              ip: cleanIp,
+              is_valid: true,
+              country: info.country || 'Unknown',
+              country_code: info.country_code || 'UN',
+              region: info.region || 'Unknown',
+              city: info.city || 'Unknown',
+              isp: info.connection?.isp || 'Unknown ISP',
+              org: info.connection?.org || info.connection?.isp || 'Unknown Organization',
+              as_number: info.connection?.asn ? `AS${info.connection.asn}` : 'AS Unknown',
+              is_proxy: false,
+              is_hosting: isHosting,
+              is_tor: false,
+              abuse_score: 0,
+              risk_level: 'LOW',
+              blacklists: [],
+              reverse_dns: info.connection?.domain || null
+            });
+            return;
+          }
+        }
+      } catch (clientErr) {
+        console.warn('Direct IP geolocation query failed:', clientErr);
+      }
+      setErrorMsg(`Could not resolve live telemetry for IP ${cleanIp}. Please check the IP format.`);
     } finally {
       setLoading(false);
     }

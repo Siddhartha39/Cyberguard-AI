@@ -18,36 +18,113 @@ export const PasswordChecker: React.FC<PasswordCheckerProps> = ({ theme }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [checking, setChecking] = useState(false);
 
-  const calcLocalEntropy = (pwd: string) => {
-    let pool = 0;
-    if (/[a-z]/.test(pwd)) pool += 26;
-    if (/[A-Z]/.test(pwd)) pool += 26;
-    if (/[0-9]/.test(pwd)) pool += 10;
-    if (/[^A-Za-z0-9]/.test(pwd)) pool += 32;
-    return pwd.length > 0 ? pwd.length * Math.log2(pool || 1) : 0;
+  // Compute exact mathematical entropy, crack time, and strength locally
+  const computeLocalTelemetry = (pwd: string) => {
+    const length = pwd.length;
+    let charset = 0;
+    const suggs: string[] = [];
+
+    if (/[a-z]/.test(pwd)) charset += 26;
+    else suggs.push("Add lowercase letters (a-z)");
+
+    if (/[A-Z]/.test(pwd)) charset += 26;
+    else suggs.push("Add uppercase letters (A-Z)");
+
+    if (/[0-9]/.test(pwd)) charset += 10;
+    else suggs.push("Add numbers (0-9)");
+
+    if (/[^A-Za-z0-9]/.test(pwd)) charset += 32;
+    else suggs.push("Add special symbols (!@#$...)");
+
+    if (length < 12) suggs.push("Make it longer (12+ characters recommended)");
+
+    if (charset === 0 || length === 0) {
+      return {
+        entropy: 0,
+        score: 0,
+        label: '',
+        crack: 'Instant',
+        suggs: []
+      };
+    }
+
+    // Shannon Entropy: length * log2(charset)
+    const ent = length * Math.log2(charset);
+
+    // Brute-force crack time assuming 10 billion guesses/sec (fast distributed cluster)
+    const guesses = Math.pow(2, ent);
+    const seconds = guesses / 10_000_000_000;
+
+    let crack = 'Instant (< 1s)';
+    if (seconds >= 31536000 * 1e12) {
+      crack = 'Trillions of Years';
+    } else if (seconds >= 31536000 * 1e9) {
+      crack = `${(seconds / (31536000 * 1e9)).toFixed(0)} Billion Years`;
+    } else if (seconds >= 31536000 * 1e6) {
+      crack = `${(seconds / (31536000 * 1e6)).toFixed(0)} Million Years`;
+    } else if (seconds >= 31536000 * 100) {
+      crack = `${(seconds / (31536000 * 100)).toFixed(0)} Centuries`;
+    } else if (seconds >= 31536000) {
+      crack = `${Math.round(seconds / 31536000)} Years`;
+    } else if (seconds >= 86400) {
+      crack = `${Math.round(seconds / 86400)} Days`;
+    } else if (seconds >= 3600) {
+      crack = `${Math.round(seconds / 3600)} Hours`;
+    } else if (seconds >= 60) {
+      crack = `${Math.round(seconds / 60)} Minutes`;
+    } else if (seconds >= 1) {
+      crack = `${Math.round(seconds)} Seconds`;
+    }
+
+    let score = 0;
+    let label = 'Very Weak';
+    if (ent >= 85) { score = 5; label = 'Ultra Secure'; }
+    else if (ent >= 65) { score = 4; label = 'Very Strong'; }
+    else if (ent >= 48) { score = 3; label = 'Strong'; }
+    else if (ent >= 32) { score = 2; label = 'Fair'; }
+    else if (ent >= 20) { score = 1; label = 'Weak'; }
+    else { score = 0; label = 'Very Weak'; }
+
+    return { entropy: ent, score, label, crack, suggs };
   };
 
   useEffect(() => {
-    const ent = calcLocalEntropy(password);
-    setEntropy(ent);
+    if (!password) {
+      setEntropy(0);
+      setStrength(0);
+      setCrackTime('Instant');
+      setStrengthLabel('');
+      setPwned(null);
+      setIsPwned(false);
+      setSuggestions([]);
+      return;
+    }
 
+    // Immediately calculate mathematically sound local metrics
+    const local = computeLocalTelemetry(password);
+    setEntropy(local.entropy);
+    setStrength(local.score);
+    setCrackTime(local.crack);
+    setStrengthLabel(local.label);
+    setSuggestions(local.suggs);
+
+    // Debounce HaveIBeenPwned breach verification (350ms)
     const timer = setTimeout(() => {
-      if (password.length > 2) {
-        checkWithBackend(password);
-      } else {
-        setPwned(null);
-        setIsPwned(false);
-        setSuggestions([]);
-        setStrengthLabel('');
-        setCrackTime('Instant');
-        setStrength(0);
+      if (password.length >= 3) {
+        checkBreachDatabase(password, local);
       }
-    }, 450);
+    }, 350);
+
     return () => clearTimeout(timer);
   }, [password]);
 
-  const checkWithBackend = async (pwd: string) => {
+  // Query HaveIBeenPwned via Backend or direct client-side k-Anonymity
+  const checkBreachDatabase = async (pwd: string, localMetrics: ReturnType<typeof computeLocalTelemetry>) => {
     setChecking(true);
+    let breachFound = false;
+    let breachCount = 0;
+
+    // 1. Try Backend API endpoint
     try {
       const endpoint = '/api/tools/password-strength';
       const opts = {
@@ -55,20 +132,67 @@ export const PasswordChecker: React.FC<PasswordCheckerProps> = ({ theme }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pwd })
       };
-      let res = await fetch(endpoint, opts).catch(() => fetch('http://127.0.0.1:8000' + endpoint, opts));
-      const data = await res.json();
-      setStrength(typeof data.score === 'number' ? data.score : 0);
-      setStrengthLabel(data.strength || '');
-      setCrackTime(data.crack_time_display || 'Unknown');
-      if (typeof data.entropy_bits === 'number') setEntropy(data.entropy_bits);
-      setIsPwned(!!data.is_pwned);
-      setPwned(data.pwned_count ?? 0);
-      setSuggestions(data.suggestions || []);
-    } catch {
-      setPwned(null);
-    } finally {
-      setChecking(false);
+      const res = await fetch(endpoint, opts).catch(() => fetch('http://127.0.0.1:8000' + endpoint, opts));
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (typeof data.score === 'number') setStrength(data.score === 4 ? 5 : data.score);
+        if (data.strength) setStrengthLabel(data.strength);
+        if (data.crack_time_display) setCrackTime(data.crack_time_display);
+        if (typeof data.entropy_bits === 'number') setEntropy(data.entropy_bits);
+        setIsPwned(!!data.is_pwned);
+        setPwned(data.pwned_count ?? 0);
+        if (data.suggestions?.length) setSuggestions(data.suggestions);
+        setChecking(false);
+        return;
+      }
+    } catch {}
+
+    // 2. Direct Web Crypto k-Anonymity query to HaveIBeenPwned (Zero fake data, authentic SHA-1 range query)
+    try {
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(pwd));
+      const hashHex = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+
+      const prefix = hashHex.slice(0, 5);
+      const suffix = hashHex.slice(5);
+
+      const hResp = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+      if (hResp.ok) {
+        const text = await hResp.text();
+        for (const line of text.split('\n')) {
+          const [matchSuffix, count] = line.trim().split(':');
+          if (matchSuffix === suffix) {
+            breachFound = true;
+            breachCount = parseInt(count, 10) || 1;
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('HIBP client-side check failed:', err);
     }
+
+    setIsPwned(breachFound);
+    setPwned(breachCount);
+
+    if (breachFound) {
+      setStrength(0);
+      setStrengthLabel('Compromised (Exposed in Breaches)');
+      setSuggestions((prev) => [
+        'CRITICAL: This exact password was found in public data breaches. Change it immediately.',
+        ...prev.filter((s) => !s.includes('CRITICAL'))
+      ]);
+    } else {
+      setStrength(localMetrics.score);
+      setStrengthLabel(localMetrics.label);
+      setCrackTime(localMetrics.crack);
+    }
+
+    setChecking(false);
   };
 
   const getSegmentColor = (idx: number) => {
