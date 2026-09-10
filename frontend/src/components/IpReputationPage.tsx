@@ -13,54 +13,84 @@ export const IpReputationPage: React.FC<IpReputationPageProps> = ({ theme }) => 
   const [data, setData] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const isValidIpAddress = (val: string): boolean => {
+    // IPv4: 4 octets 0-255
+    const ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (ipv4.test(val)) return true;
+    // IPv6: standard hex groups or :: shorthand
+    const ipv6 = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^::1$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:([0-9a-fA-F]{1,4}:){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
+    return ipv6.test(val);
+  };
+
   const handleLookup = async (lookupIp: string) => {
     const cleanIp = lookupIp.trim();
     if (!cleanIp) return;
     setIp(cleanIp);
-    setLoading(true);
     setErrorMsg(null);
+
+    // 1. Strict validation: reject non-IP strings like "rgrjjkfefe" immediately
+    if (!isValidIpAddress(cleanIp)) {
+      setData(null);
+      setErrorMsg(`Invalid IP Address: "${cleanIp}" is not a valid IPv4 or IPv6 address. Please enter a valid address (e.g. 8.8.8.8, 1.1.1.1, 185.15.59.224).`);
+      return;
+    }
+
+    setLoading(true);
+    setData(null);
 
     try {
       const res = await lookupIpReputation(cleanIp);
-      if (res) {
+      if (res && res.is_valid !== false) {
         setData(res);
+        return;
       }
     } catch (e: any) {
       console.warn('Backend IP lookup failed, querying authoritative IP telemetry registry:', e);
-      try {
-        const liveRes = await fetch(`https://ipwho.is/${cleanIp}`);
-        if (liveRes.ok) {
-          const info = await liveRes.json();
-          if (info.success !== false) {
-            const isHosting = !!(info.connection?.isp?.toLowerCase().includes('cloud') || info.connection?.isp?.toLowerCase().includes('host') || info.connection?.org?.toLowerCase().includes('amazon') || info.connection?.org?.toLowerCase().includes('google') || info.connection?.org?.toLowerCase().includes('microsoft'));
-            setData({
-              ip: cleanIp,
-              is_valid: true,
-              country: info.country || 'Unknown',
-              country_code: info.country_code || 'UN',
-              region: info.region || 'Unknown',
-              city: info.city || 'Unknown',
-              isp: info.connection?.isp || 'Unknown ISP',
-              org: info.connection?.org || info.connection?.isp || 'Unknown Organization',
-              as_number: info.connection?.asn ? `AS${info.connection.asn}` : 'AS Unknown',
-              is_proxy: false,
-              is_hosting: isHosting,
-              is_tor: false,
-              abuse_score: 0,
-              risk_level: 'LOW',
-              blacklists: [],
-              reverse_dns: info.connection?.domain || null
-            });
-            return;
-          }
-        }
-      } catch (clientErr) {
-        console.warn('Direct IP geolocation query failed:', clientErr);
-      }
-      setErrorMsg(`Could not resolve live telemetry for IP ${cleanIp}. Please check the IP format.`);
-    } finally {
-      setLoading(false);
     }
+
+    // 2. Query live public registry (Zero fake data)
+    try {
+      const liveRes = await fetch(`https://ipwho.is/${cleanIp}`);
+      if (liveRes.ok) {
+        const info = await liveRes.json();
+        if (info.success !== false) {
+          const isHosting = !!(
+            info.connection?.isp?.toLowerCase().includes('cloud') ||
+            info.connection?.isp?.toLowerCase().includes('host') ||
+            info.connection?.org?.toLowerCase().includes('amazon') ||
+            info.connection?.org?.toLowerCase().includes('google') ||
+            info.connection?.org?.toLowerCase().includes('microsoft')
+          );
+          setData({
+            ip: cleanIp,
+            is_valid: true,
+            country: info.country || 'Unknown',
+            country_code: info.country_code || 'UN',
+            region: info.region || 'Unknown',
+            city: info.city || 'Unknown',
+            isp: info.connection?.isp || 'Unknown ISP',
+            org: info.connection?.org || info.connection?.isp || 'Unknown Organization',
+            as_number: info.connection?.asn ? `AS${info.connection.asn}` : 'AS Unknown',
+            is_proxy: false,
+            is_hosting: isHosting,
+            is_tor: false,
+            abuse_score: isHosting ? 20 : 0,
+            risk_level: isHosting ? 'MEDIUM' : 'LOW',
+            blacklists: isHosting ? ['Datacenter/Hosting Provider'] : [],
+            reverse_dns: info.connection?.domain || null
+          });
+          return;
+        } else {
+          setErrorMsg(`IP Telemetry Registry: ${info.message || 'IP address not found or reserved for private use.'}`);
+          return;
+        }
+      }
+    } catch (clientErr) {
+      console.warn('Direct IP geolocation query failed:', clientErr);
+    }
+
+    setErrorMsg(`Could not resolve live telemetry for IP ${cleanIp}. Please check network connectivity.`);
+    setLoading(false);
   };
 
   const getRiskColor = (level?: string) => {
@@ -206,6 +236,35 @@ export const IpReputationPage: React.FC<IpReputationPageProps> = ({ theme }) => 
           </button>
         </div>
       </div>
+
+      {/* Error / Validation Alert Banner */}
+      <AnimatePresence>
+        {errorMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#f87171',
+              fontSize: '0.9rem',
+              lineHeight: '1.5'
+            }}
+          >
+            <AlertTriangle size={22} style={{ flexShrink: 0, color: '#ef4444' }} />
+            <div style={{ flex: 1 }}>
+              <strong style={{ color: '#ef4444', display: 'block', marginBottom: '2px' }}>Validation Alert</strong>
+              <span>{errorMsg}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Results Section */}
       <AnimatePresence>

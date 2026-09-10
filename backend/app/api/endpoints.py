@@ -876,7 +876,51 @@ async def check_password_strength(req: PasswordStrengthRequest):
 
 @router.post("/tools/ip-reputation", response_model=IpReputationResponse)
 async def check_ip_reputation(req: IpReputationRequest):
-    ip = req.ip
+    ip = req.ip.strip()
+    
+    # 1. Strict IP format validation
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+    except ValueError:
+        return IpReputationResponse(
+            ip=ip,
+            is_valid=False,
+            country="Invalid Address",
+            country_code="--",
+            region="N/A",
+            city="Invalid IP",
+            isp="N/A",
+            org="Invalid IP Format",
+            as_number="N/A",
+            is_proxy=False,
+            is_hosting=False,
+            is_tor=False,
+            abuse_score=0,
+            risk_level="LOW",
+            blacklists=["Invalid IP address format: must be valid IPv4 or IPv6"],
+            reverse_dns=None
+        )
+
+    # 2. Private/Loopback check
+    if ip_obj.is_private or ip_obj.is_loopback:
+        return IpReputationResponse(
+            ip=ip,
+            is_valid=True,
+            country="Private Network",
+            country_code="LAN",
+            region="Internal Scope",
+            city="RFC 1918 / Loopback",
+            isp="Local Area Network",
+            org="Private Non-Routable IP",
+            as_number="N/A",
+            is_proxy=False,
+            is_hosting=False,
+            is_tor=False,
+            abuse_score=0,
+            risk_level="LOW",
+            blacklists=[],
+            reverse_dns="localhost" if ip_obj.is_loopback else None
+        )
     
     geo_data = {}
     try:
