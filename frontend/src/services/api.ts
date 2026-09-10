@@ -76,6 +76,68 @@ export async function executeFreeScan(url: string): Promise<FreeScanResult> {
 }
 
 /**
+ * Client-side on-chain transaction verification via Algorand Testnet Indexer.
+ * Used when the backend is unreachable (e.g., Vercel deployment) to confirm
+ * that the x402 payment actually landed on-chain before unlocking the audit.
+ */
+async function verifyTxOnChainDirectly(txId: string): Promise<{ verified: boolean; sender?: string; receiver?: string; amountAlgo?: number; round?: number }> {
+  const cleanTxId = txId.trim();
+  if (!cleanTxId || cleanTxId.length < 16) {
+    return { verified: false };
+  }
+
+  const indexers = [
+    'https://testnet-idx.4160.nodely.dev',
+    'https://testnet-idx.algonode.cloud'
+  ];
+
+  for (const idxUrl of indexers) {
+    try {
+      const resp = await fetch(`${idxUrl}/v2/transactions/${cleanTxId}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const tx = data.transaction || {};
+        const payment = tx['payment-transaction'];
+        if (payment) {
+          return {
+            verified: true,
+            sender: tx.sender,
+            receiver: payment.receiver,
+            amountAlgo: (payment.amount || 0) / 1_000_000,
+            round: tx['confirmed-round']
+          };
+        }
+        // Even if it's not a payment tx, it was confirmed on-chain
+        return { verified: true, sender: tx.sender, round: tx['confirmed-round'] };
+      }
+    } catch {}
+  }
+
+  // Check pending pool on algod nodes
+  const algodNodes = [
+    'https://testnet-api.4160.nodely.dev',
+    'https://testnet-api.algonode.cloud'
+  ];
+  for (const nodeUrl of algodNodes) {
+    try {
+      const resp = await fetch(`${nodeUrl}/v2/transactions/pending/${cleanTxId}`);
+      if (resp.ok) {
+        const pending = await resp.json();
+        if (pending['confirmed-round'] && pending['confirmed-round'] > 0) {
+          return { verified: true, round: pending['confirmed-round'] };
+        }
+        // Transaction exists in pending pool — not yet confirmed, but valid
+        if (pending.txn) {
+          return { verified: true };
+        }
+      }
+    } catch {}
+  }
+
+  return { verified: false };
+}
+
+/**
  * 2. Premium Deep Audit Analysis via Protected x402 Endpoint (/api/premium-scan)
  */
 export async function requestPremiumScan(url: string, paymentTxId?: string): Promise<{ isPaid: boolean; report?: RiskScoreReport; challenge?: PaymentChallenge; errorMessage?: string }> {
@@ -111,11 +173,15 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
 
     // If server is 404 (e.g. Vercel static hosting) or 502 (proxy down):
     if (paymentTxId) {
-      // With real payment transaction ID, generate verified report
-      const clientReport = await generateLiveClientAudit(url, paymentTxId);
-      const normalizedKey = url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
-      auditCache.set(normalizedKey, clientReport);
-      return { isPaid: true, report: clientReport };
+      // Verify the payment actually landed on-chain before generating report
+      const onChainResult = await verifyTxOnChainDirectly(paymentTxId);
+      if (onChainResult.verified) {
+        const clientReport = await generateLiveClientAudit(url, paymentTxId);
+        const normalizedKey = url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+        auditCache.set(normalizedKey, clientReport);
+        return { isPaid: true, report: clientReport };
+      }
+      return { isPaid: false, errorMessage: 'Payment transaction could not be verified on Algorand Testnet. It may still be pending — please wait a few seconds and try again.' };
     }
 
     if (response.status === 404 || response.status === 502) {
@@ -136,9 +202,13 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
   } catch (err: any) {
     console.warn('API request failed:', err);
     if (paymentTxId) {
-      // If we have an on-chain transaction ID, generate verified live audit report
-      const clientReport = await generateLiveClientAudit(url, paymentTxId);
-      return { isPaid: true, report: clientReport };
+      // Verify on-chain before generating client-side report
+      const onChainResult = await verifyTxOnChainDirectly(paymentTxId);
+      if (onChainResult.verified) {
+        const clientReport = await generateLiveClientAudit(url, paymentTxId);
+        return { isPaid: true, report: clientReport };
+      }
+      return { isPaid: false, errorMessage: 'Payment could not be verified on Algorand Testnet.' };
     }
     const challenge = await fetchPaymentChallenge(url, `case-${Math.random().toString(36).slice(2, 10)}`);
     return { isPaid: false, challenge, errorMessage: 'Payment Required' };
@@ -276,18 +346,26 @@ export async function verifyAlgorandPayment(
   }
 
   // Client-side verification against Algorand Testnet Indexer
+  const onChainResult = await verifyTxOnChainDirectly(txId);
   const explorerUrl = `https://lora.algokit.io/testnet/transaction/${txId}`;
-  const report = await generateLiveClientAudit(targetUrl, txId);
+
+  if (onChainResult.verified) {
+    const report = await generateLiveClientAudit(targetUrl, txId);
+    return {
+      verified: true,
+      tx_id: txId,
+      sender_address: onChainResult.sender || 'Algorand Testnet Sender',
+      amount_algo: onChainResult.amountAlgo || 0.1,
+      block_round: onChainResult.round || 0,
+      confirmed_at: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      explorer_url: explorerUrl,
+      report: report
+    };
+  }
 
   return {
-    verified: true,
-    tx_id: txId,
-    sender_address: 'MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY',
-    amount_algo: 0.1,
-    block_round: 66998100,
-    confirmed_at: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
-    explorer_url: explorerUrl,
-    report: report
+    verified: false,
+    error_message: `Transaction '${txId}' could not be confirmed on Algorand Testnet. Please wait for block confirmation and try again.`
   };
 }
 

@@ -55,33 +55,46 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
 
   // Initialize PeraWalletConnect on mount
   useEffect(() => {
-    try {
-      const pera = new PeraWalletConnect({
-        chainId: 416002, // Algorand Testnet Chain ID
-        shouldShowSignTxnToast: true
-      });
-      peraWalletRef.current = pera;
+    const initPera = async () => {
+      try {
+        const pera = new PeraWalletConnect({
+          chainId: 416002, // Algorand Testnet Chain ID
+          shouldShowSignTxnToast: true
+        });
+        peraWalletRef.current = pera;
 
-      // Reconnect existing active session
-      pera.reconnectSession().then((accounts) => {
-        if (accounts && accounts.length > 0) {
-          const mainAddr = accounts[0];
-          if (mainAddr && mainAddr.length === 58) {
-            persistState(true, mainAddr, 0, 0, 'pera');
-            fetchOnChainBalances(mainAddr);
+        // Reconnect existing active session
+        try {
+          const accounts = await pera.reconnectSession();
+          if (accounts && accounts.length > 0) {
+            const mainAddr = accounts[0];
+            if (mainAddr && mainAddr.length === 58) {
+              persistState(true, mainAddr, 0, 0, 'pera');
+              fetchOnChainBalances(mainAddr);
+            }
           }
+        } catch (err) {
+          console.info('No active Pera session to reconnect:', err);
+          // Kill stale session and create a fresh instance
+          try { await pera.disconnect(); } catch {}
+          const freshPera = new PeraWalletConnect({
+            chainId: 416002,
+            shouldShowSignTxnToast: true
+          });
+          peraWalletRef.current = freshPera;
         }
-      }).catch((err) => {
-        console.info('No active Pera session to reconnect:', err);
-      });
 
-      // Handle disconnect event from mobile app
-      pera.connector?.on('disconnect', () => {
-        disconnectWallet();
-      });
-    } catch (e) {
-      console.warn('Could not initialize PeraWalletConnect:', e);
-    }
+        // Handle disconnect event from mobile app
+        if (peraWalletRef.current?.connector) {
+          peraWalletRef.current.connector.on('disconnect', () => {
+            disconnectWallet();
+          });
+        }
+      } catch (e) {
+        console.warn('Could not initialize PeraWalletConnect:', e);
+      }
+    };
+    initPera();
 
     // Load from localStorage if available (Strict validation: only accept 58-character Algorand addresses)
     try {
@@ -181,10 +194,17 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
   const connectPeraWallet = async (): Promise<string | null> => {
     setIsConnecting(true);
     try {
-      if (!peraWalletRef.current) {
-        peraWalletRef.current = new PeraWalletConnect({ chainId: 416002 });
+      // Always start with a fresh Pera instance to avoid stale WalletConnect sessions
+      if (peraWalletRef.current) {
+        try { await peraWalletRef.current.disconnect(); } catch {}
       }
-      const accounts = await peraWalletRef.current.connect();
+      const freshPera = new PeraWalletConnect({
+        chainId: 416002,
+        shouldShowSignTxnToast: true
+      });
+      peraWalletRef.current = freshPera;
+
+      const accounts = await freshPera.connect();
       if (accounts && accounts.length > 0) {
         const connectedAddr = accounts[0];
         if (connectedAddr && connectedAddr.length === 58) {
@@ -347,15 +367,47 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
         const singleTxnGroups = [{ txn, signers: [sender] }];
         const signedTxns = await peraWalletRef.current.signTransaction([singleTxnGroups]);
 
-        // Broadcast to Algorand Testnet node
+        // Broadcast to Algorand Testnet node — multi-fallback chain
         let txId = '';
+        let broadcastSuccess = false;
+        const firstTxnBytes = Array.isArray(signedTxns) ? signedTxns[0] : signedTxns;
+
+        // Attempt 1: Algod SDK client
         try {
           const sendResult = await algodClientRef.current.sendRawTransaction(signedTxns).do();
           txId = sendResult.txId;
+          broadcastSuccess = true;
         } catch (bErr: any) {
-          console.info('Direct Algod client broadcast failed, attempting backend relay broadcast...', bErr);
+          console.info('Algod SDK broadcast failed, trying direct node POST...', bErr);
+        }
+
+        // Attempt 2: Direct POST to public Algorand Testnet nodes
+        if (!broadcastSuccess) {
+          const directNodes = [
+            'https://testnet-api.4160.nodely.dev',
+            'https://testnet-api.algonode.cloud'
+          ];
+          const uint8 = new Uint8Array(firstTxnBytes);
+          for (const nodeUrl of directNodes) {
+            try {
+              const resp = await fetch(`${nodeUrl}/v2/transactions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-binary' },
+                body: uint8
+              });
+              if (resp.ok) {
+                const data = await resp.json();
+                txId = data.txId || txn.txID();
+                broadcastSuccess = true;
+                break;
+              }
+            } catch {}
+          }
+        }
+
+        // Attempt 3: Backend relay broadcast
+        if (!broadcastSuccess) {
           try {
-            const firstTxnBytes = Array.isArray(signedTxns) ? signedTxns[0] : signedTxns;
             const uint8 = new Uint8Array(firstTxnBytes);
             let binary = '';
             for (let i = 0; i < uint8.byteLength; i++) {
@@ -370,12 +422,13 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
             if (bResp && bResp.ok) {
               const bData = await bResp.json();
               txId = bData.txId || txn.txID();
-            } else {
-              txId = txn.txID();
+              broadcastSuccess = true;
             }
-          } catch {
-            txId = txn.txID();
-          }
+          } catch {}
+        }
+
+        if (!broadcastSuccess) {
+          throw new Error('Transaction was signed but could not be broadcast to Algorand Testnet. Please check your network connection and try again.');
         }
 
         // Await confirmation
@@ -393,20 +446,7 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
           explorerUrl: `https://lora.algokit.io/testnet/transaction/${txId}`
         };
       } catch (err: any) {
-        console.warn('Pera signing failed or cancelled:', err);
-        const errMsg = String(err?.message || '');
-        if (errMsg.includes('fetch') || errMsg.includes('Network') || errMsg.includes('Session') || errMsg.includes('Pairing') || errMsg.includes('Connect') || errMsg.includes('undefined')) {
-          console.info('Switching to Direct Testnet transaction signer...');
-          const txId = txn.txID();
-          return {
-            txId,
-            confirmedRound: Number(firstValid),
-            senderAddress: sender,
-            recipientAddress: recipientAddr,
-            amountAlgo,
-            explorerUrl: `https://lora.algokit.io/testnet/transaction/${txId}`
-          };
-        }
+        console.warn('Pera signing/broadcast failed:', err);
         throw new Error(err?.message || 'Transaction signing was cancelled or rejected in Pera Wallet.');
       }
     }

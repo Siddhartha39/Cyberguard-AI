@@ -220,7 +220,14 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
     } catch (err: any) {
       console.error('Payment flow error:', err);
       setPaymentStage('error');
-      setErrorMessage(err?.message || 'Transaction signing was rejected, cancelled, or timed out.');
+      const msg = err?.message || 'Transaction signing was rejected, cancelled, or timed out.';
+      if (msg.includes('Session') || msg.includes('WalletConnect') || msg.includes('Pairing') || msg.includes('relay')) {
+        setErrorMessage('WalletConnect session expired. Please disconnect your wallet, reconnect via Pera Wallet, and try again.');
+      } else if (msg.includes('broadcast')) {
+        setErrorMessage(msg + ' Please verify your network connection and ensure your Pera Wallet is on Algorand Testnet.');
+      } else {
+        setErrorMessage(msg);
+      }
     }
   };
 
