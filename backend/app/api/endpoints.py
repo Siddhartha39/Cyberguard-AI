@@ -755,17 +755,27 @@ def get_threat_stats():
     cases = db_manager.get_all_cases(limit=1000)
     
     if not cases:
-        # Generate plausible mock stats from feed
         feed = nrd_feed_manager.get_feed(limit=50)
+        phish = sum(1 for item in feed if item.status == "queued" or item.fast_risk_score >= 70)
+        susp = sum(1 for item in feed if 35 <= item.fast_risk_score < 70)
+        benign = sum(1 for item in feed if item.fast_risk_score < 35)
+        
+        tld_counts = {}
+        for item in feed:
+            if "." in item.domain:
+                tld = f".{item.domain.split('.')[-1]}"
+                tld_counts[tld] = tld_counts.get(tld, 0) + 1
+        risky_tlds = [{"tld": t, "count": c} for t, c in sorted(tld_counts.items(), key=lambda x: x[1], reverse=True)[:5]]
+
         return {
-            "total_scans": len(feed) * 10,
-            "phishing_detected": len(feed) * 2,
-            "suspicious_detected": len(feed) * 3,
-            "benign_confirmed": len(feed) * 4,
-            "unregistered_found": len(feed) * 1,
-            "top_impersonated_brands": [{"brand": "PayPal", "count": 12}, {"brand": "Microsoft", "count": 8}],
-            "risky_tlds": [{"tld": ".xyz", "count": 15}, {"tld": ".top", "count": 10}],
-            "recent_threats": [{"domain": item.domain, "verdict": "PHISHING", "risk_score": item.fast_risk_score, "timestamp": item.discovered_time} for item in feed[:10]]
+            "total_scans": len(feed),
+            "phishing_detected": phish,
+            "suspicious_detected": susp,
+            "benign_confirmed": benign,
+            "unregistered_found": 0,
+            "top_impersonated_brands": [],
+            "risky_tlds": risky_tlds,
+            "recent_threats": [{"domain": item.domain, "verdict": "PHISHING" if item.fast_risk_score >= 70 else "SUSPICIOUS" if item.fast_risk_score >= 35 else "BENIGN", "risk_score": item.fast_risk_score, "timestamp": item.discovered_time} for item in feed[:10]]
         }
 
     total = len(cases)

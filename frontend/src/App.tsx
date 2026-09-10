@@ -615,7 +615,7 @@ export function App() {
         {/* New Pages */}
         {activeTab === 'email-scanner' && <EmailPhishingScanner theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}
         {activeTab === 'bulk-scanner' && <BulkScanner theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}
-        {activeTab === 'threat-dashboard' && <ThreatDashboard theme={theme} onScanUrl={(url) => handleScan(url, true, false)} />}
+        {activeTab === 'threat-dashboard' && <ThreatDashboard theme={theme} cases={cases} feed={feed} onScanUrl={(url) => handleScan(url, true, false)} />}
         {activeTab === 'password-checker' && <PasswordChecker theme={theme} />}
         {activeTab === 'ip-reputation' && <IpReputationPage theme={theme} />}
         {activeTab === 'watchlist' && <WatchlistPage theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}
