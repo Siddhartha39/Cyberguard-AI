@@ -1395,3 +1395,46 @@ export async function removeFromWatchlist(id: string): Promise<any> {
   }
   throw new Error(`Remove from watchlist failed: ${res.statusText}`);
 }
+
+export interface RedFlagItem {
+  category: string;
+  title: string;
+  description: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export interface EmailScamAnalysisResponse {
+  email_type: string;
+  is_scam: boolean;
+  scam_score: number;
+  confidence: number;
+  verdict: string;
+  summary: string;
+  money_requested: boolean;
+  money_details?: string;
+  sender_evaluation: string;
+  red_flags: RedFlagItem[];
+  safety_recommendations: string[];
+  extracted_urls: string[];
+}
+
+export async function analyzeEmailScam(
+  emailText: string,
+  senderEmail?: string,
+  claimedCompany?: string
+): Promise<EmailScamAnalysisResponse> {
+  const res = await apiFetch('/tools/analyze-email-scam', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email_text: emailText,
+      sender_email: senderEmail,
+      claimed_company: claimedCompany
+    }),
+  });
+  if (res.ok) {
+    return await res.json();
+  }
+  throw new Error(`Email scam analysis failed: ${res.statusText}`);
+}
+

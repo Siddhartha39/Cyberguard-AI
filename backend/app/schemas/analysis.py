@@ -309,3 +309,29 @@ class WatchlistItem(BaseModel):
     last_scan: Optional[str] = None
     last_verdict: Optional[str] = None
     last_risk_score: Optional[float] = None
+
+class RedFlagItem(BaseModel):
+    category: str
+    title: str
+    description: str
+    severity: str
+
+class EmailScamAnalysisRequest(BaseModel):
+    email_text: str
+    sender_email: Optional[str] = None
+    claimed_company: Optional[str] = None
+
+class EmailScamAnalysisResponse(BaseModel):
+    email_type: str
+    is_scam: bool
+    scam_score: int
+    confidence: float
+    verdict: str
+    summary: str
+    money_requested: bool
+    money_details: Optional[str] = None
+    sender_evaluation: str
+    red_flags: List[RedFlagItem]
+    safety_recommendations: List[str]
+    extracted_urls: List[str]
+

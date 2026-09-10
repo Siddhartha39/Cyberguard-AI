@@ -31,8 +31,12 @@ from app.schemas.analysis import (
     IpReputationResponse,
     ScreenshotRequest,
     ScreenshotResponse,
-    WatchlistItem
+    WatchlistItem,
+    RedFlagItem,
+    EmailScamAnalysisRequest,
+    EmailScamAnalysisResponse
 )
+import re
 import asyncio
 import math
 import hashlib
@@ -1051,3 +1055,243 @@ def remove_watchlist(wid: str):
         del _WATCHLIST[wid]
         return {"status": "success"}
     raise HTTPException(status_code=404, detail="Not found")
+
+KNOWN_CORP_BRANDS = [
+    "google", "microsoft", "amazon", "apple", "meta", "netflix", "ibm",
+    "tcs", "tata consultancy", "infosys", "wipro", "accenture", "cognizant",
+    "deloitte", "ey", "ernst & young", "kpmg", "pwc", "pricewaterhousecoopers",
+    "cisco", "adobe", "oracle", "tesla", "goldman sachs", "jp morgan",
+    "morgan stanley", "paypal", "uber", "salesforce", "intel", "nvidia"
+]
+
+FREEMAIL_DOMAINS = {
+    "gmail.com", "yahoo.com", "ymail.com", "hotmail.com", "outlook.com",
+    "live.com", "msn.com", "proton.me", "protonmail.com", "rediffmail.com",
+    "zoho.com", "aol.com", "mail.com", "gmx.com", "icloud.com"
+}
+
+@router.post("/tools/analyze-email-scam", response_model=EmailScamAnalysisResponse)
+async def analyze_email_scam(req: EmailScamAnalysisRequest):
+    text = req.email_text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Email text cannot be empty")
+
+    text_lower = text.lower()
+    red_flags: List[RedFlagItem] = []
+    scam_score = 0
+    money_requested = False
+    money_details = None
+
+    # 1. Extract URLs
+    url_pattern = r'https?://[^\s<>"\'\)]+'
+    extracted_urls = [u.rstrip('.,:;)') for u in re.findall(url_pattern, text)]
+    extracted_urls = list(dict.fromkeys(extracted_urls))
+
+    # 2. Extract Sender Email
+    sender = req.sender_email or ""
+    if not sender:
+        sender_match = re.search(r'(?:from|sender)\s*:\s*<?([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)>?', text, re.IGNORECASE)
+        if sender_match:
+            sender = sender_match.group(1).strip()
+        else:
+            any_email = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', text)
+            if any_email:
+                sender = any_email.group(0).strip()
+
+    sender_domain = sender.split("@")[-1].lower() if "@" in sender else ""
+
+    # Detect claimed brand/company
+    claimed_company = req.claimed_company or ""
+    if not claimed_company:
+        for brand in KNOWN_CORP_BRANDS:
+            if brand in text_lower:
+                claimed_company = brand.title()
+                break
+
+    # Determine email category
+    job_internship_signals = [
+        "intern", "internship", "job offer", "selected for the position", "offer letter",
+        "human resources", "talent acquisition", "recruitment", "stipend", "salary",
+        "appointment letter", "data entry", "virtual assistant", "work from home",
+        "hiring manager", "employment offer", "candidate", "onboarding"
+    ]
+    is_job_context = any(sig in text_lower for sig in job_internship_signals)
+    email_type = "JOB_INTERNSHIP_OFFER" if is_job_context else "PHISHING_ALERT"
+
+    # Evaluation 1: Money / Upfront Fee Demands (Critical)
+    fee_patterns = [
+        r'(registration|processing|training|orientation|laptop|equipment|security|interview|enrollment|software|background check|onboarding)\s*(fee|deposit|cost|charge|payment|amount)',
+        r'refundable\s*(deposit|fee|amount)',
+        r'pay\s*(?:inr|rs\.?|₹|\$|usd|eur|gbp)\s*[\d,]+',
+        r'pay\s+[\d,]+\s*(?:inr|rs\.?|₹|\$|usd|eur|gbp)',
+        r'(wire transfer|western union|moneygram|crypto|bitcoin|usdt|gift card|google play card|apple card|upi transfer|paytm)',
+        r'(cashier(\'s)? check|reimbursement check|overpayment check)'
+    ]
+    fee_matches = []
+    for fp in fee_patterns:
+        m = re.search(fp, text_lower)
+        if m:
+            fee_matches.append(m.group(0))
+
+    if fee_matches:
+        money_requested = True
+        money_details = f"Detected payment demands: {', '.join(set(fee_matches))}"
+        red_flags.append(RedFlagItem(
+            category="MONEY_REQUEST",
+            title="Upfront Payment or Deposit Required",
+            description="The communication demands payment for registration, training, security deposit, or equipment. Legitimate employers and corporate internship programs NEVER charge candidates any fees.",
+            severity="CRITICAL"
+        ))
+        scam_score += 55
+
+    # Evaluation 2: Fake Check / Equipment Purchase Scam
+    fake_check_patterns = [
+        r'(send you a check|check will be mailed|purchase equipment from our (?:approved|certified|authorized)?\s*vendor)',
+        r'(deposit the check and (?:send|wire|transfer|buy))'
+    ]
+    for cp in fake_check_patterns:
+        if re.search(cp, text_lower):
+            red_flags.append(RedFlagItem(
+                category="ADVANCE_FEE_FRAUD",
+                title="Counterfeit Check / Home Equipment Scam",
+                description="The offer promises to mail a check for you to purchase equipment from a specific 'vendor'. This is a classic Federal Trade Commission flagged advance-fee check laundering scam.",
+                severity="CRITICAL"
+            ))
+            scam_score += 50
+            break
+
+    # Evaluation 3: Unofficial Freemail Impersonating Corporate HR
+    sender_eval = "Sender address not specified."
+    if sender:
+        is_freemail = sender_domain in FREEMAIL_DOMAINS
+        if is_freemail:
+            if claimed_company:
+                sender_eval = f"Unauthorized public webmail (@{sender_domain}) impersonating {claimed_company}."
+                red_flags.append(RedFlagItem(
+                    category="FREEMAIL_HR",
+                    title=f"Unofficial Freemail Address Impersonating {claimed_company}",
+                    description=f"The sender uses a free personal account (@{sender_domain}) while claiming to represent {claimed_company}. Global enterprises and verified organizations always recruit from their registered corporate domain.",
+                    severity="CRITICAL"
+                ))
+                scam_score += 40
+            else:
+                sender_eval = f"Recruiter using public free email provider (@{sender_domain})."
+                red_flags.append(RedFlagItem(
+                    category="FREEMAIL_HR",
+                    title="Hiring Contact Uses Free Email Provider",
+                    description=f"Official corporate communications and offer letters are issued from proprietary corporate domains, not @{sender_domain}.",
+                    severity="HIGH"
+                ))
+                scam_score += 25
+        else:
+            sender_eval = f"Domain @{sender_domain} (Corporate/Custom Domain)."
+
+    # Evaluation 4: Informal / Untraceable Communication Channels
+    chat_patterns = [
+        r'(t\.me\/|telegram|wa\.me\/|whatsapp|signal\.me|interview via skype text|connect on telegram)'
+    ]
+    for chp in chat_patterns:
+        if re.search(chp, text_lower):
+            red_flags.append(RedFlagItem(
+                category="SUSPICIOUS_CHANNEL",
+                title="Informal Chat / Messaging Platform Used for Hiring",
+                description="Scammers rely on Telegram or WhatsApp to conduct interviews and send 'offer letters' to evade enterprise email security filters and IP tracing.",
+                severity="HIGH"
+            ))
+            scam_score += 25
+            break
+
+    # Evaluation 5: Selection Without Interview / Outlier Compensation
+    no_interview_patterns = [
+        r'(selected without interview|direct selection|no interview needed|immediate appointment|direct placement|without any test)',
+        r'(selected from our resume database|shortlisted from naukri database without application)',
+        r'(\$\d{3,5}\s*(?:per|\/)\s*week|rs\.?\s*\d{5,}\s*(?:per|\/)\s*week) for \d+\s*(?:hours|hrs)'
+    ]
+    for nip in no_interview_patterns:
+        if re.search(nip, text_lower):
+            red_flags.append(RedFlagItem(
+                category="UNREALISTIC_OFFER",
+                title="Direct Appointment Without Formal Interview",
+                description="Genuine corporate hiring mandates multi-stage technical or behavioral interviews. Offers issued instantly with no structured evaluation are bait for employment scams.",
+                severity="HIGH"
+            ))
+            scam_score += 20
+            break
+
+    # Evaluation 6: High Pressure Urgency
+    urgency_patterns = [
+        r'(urgent response required|within (?:24|12|48) hours|offer expires today|limited (?:seats|slots)|pay deposit before|confirm immediately)'
+    ]
+    for up in urgency_patterns:
+        if re.search(up, text_lower):
+            red_flags.append(RedFlagItem(
+                category="URGENCY_PRESSURE",
+                title="Artificial Urgency & Coercive Deadline",
+                description="The communication imposes extreme pressure (e.g. within 24 hours) to coerce payment or personal identity documents before the candidate has time to independently verify legitimacy.",
+                severity="MEDIUM"
+            ))
+            scam_score += 15
+            break
+
+    # Evaluation 7: Suspicious URLs
+    suspicious_tlds = [".xyz", ".top", ".club", ".online", ".site", ".work", ".click", ".buzz"]
+    for u in extracted_urls:
+        u_lower = u.lower()
+        if any(u_lower.endswith(tld) or f"{tld}/" in u_lower for tld in suspicious_tlds):
+            red_flags.append(RedFlagItem(
+                category="MALICIOUS_LINK",
+                title="Suspicious / Unofficial URL Link",
+                description=f"The embedded link ({u[:45]}...) directs to a low-reputation or non-corporate domain.",
+                severity="HIGH"
+            ))
+            scam_score += 20
+            break
+
+    # Final Verdict & Calculations
+    scam_score = min(100, scam_score)
+    is_scam = scam_score >= 50 or money_requested
+
+    if money_requested and (scam_score >= 60 or any(rf.category == "FREEMAIL_HR" for rf in red_flags)):
+        verdict = "CONFIRMED FRAUD / SCAM OFFER"
+        confidence = 0.98
+        summary = "CRITICAL ALERT: This job/internship communication is an active scam. Upfront payment or training fees are requested from an unverified or free email address. Legitimate companies never charge candidates."
+    elif scam_score >= 60:
+        verdict = "HIGH RISK INTERNSHIP SCAM"
+        confidence = 0.92
+        summary = "HIGH RISK: Strong scam markers detected including unofficial contact channels, unrealistic hiring conditions, or suspicious domains."
+    elif scam_score >= 30:
+        verdict = "SUSPICIOUS OFFER (VERIFICATION REQUIRED)"
+        confidence = 0.85
+        summary = "SUSPICIOUS: Several anomalies detected. Do not share financial details, bank accounts, or pay any fees without contacting the official HR department directly."
+    else:
+        verdict = "LIKELY LEGITIMATE / LOW RISK"
+        confidence = 0.90
+        scam_score = min(scam_score, 10)
+        summary = "No overt fraud patterns detected. No financial demands, verified communication structure, and standard corporate hiring indicators observed."
+
+    # Recommendations
+    recommendations = []
+    if money_requested:
+        recommendations.append("DO NOT SEND ANY MONEY, UPI transfers, or crypto deposits under any circumstance.")
+    if any(rf.category == "FREEMAIL_HR" for rf in red_flags):
+        recommendations.append("Never accept employment offers from free webmail accounts (@gmail, @yahoo). Always verify via the company's official career portal.")
+    if any(rf.category == "SUSPICIOUS_CHANNEL" for rf in red_flags):
+        recommendations.append("Do not engage in recruitment interviews conducted solely through Telegram or WhatsApp.")
+    recommendations.append("Cross-check the job ID directly on the company's verified careers portal (e.g. careers.company.com).")
+    recommendations.append("If money was lost or demanded, file an immediate complaint at cybercrime.gov.in or reportfraud.ftc.gov.")
+
+    return EmailScamAnalysisResponse(
+        email_type=email_type,
+        is_scam=is_scam,
+        scam_score=scam_score,
+        confidence=confidence,
+        verdict=verdict,
+        summary=summary,
+        money_requested=money_requested,
+        money_details=money_details,
+        sender_evaluation=sender_eval,
+        red_flags=red_flags,
+        safety_recommendations=recommendations,
+        extracted_urls=extracted_urls
+    )
+
