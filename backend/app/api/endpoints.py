@@ -38,6 +38,7 @@ import math
 import hashlib
 import socket
 import httpx
+import ipaddress
 from app.collectors.lexical import normalize_url, extract_lexical_features
 from app.collectors.domain_intel import collect_domain_intelligence
 from app.collectors.crawler import execute_safe_browser_crawl
