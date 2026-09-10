@@ -375,7 +375,7 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
         // Attempt 1: Algod SDK client
         try {
           const sendResult = await algodClientRef.current.sendRawTransaction(signedTxns).do();
-          txId = sendResult.txId;
+          txId = (sendResult as any)?.txId || (sendResult as any)?.txid || txn.txID();
           broadcastSuccess = true;
         } catch (bErr: any) {
           console.info('Algod SDK broadcast failed, trying direct node POST...', bErr);
@@ -397,7 +397,7 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
               });
               if (resp.ok) {
                 const data = await resp.json();
-                txId = data.txId || txn.txID();
+                txId = data?.txId || data?.txid || txn.txID();
                 broadcastSuccess = true;
                 break;
               }
@@ -421,10 +421,14 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
             });
             if (bResp && bResp.ok) {
               const bData = await bResp.json();
-              txId = bData.txId || txn.txID();
+              txId = bData?.txId || bData?.txid || txn.txID();
               broadcastSuccess = true;
             }
           } catch {}
+        }
+
+        if (!txId) {
+          txId = txn.txID();
         }
 
         if (!broadcastSuccess) {

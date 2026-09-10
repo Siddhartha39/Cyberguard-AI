@@ -50,6 +50,7 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
     balanceAlgo,
     balanceUsdc,
     walletType,
+    peraWalletInstance,
     connectPeraWallet,
     connectDeflyWallet,
     connectExodusWallet,
@@ -130,8 +131,9 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (customAddressInput.trim().length === 58) {
-      connectCustomWallet(customAddressInput.trim());
+    const cleanCustom = typeof customAddressInput === 'string' ? customAddressInput.trim() : '';
+    if (cleanCustom.length === 58) {
+      connectCustomWallet(cleanCustom);
       setModalView('payment');
     } else {
       setErrorMessage('Please enter a valid 58-character Algorand Testnet address.');
@@ -149,6 +151,18 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
       setModalView('wallet_select');
       return;
     }
+
+    // If Pera selected but session is disconnected in SDK, prompt reconnect
+    if (walletType === 'pera' && (!peraWalletInstance || !peraWalletInstance.isConnected)) {
+      setModalView('pera_qr');
+      const reconnected = await connectPeraWallet();
+      if (!reconnected) {
+        return;
+      }
+    }
+
+    const safeTargetUrl = typeof targetUrl === 'string' && targetUrl.trim() ? targetUrl.trim() : (challenge?.target_url || 'https://campuskart.shop');
+    const safeCaseId = typeof caseId === 'string' && caseId.trim() ? caseId.trim() : 'case-live';
 
     try {
       // Stage: Signing Transaction
@@ -168,24 +182,26 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
       const subResult: PaymentSubmissionResult = await signAndSubmitPayment(
         recipient,
         amount,
-        `CyberGuard x402 Audit: ${targetUrl}`
+        `CyberGuard x402 Audit: ${safeTargetUrl}`
       );
+
+      const resolvedTxId = typeof subResult?.txId === 'string' ? subResult.txId.trim() : '';
 
       // Stage: Verification against protected endpoint
       setPaymentStage('broadcasting');
       setStageMessage('Verifying on-chain settlement on Algorand Testnet (/api/premium-scan)...');
 
       // Poll verification for block confirmation (~3.3s block time)
-      let res = await requestPremiumScan(targetUrl, subResult.txId);
+      let res = await requestPremiumScan(safeTargetUrl, resolvedTxId);
       if (!res.isPaid) {
         setStageMessage('Waiting for Algorand block confirmation (~3.3s)...');
         await new Promise((r) => setTimeout(r, 2500));
-        res = await requestPremiumScan(targetUrl, subResult.txId);
+        res = await requestPremiumScan(safeTargetUrl, resolvedTxId);
       }
 
       let verifiedReport = res.report;
       if (!verifiedReport) {
-        const fallbackRes = await verifyAlgorandPayment(subResult.txId, caseId, targetUrl);
+        const fallbackRes = await verifyAlgorandPayment(resolvedTxId, safeCaseId, safeTargetUrl);
         if (fallbackRes && fallbackRes.report) {
           verifiedReport = fallbackRes.report;
         }
@@ -201,7 +217,7 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
 
         const verResp: PaymentVerificationResponse = {
           verified: true,
-          tx_id: subResult.txId,
+          tx_id: resolvedTxId,
           sender_address: subResult.senderAddress,
           amount_algo: subResult.amountAlgo,
           block_round: subResult.confirmedRound || 66998124,
@@ -236,38 +252,42 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
    */
   const handleManualVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualTxId.trim()) {
+    const cleanManualTx = typeof manualTxId === 'string' ? manualTxId.trim() : '';
+    if (!cleanManualTx) {
       setErrorMessage('Please enter a valid Algorand Testnet Transaction ID.');
       return;
     }
+    const safeTargetUrl = typeof targetUrl === 'string' && targetUrl.trim() ? targetUrl.trim() : (challenge?.target_url || 'https://campuskart.shop');
+    const safeCaseId = typeof caseId === 'string' && caseId.trim() ? caseId.trim() : 'case-live';
+
     setPaymentStage('broadcasting');
     setErrorMessage(null);
     setStageMessage('Querying Algorand Testnet Indexer for transaction verification...');
 
     try {
-      const res = await requestPremiumScan(targetUrl, manualTxId.trim());
+      const res = await requestPremiumScan(safeTargetUrl, cleanManualTx);
 
       if (res.isPaid && res.report) {
         setPaymentStage('confirmed');
         setConfirmedTx({
-          txId: manualTxId.trim(),
+          txId: cleanManualTx,
           confirmedRound: 66998124,
           senderAddress: address || 'MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY',
           recipientAddress: challenge.recipient_address,
           amountAlgo: 0.1,
-          explorerUrl: `https://lora.algokit.io/testnet/transaction/${manualTxId.trim()}`
+          explorerUrl: `https://lora.algokit.io/testnet/transaction/${cleanManualTx}`
         });
         setUnlockedReport(res.report);
         setSettlementTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC');
 
         const verResp: PaymentVerificationResponse = {
           verified: true,
-          tx_id: manualTxId.trim(),
+          tx_id: cleanManualTx,
           sender_address: address || 'MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY',
           amount_algo: 0.1,
           block_round: 66998124,
           confirmed_at: new Date().toISOString(),
-          explorer_url: `https://lora.algokit.io/testnet/transaction/${manualTxId.trim()}`,
+          explorer_url: `https://lora.algokit.io/testnet/transaction/${cleanManualTx}`,
           report: res.report
         };
 
@@ -276,12 +296,32 @@ export const X402PaymentModal: React.FC<X402PaymentModalProps> = ({
           onClose();
         }, 2000);
       } else {
-        setPaymentStage('error');
-        setErrorMessage(res.errorMessage || 'Transaction could not be confirmed on Algorand Testnet.');
+        const fallbackRes = await verifyAlgorandPayment(cleanManualTx, safeCaseId, safeTargetUrl);
+        if (fallbackRes && fallbackRes.verified && fallbackRes.report) {
+          setPaymentStage('confirmed');
+          setConfirmedTx({
+            txId: cleanManualTx,
+            confirmedRound: fallbackRes.block_round || 66998124,
+            senderAddress: fallbackRes.sender_address || address || 'MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY',
+            recipientAddress: challenge.recipient_address,
+            amountAlgo: fallbackRes.amount_algo || 0.1,
+            explorerUrl: fallbackRes.explorer_url || `https://lora.algokit.io/testnet/transaction/${cleanManualTx}`
+          });
+          setUnlockedReport(fallbackRes.report);
+          setSettlementTime(new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC');
+
+          setTimeout(() => {
+            onPaymentSuccess(fallbackRes);
+            onClose();
+          }, 2000);
+        } else {
+          setPaymentStage('error');
+          setErrorMessage(res.errorMessage || fallbackRes?.error_message || 'Transaction could not be confirmed on Algorand Testnet.');
+        }
       }
     } catch (err: any) {
       setPaymentStage('error');
-      setErrorMessage(err.message || 'Error querying Algorand Testnet node.');
+      setErrorMessage(err?.message || 'Error querying Algorand Testnet node.');
     }
   };
 

@@ -26,6 +26,11 @@ export async function apiFetch(endpoint: string, init?: RequestInit): Promise<Re
   const cleanPath = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   try {
     const res = await fetch(`/api${cleanPath}`, init);
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      // Vercel static host returned index.html SPA fallback, not API
+      throw new Error('API route not served by host (SPA fallback detected)');
+    }
     // If Vite proxy returned 502 Bad Gateway or 504 Gateway Timeout, retry against direct backend
     if (res.status === 502 || res.status === 504) {
       try {
@@ -38,7 +43,12 @@ export async function apiFetch(endpoint: string, init?: RequestInit): Promise<Re
     return res;
   } catch (err) {
     try {
-      return await fetch(`http://127.0.0.1:8000/api${cleanPath}`, init);
+      const directRes = await fetch(`http://127.0.0.1:8000/api${cleanPath}`, init);
+      const contentType = directRes.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        throw new Error('Direct backend returned HTML');
+      }
+      return directRes;
     } catch {
       throw err;
     }
@@ -80,8 +90,8 @@ export async function executeFreeScan(url: string): Promise<FreeScanResult> {
  * Used when the backend is unreachable (e.g., Vercel deployment) to confirm
  * that the x402 payment actually landed on-chain before unlocking the audit.
  */
-async function verifyTxOnChainDirectly(txId: string): Promise<{ verified: boolean; sender?: string; receiver?: string; amountAlgo?: number; round?: number }> {
-  const cleanTxId = txId.trim();
+async function verifyTxOnChainDirectly(txId?: string): Promise<{ verified: boolean; sender?: string; receiver?: string; amountAlgo?: number; round?: number }> {
+  const cleanTxId = typeof txId === 'string' ? txId.trim() : '';
   if (!cleanTxId || cleanTxId.length < 16) {
     return { verified: false };
   }
@@ -140,23 +150,27 @@ async function verifyTxOnChainDirectly(txId: string): Promise<{ verified: boolea
 /**
  * 2. Premium Deep Audit Analysis via Protected x402 Endpoint (/api/premium-scan)
  */
-export async function requestPremiumScan(url: string, paymentTxId?: string): Promise<{ isPaid: boolean; report?: RiskScoreReport; challenge?: PaymentChallenge; errorMessage?: string }> {
+export async function requestPremiumScan(url?: string, paymentTxId?: string): Promise<{ isPaid: boolean; report?: RiskScoreReport; challenge?: PaymentChallenge; errorMessage?: string }> {
+  const safeUrl = typeof url === 'string' && url.trim() ? url.trim() : 'https://campuskart.shop';
+  const safeTxId = typeof paymentTxId === 'string' && paymentTxId.trim() ? paymentTxId.trim() : undefined;
+  const normalizedKey = safeUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+
   try {
     const response = await apiFetch('/premium-scan', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(paymentTxId ? { 'X-Payment': paymentTxId } : {})
+        ...(safeTxId ? { 'X-Payment': safeTxId } : {})
       },
       body: JSON.stringify({
-        url,
+        url: safeUrl,
         deep_analysis: true,
-        payment_tx_id: paymentTxId
+        payment_tx_id: safeTxId
       })
     });
 
     if (response.status === 402) {
-      const errData = await response.json();
+      const errData = await response.json().catch(() => ({}));
       return {
         isPaid: false,
         challenge: errData.challenge,
@@ -166,18 +180,16 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
 
     if (response.ok) {
       const data: RiskScoreReport = await response.json();
-      const normalizedKey = url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
       auditCache.set(normalizedKey, data);
       return { isPaid: true, report: data };
     }
 
     // If server is 404 (e.g. Vercel static hosting) or 502 (proxy down):
-    if (paymentTxId) {
+    if (safeTxId) {
       // Verify the payment actually landed on-chain before generating report
-      const onChainResult = await verifyTxOnChainDirectly(paymentTxId);
+      const onChainResult = await verifyTxOnChainDirectly(safeTxId);
       if (onChainResult.verified) {
-        const clientReport = await generateLiveClientAudit(url, paymentTxId);
-        const normalizedKey = url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+        const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
         auditCache.set(normalizedKey, clientReport);
         return { isPaid: true, report: clientReport };
       }
@@ -186,7 +198,7 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
 
     if (response.status === 404 || response.status === 502) {
       // Generate x402 payment challenge for client-side paywall
-      const challenge = await fetchPaymentChallenge(url, `case-${Math.random().toString(36).slice(2, 10)}`);
+      const challenge = await fetchPaymentChallenge(safeUrl, `case-${Math.random().toString(36).slice(2, 10)}`);
       return {
         isPaid: false,
         challenge,
@@ -201,16 +213,17 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
     };
   } catch (err: any) {
     console.warn('API request failed:', err);
-    if (paymentTxId) {
+    if (safeTxId) {
       // Verify on-chain before generating client-side report
-      const onChainResult = await verifyTxOnChainDirectly(paymentTxId);
+      const onChainResult = await verifyTxOnChainDirectly(safeTxId);
       if (onChainResult.verified) {
-        const clientReport = await generateLiveClientAudit(url, paymentTxId);
+        const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
+        auditCache.set(normalizedKey, clientReport);
         return { isPaid: true, report: clientReport };
       }
       return { isPaid: false, errorMessage: 'Payment could not be verified on Algorand Testnet.' };
     }
-    const challenge = await fetchPaymentChallenge(url, `case-${Math.random().toString(36).slice(2, 10)}`);
+    const challenge = await fetchPaymentChallenge(safeUrl, `case-${Math.random().toString(36).slice(2, 10)}`);
     return { isPaid: false, challenge, errorMessage: 'Payment Required' };
   }
 }
@@ -219,14 +232,16 @@ export async function requestPremiumScan(url: string, paymentTxId?: string): Pro
  * 3. Deep Analysis Legacy/General Route
  */
 export async function analyzeDomain(
-  url: string,
+  url?: string,
   deepAnalysis: boolean = true,
   forceRefresh: boolean = false,
   paymentTxId?: string
 ): Promise<RiskScoreReport> {
-  const normalizedKey = url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+  const safeUrl = typeof url === 'string' && url.trim() ? url.trim() : 'https://campuskart.shop';
+  const safeTxId = typeof paymentTxId === 'string' && paymentTxId.trim() ? paymentTxId.trim() : undefined;
+  const normalizedKey = safeUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 
-  if (!forceRefresh && auditCache.has(normalizedKey) && !paymentTxId) {
+  if (!forceRefresh && auditCache.has(normalizedKey) && !safeTxId) {
     return auditCache.get(normalizedKey)!;
   }
 
@@ -242,10 +257,10 @@ export async function analyzeDomain(
       },
       signal: controller.signal,
       body: JSON.stringify({
-        url,
+        url: safeUrl,
         deep_analysis: deepAnalysis,
         force_refresh: forceRefresh,
-        payment_tx_id: paymentTxId
+        payment_tx_id: safeTxId
       })
     });
     clearTimeout(timeoutId);
@@ -259,7 +274,7 @@ export async function analyzeDomain(
     console.info('Querying authoritative telemetry engine...', err);
   }
 
-  const clientReport = await generateLiveClientAudit(url, paymentTxId);
+  const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
   auditCache.set(normalizedKey, clientReport);
   return clientReport;
 }
@@ -268,11 +283,13 @@ export async function analyzeDomain(
  * 4. x402 Payment Challenge Fetcher
  */
 export async function fetchPaymentChallenge(url: string, caseId: string): Promise<PaymentChallenge> {
+  const safeUrl = typeof url === 'string' && url.trim() ? url.trim() : 'https://campuskart.shop';
+  const safeCaseId = typeof caseId === 'string' && caseId.trim() ? caseId.trim() : 'case-live';
   try {
     const response = await apiFetch('/payment/challenge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_url: url, case_id: caseId })
+      body: JSON.stringify({ target_url: safeUrl, case_id: safeCaseId })
     });
     if (response.ok) {
       return await response.json();
@@ -288,23 +305,27 @@ export async function fetchPaymentChallenge(url: string, caseId: string): Promis
   return {
     challenge_id: challengeId,
     network: 'algorand-testnet',
+    caip2_network: 'algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=',
     recipient_address: receiver,
     amount_microalgos: 100000,
     amount_algo: 0.1,
     token_symbol: 'ALGO',
-    target_url: url,
-    case_id: caseId,
+    usdc_asset_id: 10458941,
+    usdc_price: '$0.01',
+    target_url: safeUrl,
+    case_id: safeCaseId,
     created_at: now,
     expires_at: now + 1800,
     facilitator_url: 'https://facilitator.goplausible.xyz',
     x402_header: JSON.stringify({
       v: '2.0',
       net: 'algorand-testnet',
+      caip2: 'algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=',
       to: receiver,
       amt: 100000,
       cur: 'ALGO',
       cid: challengeId,
-      case: caseId,
+      case: safeCaseId,
       exp: now + 1800,
       fac: 'https://facilitator.goplausible.xyz'
     })
@@ -315,19 +336,23 @@ export async function fetchPaymentChallenge(url: string, caseId: string): Promis
  * 5. Verify Algorand Testnet Transaction and Unlock Report
  */
 export async function verifyAlgorandPayment(
-  txId: string,
-  caseId: string,
-  targetUrl: string,
+  txId?: string,
+  caseId?: string,
+  targetUrl?: string,
   challengeId?: string
 ): Promise<PaymentVerificationResponse> {
+  const safeTxId = typeof txId === 'string' ? txId.trim() : '';
+  const safeCaseId = typeof caseId === 'string' ? caseId.trim() : 'case-live';
+  const safeUrl = typeof targetUrl === 'string' && targetUrl.trim() ? targetUrl.trim() : 'https://campuskart.shop';
+
   try {
     const response = await apiFetch('/payment/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        tx_id: txId,
-        case_id: caseId,
-        target_url: targetUrl,
+        tx_id: safeTxId,
+        case_id: safeCaseId,
+        target_url: safeUrl,
         challenge_id: challengeId
       })
     });
@@ -346,14 +371,14 @@ export async function verifyAlgorandPayment(
   }
 
   // Client-side verification against Algorand Testnet Indexer
-  const onChainResult = await verifyTxOnChainDirectly(txId);
-  const explorerUrl = `https://lora.algokit.io/testnet/transaction/${txId}`;
+  const onChainResult = await verifyTxOnChainDirectly(safeTxId);
+  const explorerUrl = `https://lora.algokit.io/testnet/transaction/${safeTxId}`;
 
   if (onChainResult.verified) {
-    const report = await generateLiveClientAudit(targetUrl, txId);
+    const report = await generateLiveClientAudit(safeUrl, safeTxId);
     return {
       verified: true,
-      tx_id: txId,
+      tx_id: safeTxId,
       sender_address: onChainResult.sender || 'Algorand Testnet Sender',
       amount_algo: onChainResult.amountAlgo || 0.1,
       block_round: onChainResult.round || 0,
@@ -365,7 +390,7 @@ export async function verifyAlgorandPayment(
 
   return {
     verified: false,
-    error_message: `Transaction '${txId}' could not be confirmed on Algorand Testnet. Please wait for block confirmation and try again.`
+    error_message: `Transaction '${safeTxId}' could not be confirmed on Algorand Testnet. Please wait for block confirmation and try again.`
   };
 }
 

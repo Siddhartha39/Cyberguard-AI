@@ -12,10 +12,13 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@perawallet/connect": "^1.6.1",
+    "@x402-avm/axios": "^2.6.1",
+    "@x402-avm/paywall": "^2.6.1",
     "@x402/avm": "^2.0.0",
     "@x402/core": "^2.0.0",
     "algosdk": "^3.7.0",
     "buffer": "^6.0.3",
+    "x402-avm": "^0.6.1",
     "clsx": "^2.1.1",
     "framer-motion": "^13.1.0",
     "gsap": "^3.15.0",
