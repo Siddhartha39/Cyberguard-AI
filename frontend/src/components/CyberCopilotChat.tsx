@@ -142,11 +142,12 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   };
 
   const quickPrompts = [
-    { label: domain ? `Is ${domain} safe?` : 'How to check if a site is safe?', icon: <Shield size={12} color="var(--accent-cyan)" /> },
-    { label: domain ? `Explain ${domain} risk score` : 'How is risk score calculated?', icon: <Zap size={12} color="#f59e0b" /> },
+    { label: domain ? `Is ${domain} easily hackable?` : 'Is my website easily hackable?', icon: <Shield size={12} color="#ef4444" /> },
+    { label: domain ? `Give steps to fix ${domain}` : 'Give steps and all other things to fix it', icon: <Terminal size={12} color="#10b981" /> },
+    { label: 'Generate Nginx & Express hardening headers', icon: <Terminal size={12} color="var(--accent-cyan)" /> },
+    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" /> },
     { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
-    { label: 'Generate Nginx & Cloudflare hardening headers', icon: <Terminal size={12} color="#10b981" /> },
-    { label: 'How to prevent code injection & XSS?', icon: <Lock size={12} color="#a855f7" /> },
+    { label: 'How is risk score calculated?', icon: <Zap size={12} color="#f59e0b" /> },
     { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
   ];
 
