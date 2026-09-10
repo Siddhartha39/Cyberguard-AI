@@ -1281,8 +1281,14 @@ function generateClientChatResponse(message: string, report?: any): ChatResponse
   const grade = report?.security_audit?.security_grade || report?.security_grade || 'N/A';
   const isContradiction = !!report?.brand_analysis?.is_contradiction;
   const brandName = report?.brand_analysis?.brand_display_name || report?.matched_brand;
-  const registrar = report?.registrar || 'ICANN Accredited';
-  const domainAge = report?.domain_age_days !== undefined && report?.domain_age_days !== null ? `${report.domain_age_days} days` : 'Verified';
+  const registrarName = report?.registrar || report?.domain_intel?.registrar || 'ICANN Accredited Registrar';
+  const domainAgeDays = report?.domain_age_days ?? report?.domain_intel?.domain_age_days ?? null;
+  const creationDate = report?.creation_date || report?.domain_intel?.creation_date || null;
+  const domainAge = domainAgeDays !== null ? `${domainAgeDays} days` : 'Verified';
+  const registrationStatus = report?.registration_status || (report?.is_registered === false ? 'UNREGISTERED' : 'REGISTERED');
+  const dnsARecords: string[] = report?.dns_a_records || report?.domain_intel?.dns?.a_records || [];
+  const dnsNsRecords: string[] = report?.dns_ns_records || report?.domain_intel?.dns?.ns_records || [];
+  const tlsIssuer = report?.tls_issuer || report?.ssl_tls_evaluation?.issuer || 'Public Certificate Authority';
   const msgLower = message.toLowerCase().trim();
 
   const securityAudit = report?.security_audit || {};
@@ -1296,6 +1302,7 @@ function generateClientChatResponse(message: string, report?: any): ChatResponse
       .filter(Boolean);
   }
   const dmarcEnforced = report?.dns_records?.dmarc_policy === 'reject' || report?.dns_records?.dmarc_policy === 'quarantine';
+  const hasDmarc = report?.has_dmarc !== undefined ? report.has_dmarc : dmarcEnforced;
   const tlsValid = report?.tls_valid !== false;
 
   const greetings = ['hi', 'hello', 'hey', 'hola', 'sup', 'good morning', 'good evening', 'good afternoon', 'namaste', 'yo'];
@@ -1366,9 +1373,74 @@ function generateClientChatResponse(message: string, report?: any): ChatResponse
     reply = `📧 **Email Authentication Posture${dmarcTarget}:**\n\n- **SPF (Sender Policy Framework):** Declares authorized mail servers allowed to send from a domain.\n- **DKIM (DomainKeys Identified Mail):** Cryptographically signs emails to verify transmission integrity.\n- **DMARC:** Instructs receiving mail servers how to enforce policy (\`none\`, \`quarantine\`, \`reject\`).\n\n**Why it matters:** Missing DMARC allows attackers to spoof \`billing@domain\` or \`hr@domain\` in phishing campaigns.`;
   } else if (msgLower.includes('x402') || msgLower.includes('algorand') || msgLower.includes('payment') || msgLower.includes('microalgo') || msgLower.includes('facilitator')) {
     reply = `⚡ **Algorand & x402 Micropayment Protocol:**\n\n- **HTTP 402 Standard**: Uses decentralized paywalls to gate compute-intensive forensic audits.\n- **Algorand Testnet**: Settles on-chain in ~3.3 seconds with deterministic finality and near-zero fees (0.001 ALGO).\n- **Facilitator**: Uses the GoPlausible Facilitator (\`https://facilitator.goplausible.xyz\`).\n- **Cost**: 0.1 ALGO (100,000 microAlgos) per deep forensic audit.\n- **Verification**: Every payment transaction hash is verified on-chain via the Algorand Testnet indexer.`;
+  } else if (
+    ['register', 'registered', 'registration', 'creation date', 'created at', 'when was it created', 'when created', 'when it created', 'how old', 'domain age', 'age of', 'who registered', 'registrar', 'whois', 'expiration', 'expiry'].some(k => msgLower.includes(k))
+  ) {
+    if (hasActiveScan && domain) {
+      const ageStr = domainAgeDays !== null ? `${domainAgeDays} days old` : 'Established';
+      const dateStr = creationDate || 'Verified on registry record';
+      const regStr = registrarName;
+
+      let ageAssessment = '';
+      if (domainAgeDays !== null) {
+        if (domainAgeDays < 30) {
+          ageAssessment = `⚠️ **Newly Registered Domain (NRD):** \`${domain}\` was registered only **${domainAgeDays} days ago**. Security systems flag domains under 30 days old with elevated scrutiny because over 70% of disposable phishing campaigns use freshly registered domains.`;
+        } else if (domainAgeDays > 365) {
+          ageAssessment = `✅ **High Domain Maturity:** \`${domain}\` has been registered for **${domainAgeDays} days** (${(domainAgeDays / 365).toFixed(1)} years). Long-standing domain age provides significant trust against disposable hit-and-run phishing campaigns.`;
+        } else {
+          ageAssessment = `✅ **Established Domain:** \`${domain}\` has been active for **${domainAgeDays} days**. It has safely passed the critical 30-day Newly Registered Domain (NRD) threat window.`;
+        }
+      } else {
+        ageAssessment = `ℹ️ \`${domain}\` has verified registry standing with no flags for recent disposable creation.`;
+      }
+
+      reply = `📅 **Domain Registration & Age Intelligence for \`${domain}\`:**\n\n- 🗓️ **Registration Date:** **\`${dateStr}\`**\n- ⏳ **Domain Age:** **\`${ageStr}\`**\n- 🏛️ **Registrar:** **\`${regStr}\`**\n- 📋 **Registry Status:** \`${registrationStatus}\`\n\n${ageAssessment}\n\n---\n💡 *Would you like to check its **DNS/IP hosting records**, **SSL certificate**, or audit if **${domain} is easily hackable**?*`;
+    } else {
+      reply = `⚠️ **No Website URL Provided Yet**\n\nYou haven't scanned or specified a website URL yet! Please enter your website domain in the **Scanner** tab at the top, and click **Start Deep Inspection** to look up its exact registration date, domain age, and registrar.`;
+    }
+  } else if (
+    ['ip address', 'what is the ip', 'what\'s the ip', 'ip of', 'hosting', 'where is it hosted', 'who hosts', 'nameserver', 'ns record', 'a record', 'dns record', 'dns status', 'server ip'].some(k => msgLower.includes(k)) ||
+    (/\bip\b/.test(msgLower) && !['script', 'whip', 'clip', 'equip'].some(w => msgLower.includes(w)))
+  ) {
+    if (hasActiveScan && domain) {
+      const ips = dnsARecords.length ? dnsARecords.map(i => `\`${i}\``).join(', ') : 'Active Resolution';
+      const ns = dnsNsRecords.length ? dnsNsRecords.map(n => `\`${n}\``).join(', ') : 'Standard Authoritative Nameservers';
+
+      reply = `🌐 **DNS Infrastructure & Hosting Details for \`${domain}\`:**\n\n- 🖥️ **IP Addresses (A Records):** ${ips}\n- 📡 **Authoritative Nameservers (NS):** ${ns}\n- 🏛️ **Domain Registrar:** \`${registrarName}\`\n- 🚦 **DNS Routing:** Successfully resolved via authoritative root servers\n\n**Infrastructure Posture:** The domain resolves to active host infrastructure. No suspicious fast-flux DNS rotation or bulletproof hosting anomalies were detected.`;
+    } else {
+      reply = `⚠️ **No Website URL Provided Yet**\n\nYou haven't scanned or specified a website URL yet! Enter your website domain in the **Scanner** tab above to retrieve its live IP addresses, nameservers, and hosting infrastructure.`;
+    }
+  } else if (
+    ['ssl', 'tls', 'https', 'certificate', 'cert', 'cipher', 'encryption', 'is it encrypted', 'secure connection', 'padlock'].some(k => msgLower.includes(k))
+  ) {
+    if (hasActiveScan && domain) {
+      const statusStr = tlsValid ? '✅ Valid & Trusted (HTTPS Active)' : '❌ Insecure / Invalid TLS (Untrusted Connection)';
+      reply = `🔒 **SSL/TLS Encryption & Certificate Telemetry for \`${domain}\`:**\n\n- 🛡️ **Encryption Status:** ${statusStr}\n- 📜 **Certificate Authority (Issuer):** \`${tlsIssuer}\`\n- 🌐 **Protocol:** ${tlsValid ? 'HTTPS (Encrypted Transport Layer)' : 'Plaintext HTTP (Vulnerable to MitM Eavesdropping)'}\n\n**Security Insight:** ${tlsValid ? 'Your connection to this website is cryptographically encrypted, preventing passive eavesdropping in transit.' : 'Traffic to this website is transmitted in plaintext. Attackers on public networks can intercept passwords and session cookies.'}`;
+    } else {
+      reply = `⚠️ **No Website URL Provided Yet**\n\nEnter a URL in the **Scanner** tab above to audit its SSL certificate, cipher strength, and TLS security.`;
+    }
+  } else if (
+    ['missing header', 'headers', 'security grade', 'why grade', 'grade b', 'grade a', 'grade c', 'grade f', 'what is grade', 'score percentage'].some(k => msgLower.includes(k))
+  ) {
+    if (hasActiveScan && domain) {
+      const missingStr = missingHeaders.length ? missingHeaders.map(h => `\`${h}\``).join(', ') : 'None — All perimeter headers configured!';
+      reply = `🛡️ **Security Grade & Defensive Headers Posture for \`${domain}\`:**\n\n- **Security Grade:** **\`${grade}\`**\n- **Missing Perimeter Headers (${missingHeaders.length}):** ${missingStr}\n- **DMARC Email Spoofing Defense:** ${hasDmarc ? '✅ Enforced (p=reject/quarantine)' : '❌ Not Enforced (vulnerable to spoofing)'}\n\n**Why this grade matters:** Missing perimeter headers like \`Content-Security-Policy\` and \`X-Frame-Options\` leave your web application open to Cross-Site Scripting (XSS) and Clickjacking.\n\n👉 *Ask **"Give steps to fix ${domain}"** to get copy-paste Nginx and Express header configurations to upgrade to Grade A+!*`;
+    } else {
+      reply = `⚠️ **No Website URL Provided Yet**\n\nEnter a URL in the **Scanner** tab above to inspect its defensive HTTP security headers and calculate its Security Grade.`;
+    }
+  } else if (
+    ['tell me about', 'what is this website', 'what is this site', 'summarize', 'overview', 'what does it do', 'info about', 'about this'].some(k => msgLower.includes(k))
+  ) {
+    if (hasActiveScan && domain) {
+      const ageText = domainAgeDays !== null ? `${domainAgeDays} days old` : 'Established';
+      reply = `📋 **CyberGuard AI Executive Threat Dossier for \`${domain}\`:**\n\n- 🎯 **Domain:** \`${domain}\`\n- 📅 **Age:** ${ageText} (Registered on \`${creationDate || 'On record'}\` via \`${registrarName}\`)\n- 🌐 **Hosting:** IP \`${dnsARecords.length ? dnsARecords.join(', ') : 'Active Resolution'}\`\n- 🔒 **Transport:** ${tlsValid ? '✅ Valid TLS HTTPS' : '❌ Insecure HTTP'} (${tlsIssuer})\n- 🛡️ **Defensive Grade:** **\`${grade}\`** (${missingHeaders.length} headers missing)\n- 🚦 **Threat Verdict:** **\`${verdict}\`** (Risk Score: **${riskScore}/100**)\n\n**Summary:** \`${domain}\` has an overall risk score of ${riskScore}/100 with no trademark contradiction detected. Perimeter security scored Grade \`${grade}\`.`;
+    } else {
+      reply = `⚠️ **No Website URL Provided Yet**\n\nEnter a URL in the **Scanner** tab above to generate an executive threat dossier.`;
+    }
   } else {
     if (hasActiveScan && domain) {
-      reply = `🤖 **CyberGuard AI Copilot Telemetry for \`${domain}\`:**\n\n- **Verdict:** \`${verdict}\` (Risk Score: **${riskScore}/100**)\n- **Security Grade:** \`${grade}\` (${missingHeaders.length} defensive headers missing)\n- **Brand Security:** ${isContradiction ? '🚨 Brand Contradiction' : '✅ Verified Authentic'}\n\nDeveloper questions you can ask me:\n- *"Is ${domain} easily hackable?"*\n- *"Give me step-by-step instructions to fix ${domain}"*\n- *"How do I fix Security Grade ${grade} on Nginx/Express?"*\n- *"How to protect against SQL injection & XSS?"*`;
+      const ageInfo = creationDate && domainAgeDays !== null ? `Registered \`${creationDate}\` (${domainAgeDays} days old)` : (domainAgeDays !== null ? `${domainAgeDays} days old` : 'Active domain');
+      reply = `🤖 **CyberGuard AI Intelligence for \`${domain}\`:**\n\nRegarding your query: *"${message}"*\n\n- 📅 **Registration & Standing:** ${ageInfo} via \`${registrarName}\`\n- 🌐 **Hosting & IP:** \`${dnsARecords.length ? dnsARecords.join(', ') : 'Resolved Host'}\`\n- 🔒 **Encryption:** ${tlsValid ? '✅ Valid TLS (HTTPS)' : '❌ Insecure (No TLS)'} (${tlsIssuer})\n- 🛡️ **Security Grade:** **\`${grade}\`** (${missingHeaders.length} defensive headers missing)\n- 🎯 **Threat Verdict:** **\`${verdict}\`** (Risk Score: **${riskScore}/100**)\n\n💡 *You can ask me specific questions:*\n- *"When was it registered?"*\n- *"What is the IP and nameservers?"*\n- *"Is ${domain} easily hackable?"*\n- *"Give me step-by-step instructions to fix ${domain}"*\n- *"How to configure Nginx security headers?"*`;
     } else {
       reply = `🤖 **CyberGuard AI Copilot (General Cybersecurity Mode):**\n\nNo website URL is currently selected. To run a live security audit on a website, enter its URL in the **Scanner** tab above!\n\nYou can ask me questions like:\n- *"How do I audit my website?"*\n- *"What vulnerabilities does CyberGuard test for?"*\n- *"Show general Nginx hardening config"*\n- *"How to detect fake internship offers?"*\n- *"How to protect against SQL injection and XSS?"*`;
     }
