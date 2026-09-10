@@ -51,29 +51,31 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const domain = (report as any)?.canonical_domain || (report as any)?.domain;
+  const rawDomain = (report as any)?.canonical_domain || (report as any)?.domain;
+  const hasScannedSite = Boolean(rawDomain && typeof rawDomain === 'string' && rawDomain.trim() && rawDomain.trim().toLowerCase() !== 'target website');
+  const domain = hasScannedSite ? rawDomain.trim() : null;
   const verdict = (report as any)?.verdict;
   const riskScore = (report as any)?.overall_risk_score ?? (report as any)?.basic_risk_score ?? (report as any)?.fast_risk_score;
   const grade = (report as any)?.security_audit?.security_grade || (report as any)?.security_grade;
 
   // Initialize or reset welcome message when report changes
   useEffect(() => {
-    if (report && domain) {
+    if (report && hasScannedSite && domain) {
       setMessages([
         {
           role: 'assistant',
-          content: `👋 **CyberGuard AI Copilot Active**\n\nI have loaded the live forensic intelligence for **\`${domain}\`**:\n- **Verdict:** \`${verdict || 'ANALYZED'}\`\n- **Risk Score:** \`${riskScore !== undefined ? `${riskScore}/100` : 'Evaluated'}\`\n- **Security Grade:** \`${grade || 'Active'}\`\n\nAsk me anything! Is this site safe? How to fix missing security headers? How to detect fake job offers?`
+          content: `👋 **CyberGuard AI Copilot Active**\n\nI have loaded live forensic intelligence for **\`${domain}\`**:\n- **Verdict:** \`${verdict || 'ANALYZED'}\`\n- **Risk Score:** \`${riskScore !== undefined ? `${riskScore}/100` : 'Evaluated'}\`\n- **Security Grade:** \`${grade || 'Active'}\`\n\nAsk me anything about \`${domain}\`: Is it easily hackable? How do I fix missing defensive headers? What vulnerabilities does it have?`
         }
       ]);
     } else {
       setMessages([
         {
           role: 'assistant',
-          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your real-time defensive cybersecurity analyst. I can explain website threat scores, detect fake internship offers, guide server hardening (Nginx/Cloudflare), and verify Algorand x402 settlements.\n\nAsk me any question below or audit a URL in the Scanner!`
+          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your real-time defensive cybersecurity analyst. No website URL is currently selected.\n\nTo audit your website's hackability and get tailored security fixes, enter your URL in the **Scanner** tab above. Or ask me any general cybersecurity question below!`
         }
       ]);
     }
-  }, [domain, verdict, riskScore, grade]);
+  }, [domain, verdict, riskScore, grade, hasScannedSite]);
 
   // Handle pending prompt from external "Ask AI Copilot" triggers
   useEffect(() => {
@@ -141,13 +143,20 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const quickPrompts = [
-    { label: domain ? `Is ${domain} easily hackable?` : 'Is my website easily hackable?', icon: <Shield size={12} color="#ef4444" /> },
-    { label: domain ? `Give steps to fix ${domain}` : 'Give steps and all other things to fix it', icon: <Terminal size={12} color="#10b981" /> },
-    { label: 'Generate Nginx & Express hardening headers', icon: <Terminal size={12} color="var(--accent-cyan)" /> },
+  const quickPrompts = hasScannedSite && domain ? [
+    { label: `Is ${domain} easily hackable?`, icon: <Shield size={12} color="#ef4444" /> },
+    { label: `Give steps to fix ${domain}`, icon: <Terminal size={12} color="#10b981" /> },
+    { label: `Hardening headers for ${domain}`, icon: <Terminal size={12} color="var(--accent-cyan)" /> },
+    { label: `Explain ${domain} risk score`, icon: <Zap size={12} color="#f59e0b" /> },
     { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" /> },
     { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
-    { label: 'How is risk score calculated?', icon: <Zap size={12} color="#f59e0b" /> },
+    { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
+  ] : [
+    { label: 'How do I audit my website?', icon: <Shield size={12} color="var(--accent-cyan)" /> },
+    { label: 'What vulnerabilities does CyberGuard test for?', icon: <Zap size={12} color="#f59e0b" /> },
+    { label: 'Show general Nginx hardening config', icon: <Terminal size={12} color="#10b981" /> },
+    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" /> },
+    { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
     { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
   ];
 
