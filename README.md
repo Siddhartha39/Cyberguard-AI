@@ -29,12 +29,13 @@
 3. [Deep Dive: Backend Inspection Pipeline & Engineering](#-deep-dive-backend-inspection-pipeline--engineering)
 4. [Live Threat Intelligence Feeds & Datasets Used](#-live-threat-intelligence-feeds--datasets-used)
 5. [Developer Website Hardening & Code Injection Immunity](#-developer-website-hardening--code-injection-immunity)
-6. [Complete Platform Feature Matrix](#-complete-platform-feature-matrix)
-7. [x402 Micropayment Protocol on Algorand Testnet](#-x402-micropayment-protocol-on-algorand-testnet)
-8. [REST API Reference & Endpoints](#-rest-api-reference--endpoints)
-9. [Local Deployment & Setup Guide](#-local-deployment--setup-guide)
-10. [Manifest V3 Chrome Extension Setup](#-manifest-v3-chrome-extension-setup)
-11. [Technical FAQ & Security Architecture](#-technical-faq--security-architecture)
+6. [CyberGuard AI Copilot: Interactive AppSec Assistant](#-cyberguard-ai-copilot-interactive-appsec-assistant)
+7. [Complete Platform Feature Matrix](#-complete-platform-feature-matrix)
+8. [x402 Micropayment Protocol on Algorand Testnet](#-x402-micropayment-protocol-on-algorand-testnet)
+9. [REST API Reference & Endpoints](#-rest-api-reference--endpoints)
+10. [Local Deployment & Setup Guide](#-local-deployment--setup-guide)
+11. [Manifest V3 Chrome Extension: Autonomous Background Shield](#-manifest-v3-chrome-extension-autonomous-background-shield)
+12. [Technical FAQ & Security Architecture](#-technical-faq--security-architecture)
 
 ---
 
@@ -446,6 +447,65 @@ For any missing or weak security controls, CyberGuard AI automatically formats r
 
 ---
 
+## 🤖 CyberGuard AI Copilot: Interactive AppSec Assistant
+
+The platform embeds **CyberGuard AI Copilot**, an autonomous defensive cybersecurity and Application Security (AppSec) agent connected directly to live forensic scan telemetry:
+
+```
+                  +----------------------------------------------+
+                  |         CYBERGUARD AI COPILOT ENGINE         |
+                  +----------------------------------------------+
+                                         |
+     +-------------------+---------------+-------------------+-------------------+
+     |                   |                                   |                   |
+     v                   v                                   v                   v
++------------+  +-------------------+               +-------------------+  +---------------+
+| VULNERABILITY |  | DIRECT DOMAIN Q&A |               | REMEDIATION GUIDE |  | SCAM SENTINEL |
+|   AUDIT    |  | (Age, DNS, SSL)   |               | (Nginx, Node, SQL)|  | (Job Scams)   |
++------------+  +-------------------+               +-------------------+  +---------------+
+     |                   |                                   |                   |
+     +-------------------+---------------+-------------------+-------------------+
+                                         |
+                                         v
+                  +----------------------------------------------+
+                  |  Interactive Animated Chat UI (Cyberpunk)   |
+                  +----------------------------------------------+
+```
+
+### Key Copilot Capabilities:
+
+1. **Direct Natural Language Domain Intelligence**:
+   - **Registration & Domain Age**: Ask *"when it registered"*, *"when was it created"*, *"domain age"*, or *"who is the registrar"*. The Copilot retrieves exact RDAP creation dates, domain age in days, accredited registrars, and calculates Newly Registered Domain (NRD) threat status (<30 day correlation with disposable phishing kits).
+   - **DNS Infrastructure & Routing**: Ask *"what is the ip"*, *"where is it hosted"*, or *"what are the nameservers"*. Retrieves authoritative A-record IPv4/IPv6 addresses, hosting providers, and authoritative NS records.
+   - **SSL/TLS Encryption & Ciphers**: Ask *"is ssl valid"*, *"who issued the certificate"*, or *"is the connection encrypted"*. Checks TLS validity, certificate authority (Let's Encrypt, DigiCert, Sectigo), and MitM downgrade risk.
+   - **Security Grade & Defensive Headers**: Ask *"what headers are missing"* or *"why did it receive Grade B"*. Breaches down missing controls (`CSP`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`) and their exploit potential.
+   - **Executive Dossiers**: Ask *"tell me about [domain]"* or *"summarize this site"* for a complete executive risk brief.
+
+2. **Developer Hackability & Vulnerability Auditing**:
+   - When developers ask *"Is my website safe?"* or *"Is it easily hackable?"*, the Copilot acts as a senior penetration tester:
+     - **Cross-Site Scripting (XSS)**: Analyzes absence of `Content-Security-Policy` and potential session token exfiltration.
+     - **Clickjacking & UI Redressing**: Explains `<iframe>` overlay attacks when `X-Frame-Options` or `frame-ancestors` are missing.
+     - **SSL Stripping & MitM**: Audits `Strict-Transport-Security` (HSTS) preload flags against untrusted Wi-Fi adversaries.
+     - **MIME Sniffing**: Inspects `X-Content-Type-Options: nosniff` against user-uploaded script execution.
+     - **Email Domain Spoofing**: Checks `DMARC` (`p=reject`) and `SPF` to stop CEO fraud and forged emails.
+
+3. **Step-by-Step Developer Remediation Blueprints**:
+   - Provides ready-to-deploy code configurations:
+     - **Nginx Reverse Proxy**: Production `/etc/nginx/conf.d/security.conf` with 7 essential defensive headers.
+     - **Node.js / Express**: Automated header hardening via `helmet()` and IP-based rate limiting via `express-rate-limit`.
+     - **Next.js**: Security header definitions for `next.config.js` or `middleware.ts`.
+     - **SQL Injection Immunization**: Parameterized query examples across Python DB-API, Prisma, and SQLAlchemy.
+     - **Cookie Hardening**: Proper deployment of `HttpOnly; Secure; SameSite=Strict; Path=/`.
+
+4. **Zero-Phantom Pre-Scan Guard**:
+   - The Copilot enforces a strict verification model: if no website URL has been scanned, it refuses to invent phantom reports or use placeholder domains (e.g. `"target website"`).
+   - Prompts the user to enter their URL in the Scanner tab or provides general production hardening templates clearly labeled as generic server configurations.
+
+5. **Employment & Internship Scam Sentinel**:
+   - Protects users against job scams by detecting upfront fee demands, freemail HR accounts (`@gmail.com`), fake cashier check equipment laundering, and informal chat-only interviews.
+
+---
+
 ## 🎛️ Complete Platform Feature Matrix
 
 ```
@@ -600,16 +660,56 @@ npm run dev -- --host 0.0.0.0 --port 5173
 
 ---
 
-## 🧩 Manifest V3 Chrome Extension Setup
+## 🧩 Manifest V3 Chrome Extension: Autonomous Background Shield
 
-The repository includes a production **Manifest V3 Chrome Extension** located in the `extension/` directory:
+The platform includes a production **Manifest V3 Chrome Extension** (`v2.1.0`) located in the `extension/` directory, engineered for continuous, real-time browsing protection:
 
-1. Open Google Chrome and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** using the toggle in the upper-right corner.
-3. Click **Load unpacked** in the upper-left corner.
-4. Select the `extension/` folder inside the `Cyberguard-AI` directory.
-5. The CyberGuard AI shield icon will appear in your Chrome toolbar.
-6. Click the extension on any active webpage to initiate a real-time security audit connecting directly to your local CyberGuard AI backend.
+```
++-----------------------------------------------------------------------------------+
+|               CYBERGUARD AI BROWSER DEFENSE LIFECYCLE (MANIFEST V3)               |
++-----------------------------------------------------------------------------------+
+ 1. User Navigates to Website (chrome.tabs.onUpdated)
+    │
+    ▼
+ 2. Background Service Worker (background.js) Intercepts Navigation
+    ├─ Sets Badge to "..." (Blue)
+    ├─ Queries Local Backend (:8000) or Autonomous Edge DoH Engine
+    ├─ Computes Threat Score, Security Grade, DNS/TLS Telemetry
+    └─ Caches Scan Result in chrome.storage.local (15-min TTL)
+    │
+    ▼
+ 3. Threat Assessment & Badge Update
+    ├─ BENIGN       ──> Badge "SAFE" (Green)
+    ├─ SUSPICIOUS   ──> Badge "WARN" (Orange)
+    └─ PHISHING     ──> Badge "ALERT" (Red) + Native Desktop Warning Notification!
+    │
+    ▼
+ 4. User Opens Extension Popup (popup.js)
+    └─ Instant Zero-Wait Render (0ms): Threat Index, Security Grade, Telemetry & Brief!
++-----------------------------------------------------------------------------------+
+```
+
+### Core Extension Features:
+1. **Automatic Background Scanning on Page Visit**:
+   - The extension service worker (`background.js`) runs continuously and audits websites the moment you visit them—**no manual clicking required**.
+2. **Real-Time Browser Toolbar Badges**:
+   - Visual status indicators (`SAFE`, `WARN`, `ALERT`) reflect the live threat level of the active tab.
+   - Automatically switches badges when toggling between browser tabs (`chrome.tabs.onActivated`).
+3. **Native Phishing Threat Desktop Alerts**:
+   - If a deceptive lookalike or credential harvesting portal is detected, Chrome automatically fires an OS-level notification warning you before you submit passwords.
+4. **Instant Zero-Wait Popup UI**:
+   - Retrieves pre-audited telemetry from local extension storage. When you click the shield icon, results appear **instantly** without waiting for network latency or showing loading placeholders.
+   - Includes a **🔄 Force Re-scan** button for manual audits on demand.
+5. **Autonomous Edge DNS Shield (Zero-Backend Mode)**:
+   - If your local Python backend is offline, the extension seamlessly switches to client-side Google DoH resolution and lexical entropy calculation, operating completely independently on any device.
+
+### How to Install in Google Chrome, Brave, or Edge:
+1. Open your browser and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** using the toggle in the top-right corner.
+3. Click **Load unpacked** in the top-left corner.
+4. Select the `extension/` folder inside the project root (`/Users/siddhartha/Desktop/aad/projects/cyberAI/extension`).
+5. Pin the **CyberGuard AI** shield icon to your browser toolbar!
+6. Alternatively, download the ready-to-use zip package directly from the **Extension** tab in the web application (`CyberGuard-AI-Chrome-Extension.zip`).
 
 ---
 
