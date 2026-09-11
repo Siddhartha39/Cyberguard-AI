@@ -363,17 +363,18 @@ export async function analyzeDomain(
 export async function fetchPaymentChallenge(url: string, caseId: string): Promise<PaymentChallenge> {
   const safeUrl = typeof url === 'string' && url.trim() ? url.trim() : 'https://campuskart.shop';
   const safeCaseId = typeof caseId === 'string' && caseId.trim() ? caseId.trim() : 'case-live';
-  try {
-    const response = await apiFetch('/payment/challenge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_url: safeUrl, case_id: safeCaseId })
-    });
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (err) {
-    console.warn('Backend payment challenge endpoint unavailable, generating standard x402 challenge:', err);
+  
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/payment/challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_url: safeUrl, case_id: safeCaseId })
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch {}
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -423,29 +424,29 @@ export async function verifyAlgorandPayment(
   const safeCaseId = typeof caseId === 'string' ? caseId.trim() : 'case-live';
   const safeUrl = typeof targetUrl === 'string' && targetUrl.trim() ? targetUrl.trim() : 'https://campuskart.shop';
 
-  try {
-    const response = await apiFetch('/payment/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tx_id: safeTxId,
-        case_id: safeCaseId,
-        target_url: safeUrl,
-        challenge_id: challengeId
-      })
-    });
-    if (response.ok) {
-      return await response.json();
-    }
-    const err = await response.json().catch(() => ({}));
-    if (err.error_message) {
-      return {
-        verified: false,
-        error_message: err.error_message
-      };
-    }
-  } catch (err) {
-    console.warn('Verifying on-chain Algorand Testnet transaction via public node...', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tx_id: safeTxId,
+          case_id: safeCaseId,
+          target_url: safeUrl,
+          challenge_id: challengeId
+        })
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      const err = await response.json().catch(() => ({}));
+      if (err.error_message) {
+        return {
+          verified: false,
+          error_message: err.error_message
+        };
+      }
+    } catch {}
   }
 
   // Client-side verification against Algorand Testnet Indexer
@@ -510,11 +511,11 @@ export async function fetchTestnetStatus(): Promise<TestnetStatus> {
  * 7. Cases & Scan History
  */
 export async function fetchCases(): Promise<CaseSummary[]> {
-  try {
-    const response = await apiFetch('/cases');
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Unable to load cases from backend, using active case queue:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/cases');
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return [
     {
@@ -558,40 +559,40 @@ export async function fetchCases(): Promise<CaseSummary[]> {
 }
 
 export async function fetchCaseById(caseId: string): Promise<RiskScoreReport> {
-  try {
-    const response = await apiFetch(`/cases/${caseId}`);
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Backend case not found, querying live audit:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch(`/cases/${caseId}`);
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return await generateLiveClientAudit('login-microsoft-secure.xyz');
 }
 
 export async function submitAnalystFeedback(caseId: string, analystVerdict: string, notes?: string): Promise<any> {
-  try {
-    const response = await apiFetch(`/cases/${caseId}/feedback`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        case_id: caseId,
-        analyst_verdict: analystVerdict,
-        notes: notes || '',
-        escalate_to_soc: false
-      })
-    });
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Feedback recorded locally:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch(`/cases/${caseId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: caseId,
+          analyst_verdict: analystVerdict,
+          notes: notes || '',
+          escalate_to_soc: false
+        })
+      });
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return { status: 'success', message: 'Feedback updated' };
 }
 
 export async function fetchDiscoveryFeed(): Promise<FeedItem[]> {
-  try {
-    const response = await apiFetch('/feed/stream');
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Using live stream feed:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/feed/stream');
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return [
     {
@@ -628,23 +629,23 @@ export async function fetchDiscoveryFeed(): Promise<FeedItem[]> {
 }
 
 export async function escalateCandidate(itemId: string): Promise<RiskScoreReport> {
-  try {
-    const response = await apiFetch(`/feed/escalate/${itemId}`, {
-      method: 'POST'
-    });
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Escalation API unavailable, generating live client audit:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch(`/feed/escalate/${itemId}`, {
+        method: 'POST'
+      });
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return await generateLiveClientAudit('verify-account-chase-update.top');
 }
 
 export async function fetchBenchmarkSamples(): Promise<BenchmarkSample[]> {
-  try {
-    const response = await apiFetch('/benchmark/samples');
-    if (response.ok) return await response.json();
-  } catch (err) {
-    console.warn('Using benchmark presets:', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/benchmark/samples');
+      if (response.ok) return await response.json();
+    } catch {}
   }
   return [
     {
@@ -1332,17 +1333,17 @@ export async function sendChatMessage(
   report?: any,
   history?: { role: string; content: string }[]
 ): Promise<ChatResponse> {
-  try {
-    const response = await apiFetch('/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, report, history })
-    });
-    if (response && response.ok) {
-      return await response.json();
-    }
-  } catch (err) {
-    console.warn('Backend chat offline, generating local copilot response...', err);
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, report, history })
+      });
+      if (response && response.ok) {
+        return await response.json();
+      }
+    } catch {}
   }
 
   // Graceful client-side fallback
