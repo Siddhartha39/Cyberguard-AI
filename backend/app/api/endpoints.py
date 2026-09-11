@@ -938,22 +938,56 @@ async def check_ip_reputation(req: IpReputationRequest):
         )
     
     geo_data = {}
+    is_valid = False
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             resp = await client.get(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,region,city,isp,org,as,proxy,hosting")
-            geo_data = resp.json()
+            if resp.status_code == 200:
+                geo_data = resp.json()
+                is_valid = geo_data.get("status") == "success"
     except Exception:
         pass
-        
-    is_valid = geo_data.get("status") == "success"
-    
-    reverse_dns = None
-    try:
-        reverse_dns = socket.getfqdn(ip)
-        if reverse_dns == ip:
+
+    # Resilient Secondary Fallback via ipwho.is (zero fake data)
+    if not is_valid:
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                resp = await client.get(f"https://ipwho.is/{ip}")
+                if resp.status_code == 200:
+                    iw = resp.json()
+                    if iw.get("success") is not False:
+                        is_valid = True
+                        conn = iw.get("connection", {}) if isinstance(iw.get("connection"), dict) else {}
+                        isp_name = conn.get("isp") or ""
+                        org_name = conn.get("org") or isp_name
+                        is_host = any(k in (isp_name + " " + org_name).lower() for k in ["cloud", "host", "amazon", "google", "microsoft", "datacenter", "ovh", "hetzner"])
+                        geo_data = {
+                            "country": iw.get("country"),
+                            "countryCode": iw.get("country_code"),
+                            "region": iw.get("region"),
+                            "city": iw.get("city"),
+                            "isp": isp_name,
+                            "org": org_name,
+                            "as": f"AS{conn.get('asn')}" if conn.get("asn") else None,
+                            "proxy": False,
+                            "hosting": is_host,
+                            "reverse": conn.get("domain")
+                        }
+        except Exception:
+            pass
+
+    reverse_dns = geo_data.get("reverse")
+    if not reverse_dns:
+        try:
+            def _resolve_ptr():
+                try:
+                    name, _, _ = socket.gethostbyaddr(ip)
+                    return name if name != ip else None
+                except Exception:
+                    return None
+            reverse_dns = await asyncio.wait_for(asyncio.to_thread(_resolve_ptr), timeout=1.5)
+        except Exception:
             reverse_dns = None
-    except Exception:
-        pass
 
     org = geo_data.get("org", "")
     is_tor = org and "tor" in org.lower()

@@ -39,58 +39,63 @@ export const IpReputationPage: React.FC<IpReputationPageProps> = ({ theme }) => 
     setData(null);
 
     try {
-      const res = await lookupIpReputation(cleanIp);
-      if (res && res.is_valid !== false) {
-        setData(res);
-        return;
-      }
-    } catch (e: any) {
-      console.warn('Backend IP lookup failed, querying authoritative IP telemetry registry:', e);
-    }
-
-    // 2. Query live public registry (Zero fake data)
-    try {
-      const liveRes = await fetch(`https://ipwho.is/${cleanIp}`);
-      if (liveRes.ok) {
-        const info = await liveRes.json();
-        if (info.success !== false) {
-          const isHosting = !!(
-            info.connection?.isp?.toLowerCase().includes('cloud') ||
-            info.connection?.isp?.toLowerCase().includes('host') ||
-            info.connection?.org?.toLowerCase().includes('amazon') ||
-            info.connection?.org?.toLowerCase().includes('google') ||
-            info.connection?.org?.toLowerCase().includes('microsoft')
-          );
-          setData({
-            ip: cleanIp,
-            is_valid: true,
-            country: info.country || 'Unknown',
-            country_code: info.country_code || 'UN',
-            region: info.region || 'Unknown',
-            city: info.city || 'Unknown',
-            isp: info.connection?.isp || 'Unknown ISP',
-            org: info.connection?.org || info.connection?.isp || 'Unknown Organization',
-            as_number: info.connection?.asn ? `AS${info.connection.asn}` : 'AS Unknown',
-            is_proxy: false,
-            is_hosting: isHosting,
-            is_tor: false,
-            abuse_score: isHosting ? 20 : 0,
-            risk_level: isHosting ? 'MEDIUM' : 'LOW',
-            blacklists: isHosting ? ['Datacenter/Hosting Provider'] : [],
-            reverse_dns: info.connection?.domain || null
-          });
-          return;
-        } else {
-          setErrorMsg(`IP Telemetry Registry: ${info.message || 'IP address not found or reserved for private use.'}`);
+      // 1. Query CyberGuard Core Backend
+      try {
+        const res = await lookupIpReputation(cleanIp);
+        if (res && res.is_valid !== false) {
+          setData(res);
           return;
         }
+      } catch (e: any) {
+        console.warn('Backend IP lookup failed, querying authoritative IP telemetry registry:', e);
       }
-    } catch (clientErr) {
-      console.warn('Direct IP geolocation query failed:', clientErr);
-    }
 
-    setErrorMsg(`Could not resolve live telemetry for IP ${cleanIp}. Please check network connectivity.`);
-    setLoading(false);
+      // 2. Query live public registry (Zero fake data)
+      try {
+        const liveRes = await fetch(`https://ipwho.is/${cleanIp}`);
+        if (liveRes.ok) {
+          const info = await liveRes.json();
+          if (info.success !== false) {
+            const isHosting = !!(
+              info.connection?.isp?.toLowerCase().includes('cloud') ||
+              info.connection?.isp?.toLowerCase().includes('host') ||
+              info.connection?.org?.toLowerCase().includes('amazon') ||
+              info.connection?.org?.toLowerCase().includes('google') ||
+              info.connection?.org?.toLowerCase().includes('microsoft') ||
+              info.connection?.isp?.toLowerCase().includes('datacenter')
+            );
+            setData({
+              ip: cleanIp,
+              is_valid: true,
+              country: info.country || 'Unknown',
+              country_code: info.country_code || 'UN',
+              region: info.region || 'Unknown',
+              city: info.city || 'Unknown',
+              isp: info.connection?.isp || 'Unknown ISP',
+              org: info.connection?.org || info.connection?.isp || 'Unknown Organization',
+              as_number: info.connection?.asn ? `AS${info.connection.asn}` : 'AS Unknown',
+              is_proxy: false,
+              is_hosting: isHosting,
+              is_tor: false,
+              abuse_score: isHosting ? 20 : 0,
+              risk_level: isHosting ? 'MEDIUM' : 'LOW',
+              blacklists: isHosting ? ['Datacenter/Hosting Provider'] : [],
+              reverse_dns: info.connection?.domain || null
+            });
+            return;
+          } else {
+            setErrorMsg(`IP Telemetry Registry: ${info.message || 'IP address not found or reserved for private use.'}`);
+            return;
+          }
+        }
+      } catch (clientErr) {
+        console.warn('Direct IP geolocation query failed:', clientErr);
+      }
+
+      setErrorMsg(`Could not resolve live telemetry for IP ${cleanIp}. Please check network connectivity.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getRiskColor = (level?: string) => {
