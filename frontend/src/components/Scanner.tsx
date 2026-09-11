@@ -12,7 +12,7 @@ interface ScannerProps {
 
 export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSamples }) => {
   const [url, setUrl] = useState('');
-  const [scanMode, setScanMode] = useState<'free' | 'deep'>('deep');
+  const [scanMode, setScanMode] = useState<'free' | 'deep'>('free');
   const [forceRefresh, setForceRefresh] = useState(false);
   const [selectedSample, setSelectedSample] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -204,58 +204,27 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
             </motion.button>
           </div>
 
-          {/* Options & Scan Mode Selector */}
+          {/* Options & Scan Status */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                type="button"
-                onClick={() => setScanMode('deep')}
+              <div
                 style={{
-                  background: scanMode === 'deep' ? 'rgba(0, 240, 255, 0.16)' : 'transparent',
-                  border: scanMode === 'deep' ? '1px solid var(--accent-cyan)' : '1px solid var(--border-color)',
+                  background: 'rgba(0, 240, 255, 0.12)',
+                  border: '1px solid var(--accent-cyan)',
                   borderRadius: '10px',
-                  padding: '7px 14px',
+                  padding: '6px 12px',
                   fontSize: '0.8rem',
                   fontWeight: 800,
-                  color: scanMode === 'deep' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
+                  color: 'var(--accent-cyan)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  boxShadow: scanMode === 'deep' ? '0 0 14px rgba(0, 240, 255, 0.25)' : 'none',
-                  transition: 'all 0.2s'
+                  boxShadow: '0 0 12px rgba(0, 240, 255, 0.2)'
                 }}
               >
-                <Shield size={15} />
-                <span>Premium Deep Audit (x402)</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                type="button"
-                onClick={() => setScanMode('free')}
-                style={{
-                  background: scanMode === 'free' ? 'rgba(0, 240, 255, 0.16)' : 'transparent',
-                  border: scanMode === 'free' ? '1px solid var(--accent-cyan)' : '1px solid var(--border-color)',
-                  borderRadius: '10px',
-                  padding: '7px 14px',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  color: scanMode === 'free' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: scanMode === 'free' ? '0 0 14px rgba(0, 240, 255, 0.25)' : 'none',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <Zap size={15} />
+                <Zap size={14} />
                 <span>Free Quick Scan (Triage)</span>
-              </motion.button>
+              </div>
             </div>
 
             {/* Benchmark Samples Selector */}
