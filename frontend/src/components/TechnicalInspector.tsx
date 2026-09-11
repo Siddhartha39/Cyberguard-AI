@@ -9,7 +9,7 @@ interface TechnicalInspectorProps {
 
 export const TechnicalInspector: React.FC<TechnicalInspectorProps> = ({ report, onOpenAbout }) => {
   const [activeTab, setActiveTab] = useState<'screenshot' | 'dns_tls' | 'dom_forms' | 'raw_json'>('screenshot');
-  const [viewMode, setViewMode] = useState<'snapshot' | 'live_iframe'>('live_iframe');
+  const [viewMode, setViewMode] = useState<'snapshot' | 'live_iframe'>('snapshot');
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -298,18 +298,32 @@ export const TechnicalInspector: React.FC<TechnicalInspectorProps> = ({ report, 
                       )}
                     </>
                   ) : (
-                    /* Fallback to Live Iframe if Snapshot CDN rate limits */
-                    <iframe
-                      src={report.target_url}
-                      title={`Fallback Sandbox of ${report.canonical_domain}`}
-                      sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-                      style={{
-                        width: '100%',
-                        height: '480px',
-                        border: 'none',
-                        background: '#ffffff'
-                      }}
-                    />
+                    /* Secure Telemetry Placeholder (Requires user action to launch live sandbox) */
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '12px', textAlign: 'center' }}>
+                      <Globe size={38} color="#38bdf8" />
+                      <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.9rem' }}>
+                        {report.canonical_domain}
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', maxWidth: '340px' }}>
+                        DNS, TLS & defensive header telemetry analyzed. Click below to inspect in an isolated live sandbox.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('live_iframe')}
+                        style={{
+                          background: 'rgba(6, 182, 212, 0.15)',
+                          border: '1px solid #38bdf8',
+                          color: '#38bdf8',
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '0.78rem',
+                          fontWeight: 700
+                        }}
+                      >
+                        Launch Isolated Sandbox
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

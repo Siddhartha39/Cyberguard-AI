@@ -227,7 +227,11 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
         }
       }
     } catch (err: any) {
-      console.warn('Pera connection error or cancelled by user:', err);
+      if (err?.data?.type === 'CONNECT_MODAL_CLOSED' || err?.message?.includes('closed by user') || err?.message?.includes('cancelled')) {
+        // User deliberately closed or cancelled the modal - normal UX
+      } else {
+        console.info('Pera connection status:', err?.message || err);
+      }
     } finally {
       setIsConnecting(false);
     }

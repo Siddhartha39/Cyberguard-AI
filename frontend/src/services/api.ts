@@ -233,77 +233,51 @@ export async function requestPremiumScan(url?: string, paymentTxId?: string): Pr
   const safeTxId = typeof paymentTxId === 'string' && paymentTxId.trim() ? paymentTxId.trim() : undefined;
   const normalizedKey = safeUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 
-  try {
-    const response = await apiFetch('/premium-scan', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(safeTxId ? { 'X-Payment': safeTxId } : {})
-      },
-      body: JSON.stringify({
-        url: safeUrl,
-        deep_analysis: true,
-        payment_tx_id: safeTxId
-      })
-    });
+  if (isBackendConfigured()) {
+    try {
+      const response = await apiFetch('/premium-scan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(safeTxId ? { 'X-Payment': safeTxId } : {})
+        },
+        body: JSON.stringify({
+          url: safeUrl,
+          deep_analysis: true,
+          payment_tx_id: safeTxId
+        })
+      });
 
-    if (response.status === 402) {
-      const errData = await response.json().catch(() => ({}));
-      return {
-        isPaid: false,
-        challenge: errData.challenge,
-        errorMessage: errData.detail || errData.message || 'Payment Required'
-      };
-    }
-
-    if (response.ok) {
-      const data: RiskScoreReport = await response.json();
-      auditCache.set(normalizedKey, data);
-      return { isPaid: true, report: data };
-    }
-
-    // If server is 404 (e.g. Vercel static hosting) or 502 (proxy down):
-    if (safeTxId) {
-      // Verify the payment actually landed on-chain before generating report
-      const onChainResult = await verifyTxOnChainDirectly(safeTxId);
-      if (onChainResult.verified) {
-        const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
-        auditCache.set(normalizedKey, clientReport);
-        return { isPaid: true, report: clientReport };
+      if (response.status === 402) {
+        const errData = await response.json().catch(() => ({}));
+        return {
+          isPaid: false,
+          challenge: errData.challenge,
+          errorMessage: errData.detail || errData.message || 'Payment Required'
+        };
       }
-      return { isPaid: false, errorMessage: 'Payment transaction could not be verified on Algorand Testnet. It may still be pending — please wait a few seconds and try again.' };
-    }
 
-    if (response.status === 404 || response.status === 502) {
-      // Generate x402 payment challenge for client-side paywall
-      const challenge = await fetchPaymentChallenge(safeUrl, `case-${Math.random().toString(36).slice(2, 10)}`);
-      return {
-        isPaid: false,
-        challenge,
-        errorMessage: 'Payment Required'
-      };
-    }
-
-    const errJson = await response.json().catch(() => ({}));
-    return {
-      isPaid: false,
-      errorMessage: errJson.detail || errJson.message || `Server responded with status ${response.status}`
-    };
-  } catch (err: any) {
-    console.warn('API request failed:', err);
-    if (safeTxId) {
-      // Verify on-chain before generating client-side report
-      const onChainResult = await verifyTxOnChainDirectly(safeTxId);
-      if (onChainResult.verified) {
-        const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
-        auditCache.set(normalizedKey, clientReport);
-        return { isPaid: true, report: clientReport };
+      if (response.ok) {
+        const data: RiskScoreReport = await response.json();
+        auditCache.set(normalizedKey, data);
+        return { isPaid: true, report: data };
       }
-      return { isPaid: false, errorMessage: 'Payment could not be verified on Algorand Testnet.' };
-    }
-    const challenge = await fetchPaymentChallenge(safeUrl, `case-${Math.random().toString(36).slice(2, 10)}`);
-    return { isPaid: false, challenge, errorMessage: 'Payment Required' };
+    } catch {}
   }
+
+  // Client-side execution: verify transaction on-chain if provided
+  if (safeTxId) {
+    const onChainResult = await verifyTxOnChainDirectly(safeTxId);
+    if (onChainResult.verified) {
+      const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
+      auditCache.set(normalizedKey, clientReport);
+      return { isPaid: true, report: clientReport };
+    }
+    return { isPaid: false, errorMessage: 'Payment transaction could not be verified on Algorand Testnet.' };
+  }
+
+  const challenge = await fetchPaymentChallenge(safeUrl, `case-${Math.random().toString(36).slice(2, 10)}`);
+  return { isPaid: false, challenge, errorMessage: 'Payment Required' };
 }
 
 /**
@@ -323,33 +297,33 @@ export async function analyzeDomain(
     return auditCache.get(normalizedKey)!;
   }
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+  if (isBackendConfigured()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const response = await apiFetch('/premium-scan', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(paymentTxId ? { 'X-Payment': paymentTxId } : {})
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        url: safeUrl,
-        deep_analysis: deepAnalysis,
-        force_refresh: forceRefresh,
-        payment_tx_id: safeTxId
-      })
-    });
-    clearTimeout(timeoutId);
+      const response = await apiFetch('/premium-scan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(paymentTxId ? { 'X-Payment': paymentTxId } : {})
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          url: safeUrl,
+          deep_analysis: deepAnalysis,
+          force_refresh: forceRefresh,
+          payment_tx_id: safeTxId
+        })
+      });
+      clearTimeout(timeoutId);
 
-    if (response.ok) {
-      const data: RiskScoreReport = await response.json();
-      auditCache.set(normalizedKey, data);
-      return data;
-    }
-  } catch (err) {
-    console.info('Querying authoritative telemetry engine...', err);
+      if (response.ok) {
+        const data: RiskScoreReport = await response.json();
+        auditCache.set(normalizedKey, data);
+        return data;
+      }
+    } catch {}
   }
 
   const clientReport = await generateLiveClientAudit(safeUrl, safeTxId);
