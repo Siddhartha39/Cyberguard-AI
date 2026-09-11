@@ -63,25 +63,31 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
         });
         peraWalletRef.current = pera;
 
-        // Reconnect existing active session
+        // Only attempt reconnect if a saved active session exists in localStorage
+        // This avoids Chrome logging "Failed to launch 'perawallet-wc://' because scheme does not have registered handler"
+        let wasActiveSession = false;
         try {
-          const accounts = await pera.reconnectSession();
-          if (accounts && accounts.length > 0) {
-            const mainAddr = accounts[0];
-            if (mainAddr && mainAddr.length === 58) {
-              persistState(true, mainAddr, 0, 0, 'pera');
-              fetchOnChainBalances(mainAddr);
-            }
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            wasActiveSession = Boolean(parsed.isConnected && parsed.walletType === 'pera' && parsed.address?.length === 58);
           }
-        } catch (err) {
-          console.info('No active Pera session to reconnect:', err);
-          // Kill stale session and create a fresh instance
-          try { await pera.disconnect(); } catch {}
-          const freshPera = new PeraWalletConnect({
-            chainId: 416002,
-            shouldShowSignTxnToast: true
-          });
-          peraWalletRef.current = freshPera;
+        } catch {}
+
+        if (wasActiveSession) {
+          try {
+            const accounts = await pera.reconnectSession();
+            if (accounts && accounts.length > 0) {
+              const mainAddr = accounts[0];
+              if (mainAddr && mainAddr.length === 58) {
+                persistState(true, mainAddr, 0, 0, 'pera');
+                fetchOnChainBalances(mainAddr);
+              }
+            }
+          } catch (err) {
+            // Stale session cleared safely
+            try { await pera.disconnect(); } catch {}
+          }
         }
 
         // Handle disconnect event from mobile app
@@ -145,22 +151,17 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
   const fetchOnChainBalances = async (addr: string) => {
     if (!addr || addr.length !== 58) return;
     try {
-      // 1. Try Backend Proxy first
-      const proxyResp = await safeApiFetch(`/payment/account-balance/${addr}`).catch(() => null);
-      if (proxyResp && proxyResp.ok) {
-        const data = await proxyResp.json();
-        setBalanceAlgo(data.algo || 0.0);
-        setBalanceUsdc(data.usdc || 0.0);
-        return;
-      }
-      // 2. Direct Node fetch fallback (Nodely + AlgoNode)
+      // 1. Direct Public Algorand Testnet Node fetch (Algonode + Nodely - Fast, direct, zero 404 proxy calls)
       const nodes = [
-        `https://testnet-api.4160.nodely.dev/v2/accounts/${addr}`,
-        `https://testnet-api.algonode.cloud/v2/accounts/${addr}`
+        `https://testnet-api.algonode.cloud/v2/accounts/${addr}`,
+        `https://testnet-api.4160.nodely.dev/v2/accounts/${addr}`
       ];
       for (const nodeUrl of nodes) {
         try {
-          const resp = await fetch(nodeUrl).catch(() => null);
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 3500);
+          const resp = await fetch(nodeUrl, { signal: controller.signal }).catch(() => null);
+          clearTimeout(timer);
           if (resp && resp.ok) {
             const accountInfo = await resp.json();
             const algo = (accountInfo.amount || 0) / 1_000_000;
@@ -176,6 +177,17 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
             return;
           }
         } catch {}
+      }
+
+      // 2. Fallback to backend proxy only if on localhost or configured
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        const proxyResp = await safeApiFetch(`/payment/account-balance/${addr}`).catch(() => null);
+        if (proxyResp && proxyResp.ok) {
+          const data = await proxyResp.json();
+          setBalanceAlgo(data.algo || 0.0);
+          setBalanceUsdc(data.usdc || 0.0);
+          return;
+        }
       }
     } catch (e) {
       console.info('Algorand account balance query:', e);
@@ -319,17 +331,19 @@ export const AlgorandWalletProvider: React.FC<{ children: React.ReactNode }> = (
     const recipientAddr = (recipient && recipient.length === 58) ? recipient : DEFAULT_TESTNET_RECEIVER;
     const amountMicroAlgos = Math.round(amountAlgo * 1_000_000);
 
-    // Fetch and normalize suggested parameters from Algorand Testnet node
+    // Fetch and normalize suggested parameters directly from Algorand Testnet node
     let rawParams: any = null;
     try {
-      const pResp = await safeApiFetch('/payment/params').catch(() => null);
-      if (pResp && pResp.ok) {
-        rawParams = await pResp.json();
-      } else {
-        rawParams = await algodClientRef.current.getTransactionParams().do();
-      }
+      rawParams = await algodClientRef.current.getTransactionParams().do();
     } catch (e) {
-      console.warn('Could not fetch live suggestedParams, using Testnet baseline:', e);
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        try {
+          const pResp = await safeApiFetch('/payment/params').catch(() => null);
+          if (pResp && pResp.ok) {
+            rawParams = await pResp.json();
+          }
+        } catch {}
+      }
     }
 
     const firstValid = rawParams?.firstValid ?? rawParams?.firstRound ?? rawParams?.['last-round'] ?? 66998000n;

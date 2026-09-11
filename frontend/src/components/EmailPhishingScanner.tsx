@@ -21,7 +21,7 @@ import {
   HelpCircle,
   Lock
 } from 'lucide-react';
-import { scanBulkUrls, analyzeEmailScam } from '../services/api';
+import { scanBulkUrls, analyzeEmailScam, queryDns } from '../services/api';
 import type { EmailScamAnalysisResponse, RedFlagItem } from '../services/api';
 
 interface EmailPhishingScannerProps {
@@ -352,14 +352,13 @@ export const EmailPhishingScanner: React.FC<EmailPhishingScannerProps> = ({ them
           setUrls(updated);
         }
       } catch (err: any) {
-        console.warn('Backend bulk scan unavailable, querying live Google DNS telemetry:', err);
-        // Live DNS audit with Google Public DNS (Zero Fake Data)
+        console.warn('Backend bulk scan unavailable, querying live DNS telemetry:', err);
+        // Live DNS audit with resilient DoH (Zero Fake Data, immune to QUIC timeout)
         const updated = await Promise.all(initialUrls.map(async (item) => {
           let hasDns = false;
           try {
-            const dnsRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(item.domain)}&type=A`);
-            if (dnsRes.ok) {
-              const dnsJson = await dnsRes.json();
+            const dnsJson = await queryDns(item.domain, 'A');
+            if (dnsJson) {
               hasDns = Array.isArray(dnsJson.Answer) && dnsJson.Answer.length > 0;
             }
           } catch (dnsErr) {
