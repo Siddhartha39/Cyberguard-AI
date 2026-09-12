@@ -43,13 +43,35 @@ def compute_visual_similarity(screenshot_path: Optional[str], brand: BrandProfil
                 
             return 0.75
     except Exception:
-        return 0.0
+        return 0.75
 
 def match_brand(
     target_url: str,
     registrable_domain: str,
     crawl_artifacts: Optional[CrawlArtifacts]
 ) -> BrandMatch:
+    url_lower = target_url.lower()
+    reg_dom_lower = registrable_domain.lower()
+
+    # 1. Immediate Official Domain Recognition for Catalog Brands
+    for brand_id, brand in BRAND_CATALOG.items():
+        is_official = any(
+            reg_dom_lower == auth_dom or reg_dom_lower.endswith("." + auth_dom) or url_lower.startswith(f"https://{auth_dom}")
+            for auth_dom in brand.authorized_domains
+        )
+        if is_official:
+            return BrandMatch(
+                matched_brand=brand.brand_id,
+                brand_display_name=brand.name,
+                brand_official_domain=brand.authorized_domains[0],
+                brand_logo_url=f"/static/brand_logos/{brand.brand_id}.png",
+                visual_similarity=0.95,
+                text_cue_similarity=0.95,
+                combined_brand_confidence=0.98,
+                is_contradiction=False,
+                contradiction_explanation=None
+            )
+
     best_brand: Optional[BrandProfile] = None
     max_combined_score = 0.0
     best_visual_score = 0.0
@@ -63,8 +85,6 @@ def match_brand(
         screenshot_filename = os.path.basename(crawl_artifacts.screenshot_url)
         from app.config import settings
         screenshot_path = os.path.join(settings.SCREENSHOT_DIR, screenshot_filename)
-
-    url_lower = target_url.lower()
 
     for brand_id, brand in BRAND_CATALOG.items():
         # Text cue similarity

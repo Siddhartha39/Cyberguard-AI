@@ -187,6 +187,15 @@ async function performScan(url, hostname, isHttps) {
     data = await runAutonomousEdgeAnalysis(url, hostname, isHttps);
   }
 
+  // Normalize low risk floor for verified benign domains
+  if (data && data.verdict === 'BENIGN') {
+    if ((data.overall_risk_score !== undefined && data.overall_risk_score <= 10) ||
+        (data.basic_risk_score !== undefined && data.basic_risk_score <= 10)) {
+      data.overall_risk_score = 0;
+      data.basic_risk_score = 0;
+    }
+  }
+
   // Store in memory & persistent storage
   const cacheObj = { data, timestamp: Date.now() };
   inMemoryCache.set(hostname, cacheObj);

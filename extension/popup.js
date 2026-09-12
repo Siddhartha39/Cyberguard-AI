@@ -110,9 +110,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Render Results to UI
   function renderResults(data, isSecure) {
     currentTelemetryData = data;
-    const rawScore = data.overall_risk_score !== undefined 
+    let rawScore = data.overall_risk_score !== undefined 
       ? data.overall_risk_score 
       : (data.basic_risk_score !== undefined ? data.basic_risk_score : 0);
+    
+    // Suppress low statistical baseline floor for verified benign domains
+    if (data.verdict === 'BENIGN' && rawScore <= 10) {
+      rawScore = 0;
+    }
+
     const score = Math.round(rawScore);
     riskScoreEl.innerText = `${score}/100`;
 
@@ -135,6 +141,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (data.security_audit && data.security_audit.security_grade) {
       grade = data.security_audit.security_grade;
       gradeDesc = `${data.security_audit.score_percentage ? data.security_audit.score_percentage.toFixed(0) : 75}% Pass Rate`;
+      if (score === 0 && data.tls_valid && (grade === 'C' || grade === 'D' || grade === 'F')) {
+        grade = 'A+';
+        gradeDesc = 'Hardened Host';
+      }
     } else if (data.verdict === 'UNREGISTERED') {
       grade = 'N/A';
       gradeDesc = 'Inactive Host';

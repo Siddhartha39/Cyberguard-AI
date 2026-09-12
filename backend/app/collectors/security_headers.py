@@ -195,19 +195,26 @@ async def audit_security_headers_and_dns(url: str, txt_records: List[str], is_es
             is_email_spoofable = True
 
     # Calculate Grade
-    passes = sum(1 for f in findings if f.status == "PASS")
+    # PASS = 1.0, WARNING = 0.75 (advisory / non-blocking), FAIL = 0.0
+    points = sum(1.0 if f.status == "PASS" else 0.75 if f.status == "WARNING" else 0.0 for f in findings)
     total = len(findings)
-    score_percentage = round((passes / total) * 100, 1)
+    score_percentage = round((points / total) * 100, 1)
 
-    if score_percentage >= 85:
+    has_core_perimeter = has_csp and has_hsts and not is_clickjackable
+    has_any_fail = any(f.status == "FAIL" for f in findings)
+
+    if score_percentage >= 85 or (has_core_perimeter and not has_any_fail):
         grade = "A+"
-        hacker_summary = "Hardened Defense Posture: Modern security headers and anti-spoofing policies are well-configured."
-    elif score_percentage >= 70:
+        hacker_summary = "Hardened Defense Posture: Modern browser isolation headers (CSP, HSTS, Anti-Clickjacking) and core defenses are well-configured."
+    elif score_percentage >= 70 or has_core_perimeter:
+        grade = "A"
+        hacker_summary = "Strong Defense Posture: Core perimeter headers active; minor advisory hardening recommended."
+    elif score_percentage >= 55 and not has_any_fail:
         grade = "B"
-        hacker_summary = "Moderate Security Posture: Basic protections active, but missing critical modern headers (like CSP or strict HSTS)."
-    elif score_percentage >= 45:
+        hacker_summary = "Moderate Security Posture: Basic protections active; no critical vulnerabilities detected."
+    elif score_percentage >= 40:
         grade = "C"
-        hacker_summary = "Elevated Exploitability: Lacks fundamental browser isolation headers and email authentication. Vulnerable to Clickjacking or XSS injection."
+        hacker_summary = "Elevated Exploitability: Missing critical perimeter headers or DNS email authentication."
     else:
         grade = "F"
         hacker_summary = "Critical Security Deficit: Missing essential security headers and DNS email authentication. Easily exploitable via Clickjacking and Domain Spoofing."

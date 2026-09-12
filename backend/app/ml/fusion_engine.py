@@ -207,14 +207,14 @@ def calculate_multi_signal_fusion(
         elif has_contradiction and domain_intel.is_newly_registered:
             raw_score = max(raw_score, 82.0)
         elif not has_contradiction and not domain_intel.is_newly_registered:
-            # If it's a verified authentic brand on its official domain (e.g. YouTube, Google, Apple)
+            # If it's a verified authentic brand on its official domain (e.g. Google, Apple, Microsoft, PayPal)
             if brand_match.matched_brand:
                 raw_score = 0.0
             # If all threat vectors are clean and baseline noise is low
+            elif score_lexical < 0.15 and not has_contradiction:
+                raw_score = 0.0
             elif raw_score < 4.0 and score_content == 0.0 and score_visual == 0.0:
                 raw_score = 0.0
-            elif score_lexical < 0.15:
-                raw_score = min(raw_score, 10.0)
 
         overall_risk_score = round(max(0.0, min(100.0, raw_score)), 1)
 
