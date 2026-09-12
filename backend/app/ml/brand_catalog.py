@@ -44,9 +44,9 @@ BRAND_CATALOG: Dict[str, BrandProfile] = {
     ),
     "google": BrandProfile(
         brand_id="google",
-        name="Google Workspace / Gmail",
-        authorized_domains=["google.com", "gmail.com", "google.co.in", "google.co.uk", "accounts.google.com", "gstatic.com", "youtube.com"],
-        keywords=["google workspace", "google account", "gmail", "google drive", "google security"],
+        name="Google Workspace / Meet / Gmail",
+        authorized_domains=["google.com", "gmail.com", "google.co.in", "google.co.uk", "accounts.google.com", "meet.google.com", "gstatic.com", "youtube.com"],
+        keywords=["google", "google meet", "google workspace", "google account", "gmail", "google drive", "google security"],
         primary_colors=["#4285F4", "#EA4335", "#FBBC05", "#34A853"]
     ),
     "apple": BrandProfile(
