@@ -31,17 +31,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load configured backend URL and frontend URL
   let backendUrl = 'http://localhost:8000';
-  let frontendUrl = 'http://localhost:5173';
+  let frontendUrl = 'https://cyberguard-ai-one.vercel.app';
   try {
     const stored = await chrome.storage.local.get(['cyberguard_backend_url', 'cyberguard_frontend_url']);
     if (stored && stored.cyberguard_backend_url) {
       backendUrl = stored.cyberguard_backend_url;
       backendUrlInput.value = backendUrl;
     }
-    if (stored && stored.cyberguard_frontend_url) {
+    if (stored && stored.cyberguard_frontend_url && !stored.cyberguard_frontend_url.includes('localhost:5173')) {
       frontendUrl = stored.cyberguard_frontend_url;
-      if (frontendUrlInput) frontendUrlInput.value = frontendUrl;
+    } else {
+      frontendUrl = 'https://cyberguard-ai-one.vercel.app';
+      await chrome.storage.local.set({ cyberguard_frontend_url: frontendUrl });
     }
+    if (frontendUrlInput) frontendUrlInput.value = frontendUrl;
   } catch (e) {}
 
   // Settings toggle
