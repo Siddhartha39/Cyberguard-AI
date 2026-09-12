@@ -140,7 +140,7 @@ export function App() {
       setActiveTab(tabParam);
     }
     if (scanUrl) {
-      handleScan(scanUrl, true, false);
+      handleScan(scanUrl, false, false);
     }
   }, []);
 
@@ -159,7 +159,7 @@ export function App() {
     }
   };
 
-  const handleScan = async (url: string, deep: boolean = true, forceRefresh: boolean = false) => {
+  const handleScan = async (url: string, deep: boolean = false, forceRefresh: boolean = false) => {
     const cleanUrl = url.trim();
     if (!cleanUrl) return;
 
@@ -169,7 +169,7 @@ export function App() {
     setReport(null);
     setFreeScanResult(null);
     setActiveTab('scanner');
-    setAgentIsPaid(deep);
+    setAgentIsPaid(deep && agentIsPaid);
 
     // Initialize pipeline steps
     const steps: PipelineStep[] = DEFAULT_PIPELINE_STEPS.map((s) => ({ ...s, status: 'idle' }));
@@ -201,6 +201,14 @@ export function App() {
         // Stage 2 (SSL/TLS & Posture)
         await sleep(650);
         steps[2].status = 'completed';
+
+        // Mark remaining stages as locked behind x402 payment
+        steps[3].status = 'locked';
+        steps[3].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
+        steps[4].status = 'locked';
+        steps[4].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
+        steps[5].status = 'locked';
+        steps[5].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
         setPipelineSteps([...steps]);
 
         const freeRes = await freeScanPromise;
@@ -389,7 +397,7 @@ export function App() {
             onLaunchScanner={handleLaunchScanner}
             onOpenExtension={() => setActiveTab('extension')}
             onOpenDiscovery={() => setActiveTab('discovery')}
-            onScanUrl={(url) => handleScan(url, true, false)}
+            onScanUrl={(url) => handleScan(url, false, false)}
           />
         )}
 
@@ -411,7 +419,11 @@ export function App() {
 
             {/* Pipeline Stepper (Active during scan or when target URL is entered) */}
             {!isLoading && currentScanningUrl && (
-              <PipelineStepper steps={pipelineSteps} currentStepIndex={currentAgentStage} />
+              <PipelineStepper
+                steps={pipelineSteps}
+                currentStepIndex={currentAgentStage}
+                onUnlock={handleOpenPaymentForFreeScan}
+              />
             )}
 
             {/* Agentic Workflow HUD */}
@@ -615,7 +627,7 @@ export function App() {
         {/* New Pages */}
         {activeTab === 'email-scanner' && <EmailPhishingScanner theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}
         {activeTab === 'bulk-scanner' && <BulkScanner theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}
-        {activeTab === 'threat-dashboard' && <ThreatDashboard theme={theme} cases={cases} feed={feed} onScanUrl={(url) => handleScan(url, true, false)} />}
+        {activeTab === 'threat-dashboard' && <ThreatDashboard theme={theme} cases={cases} feed={feed} onScanUrl={(url) => handleScan(url, false, false)} />}
         {activeTab === 'password-checker' && <PasswordChecker theme={theme} />}
         {activeTab === 'ip-reputation' && <IpReputationPage theme={theme} />}
         {activeTab === 'watchlist' && <WatchlistPage theme={theme} onScanUrl={(url) => handleScan(url, false, false)} />}

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Shield, ShieldAlert, ShieldCheck, Globe, Lock, Terminal, Database, CheckCircle2, XCircle, AlertTriangle, Coins, ArrowRight, Zap, Eye, Cpu, HelpCircle } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, Globe, Lock, Terminal, Database, CheckCircle2, XCircle, AlertTriangle, Coins, ArrowRight, Zap, Eye, Cpu, HelpCircle, Wallet } from 'lucide-react';
 import type { FreeScanResult } from '../types';
+import { useAlgorandWallet } from '../context/AlgorandWalletContext';
 
 interface FreeScanDetailedCardProps {
   result: FreeScanResult;
@@ -13,6 +14,7 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
   onUnlockDeepAudit,
   onOpenAbout
 }) => {
+  const { isConnected } = useAlgorandWallet();
   const isUnregistered = result.verdict === 'UNREGISTERED' || result.is_registered === false;
   const isPhishing = result.verdict === 'PHISHING';
   const isSuspicious = result.verdict === 'SUSPICIOUS';
@@ -44,12 +46,14 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
             <button
               onClick={onUnlockDeepAudit}
               style={{
-                background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                color: '#ffffff',
+                background: isConnected 
+                  ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
+                  : 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
+                color: isConnected ? '#ffffff' : '#070a10',
                 border: 'none',
                 borderRadius: '10px',
                 padding: '12px 22px',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -58,8 +62,12 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
                 boxShadow: '0 0 20px rgba(2, 132, 199, 0.5)'
               }}
             >
-              <Coins size={16} />
-              <span>Unlock Premium Deep Audit (0.1 ALGO via x402)</span>
+              {isConnected ? <Coins size={16} /> : <Wallet size={16} />}
+              <span>
+                {isConnected
+                  ? 'Unlock Premium Deep Audit (0.1 ALGO via x402)'
+                  : 'Connect Wallet to Unlock Deep Audit (0.1 ALGO)'}
+              </span>
               <ArrowRight size={15} />
             </button>
 
@@ -319,8 +327,10 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
           <button
             onClick={onUnlockDeepAudit}
             style={{
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              color: '#ffffff',
+              background: isConnected
+                ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
+                : 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
+              color: isConnected ? '#ffffff' : '#070a10',
               border: 'none',
               borderRadius: '10px',
               padding: '14px 28px',
@@ -333,8 +343,12 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
               boxShadow: '0 0 25px rgba(2, 132, 199, 0.6)'
             }}
           >
-            <Coins size={18} />
-            <span>Unlock via x402 (0.1 ALGO)</span>
+            {isConnected ? <Coins size={18} /> : <Wallet size={18} />}
+            <span>
+              {isConnected
+                ? 'Unlock via x402 (0.1 ALGO)'
+                : 'Connect Algorand Wallet to Unlock (0.1 ALGO)'}
+            </span>
             <ArrowRight size={16} />
           </button>
         </div>

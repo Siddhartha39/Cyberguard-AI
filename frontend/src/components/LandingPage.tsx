@@ -503,6 +503,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </motion.button>
             ))}
           </div>
+
+          {/* Scan Protocol Notice */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <Coins size={12} color="var(--accent-cyan)" />
+            <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              Free Initial Triage • Full Headless Sandbox, pHash Vision &amp; Attack-Chain unlocked with <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>0.1 ALGO (x402)</span>
+            </span>
+          </div>
         </motion.div>
 
         {/* Hero CTAs */}
