@@ -20,10 +20,31 @@ SECURITY_KEYWORDS = [
 ]
 
 TARGET_BRAND_KEYWORDS = [
-    "paypal", "apple", "microsoft", "google", "amazon", "netflix",
+    "paypal", "apple", "icloud", "microsoft", "google", "amazon", "netflix",
     "chase", "wellsfargo", "bankofamerica", "binance", "coinbase",
-    "metamask", "steam", "facebook", "instagram", "whatsapp", "dropbox"
+    "metamask", "steam", "facebook", "instagram", "whatsapp", "dropbox",
+    "outlook", "office365"
 ]
+
+BRAND_LOOKALIKES_MAP = {
+    "icloud": ["icloud.com", "apple.com"],
+    "apple": ["apple.com", "icloud.com"],
+    "paypal": ["paypal.com"],
+    "microsoft": ["microsoft.com", "live.com", "office.com", "outlook.com", "office365.com", "msn.com"],
+    "netflix": ["netflix.com"],
+    "amazon": ["amazon.com", "amazon.in", "amazon.co.uk", "amazon.de"],
+    "chase": ["chase.com"],
+    "wellsfargo": ["wellsfargo.com"],
+    "bankofamerica": ["bankofamerica.com"],
+    "binance": ["binance.com"],
+    "coinbase": ["coinbase.com"],
+    "metamask": ["metamask.io"],
+    "steam": ["steampowered.com", "steamcommunity.com"],
+    "whatsapp": ["whatsapp.com"],
+    "instagram": ["instagram.com"],
+    "facebook": ["facebook.com", "fb.com"],
+    "dropbox": ["dropbox.com"]
+}
 
 def calculate_shannon_entropy(text: str) -> float:
     if not text:
@@ -117,6 +138,18 @@ def extract_lexical_features(url: str) -> Dict[str, Any]:
     # Hexadecimal strings / Random token cues
     hex_tokens = len(re.findall(r"[0-9a-f]{8,}", full_url))
     
+    # Brand Lookalike analysis in domain
+    brand_in_domain = 0.0
+    detected_spoofed_brand = None
+    reg_dom_lower = registrable_domain.lower()
+    for b, legits in BRAND_LOOKALIKES_MAP.items():
+        if b in reg_dom_lower:
+            is_authorized = any(reg_dom_lower == d or reg_dom_lower.endswith("." + d) for d in legits)
+            if not is_authorized:
+                brand_in_domain = 1.0
+                detected_spoofed_brand = b
+                break
+
     features = {
         "url_length": float(url_len),
         "domain_length": float(domain_len),
@@ -140,6 +173,7 @@ def extract_lexical_features(url: str) -> Dict[str, Any]:
         "security_keyword_count": float(keyword_count),
         "brand_in_subdomain": float(brand_in_subdomain),
         "brand_in_path": float(brand_in_path),
+        "brand_in_domain": float(brand_in_domain),
         "digit_ratio": float(digit_ratio),
         "hex_tokens": float(hex_tokens),
     }
@@ -149,5 +183,6 @@ def extract_lexical_features(url: str) -> Dict[str, Any]:
         "registrable_domain": registrable_domain,
         "subdomain": subdomain,
         "tld": tld,
-        "features": features
+        "features": features,
+        "spoofed_brand": detected_spoofed_brand
     }

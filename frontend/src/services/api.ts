@@ -870,17 +870,57 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
   }
 
   // If registered, evaluate risk
+  const brandLookalikes: Array<{ brand: string; legit: string[] }> = [
+    { brand: 'icloud', legit: ['icloud.com', 'apple.com'] },
+    { brand: 'apple', legit: ['apple.com', 'icloud.com'] },
+    { brand: 'paypal', legit: ['paypal.com'] },
+    { brand: 'microsoft', legit: ['microsoft.com', 'live.com', 'office.com', 'outlook.com'] },
+    { brand: 'netflix', legit: ['netflix.com'] },
+    { brand: 'amazon', legit: ['amazon.com', 'amazon.in'] },
+    { brand: 'chase', legit: ['chase.com'] },
+    { brand: 'binance', legit: ['binance.com'] },
+    { brand: 'coinbase', legit: ['coinbase.com'] },
+    { brand: 'metamask', legit: ['metamask.io'] },
+    { brand: 'steam', legit: ['steampowered.com', 'steamcommunity.com'] },
+    { brand: 'whatsapp', legit: ['whatsapp.com'] },
+    { brand: 'instagram', legit: ['instagram.com'] },
+    { brand: 'facebook', legit: ['facebook.com', 'fb.com'] }
+  ];
+
+  let brandSpoofed: string | null = null;
+  for (const b of brandLookalikes) {
+    if (domain.includes(b.brand)) {
+      const isLegit = b.legit.some(legitDom => domain === legitDom || domain.endsWith('.' + legitDom));
+      if (!isLegit) {
+        brandSpoofed = b.brand;
+        break;
+      }
+    }
+  }
+
   const hasSuspiciousKeywords = domain.includes('login') || domain.includes('verify');
   const isInstitutional = domain.endsWith('.ac.in') || domain.endsWith('.edu') || domain.endsWith('.gov') || domain.endsWith('.edu.in');
   
   let basicScore = 0.0;
-  if (intel.isNrd && hasSuspiciousKeywords) {
+  if (brandSpoofed) {
+    basicScore = 94.0;
+  } else if (intel.isNrd && hasSuspiciousKeywords) {
     basicScore = 88.0;
   } else if (intel.isNrd) {
     basicScore = 45.0;
   } else if (isInstitutional) {
     basicScore = 0.0;
   }
+
+  const triageReason = brandSpoofed
+    ? `Critical Brand Lookalike: Domain contains '${brandSpoofed}' trademark on unauthorized infrastructure.`
+    : (hasSuspiciousKeywords && intel.isNrd)
+    ? 'Suspicious lexical tokens on newly registered domain'
+    : 'Lexical features within normal baseline parameters.';
+
+  const featureAttributions = brandSpoofed
+    ? { [`Unauthorized ${brandSpoofed.toUpperCase()} trademark in domain`]: 0.94 }
+    : {};
 
   return {
     case_id: caseId,
@@ -889,8 +929,8 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
     timestamp: new Date().toISOString(),
     basic_risk_score: basicScore,
     verdict: basicScore >= 70.0 ? 'PHISHING' : basicScore >= 35.0 ? 'SUSPICIOUS' : 'BENIGN',
-    confidence: 0.94,
-    lexical_score: hasSuspiciousKeywords && intel.isNrd ? 0.78 : 0.0,
+    confidence: brandSpoofed ? 0.98 : 0.94,
+    lexical_score: brandSpoofed ? 0.94 : (hasSuspiciousKeywords && intel.isNrd ? 0.78 : 0.0),
     is_newly_registered: intel.isNrd,
     domain_age_days: intel.domainAgeDays,
     creation_date: intel.creationDateStr,
@@ -904,10 +944,8 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
     tls_valid: intel.aRecords.length > 0,
     tls_issuer: 'Public CA',
     entropy_score: 3.42,
-    triage_reason: (hasSuspiciousKeywords && intel.isNrd)
-      ? 'Suspicious lexical tokens on newly registered domain'
-      : 'Lexical features within normal baseline parameters.',
-    feature_attributions: {},
+    triage_reason: triageReason,
+    feature_attributions: featureAttributions,
     deep_audit_locked: true,
     x402_challenge: challenge
   };

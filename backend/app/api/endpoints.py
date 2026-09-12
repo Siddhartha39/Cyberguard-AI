@@ -255,6 +255,7 @@ async def free_security_scan(req: AnalysisRequest):
     has_spf = any("v=spf1" in txt.lower() for txt in domain_intel.dns.txt_records)
     has_dmarc = any("v=dmarc1" in txt.lower() for txt in domain_intel.dns.txt_records)
     entropy = features.get("url_entropy", 0.0)
+    spoofed_brand = lex_res.get("spoofed_brand")
 
     # Compute basic risk score (0-100) & Verdict
     if not domain_intel.is_registered:
@@ -262,6 +263,11 @@ async def free_security_scan(req: AnalysisRequest):
         verdict = "UNREGISTERED"
         confidence = 0.98
         triage_msg = "Domain is not registered in global RDAP / DNS registries. Host is inactive."
+    elif spoofed_brand:
+        basic_score = 94.0
+        verdict = "PHISHING"
+        confidence = 0.98
+        triage_msg = f"Critical Brand Lookalike: Domain '{registrable_domain}' contains protected trademark '{spoofed_brand}' on unauthorized infrastructure ({domain_intel.registrar or 'Unknown Registrar'})."
     else:
         # For clean domains with zero risk attributions, score is 0.0 (suppresses statistical floor noise)
         if len(triage.feature_attributions) == 0 and not domain_intel.is_newly_registered:
@@ -677,16 +683,25 @@ async def bulk_scan(req: BulkScanRequest):
             has_spf = any("v=spf1" in txt.lower() for txt in domain_intel.dns.txt_records)
             has_dmarc = any("v=dmarc1" in txt.lower() for txt in domain_intel.dns.txt_records)
             entropy = features.get("url_entropy", 0.0)
+            spoofed_brand = lex_res.get("spoofed_brand")
 
             if not domain_intel.is_registered:
                 basic_score = round(min(15.0, triage.lexical_score * 15.0), 1)
                 verdict = "UNREGISTERED"
                 confidence = 0.98
                 triage_msg = "Domain is not registered in global RDAP / DNS registries. Host is inactive."
+            elif spoofed_brand:
+                basic_score = 94.0
+                verdict = "PHISHING"
+                confidence = 0.98
+                triage_msg = f"Critical Brand Lookalike: Domain '{registrable_domain}' contains protected trademark '{spoofed_brand}' on unauthorized infrastructure ({domain_intel.registrar or 'Unknown Registrar'})."
             else:
-                basic_score = round(triage.lexical_score * 70.0 + (25.0 if domain_intel.is_newly_registered else 0.0), 1)
+                if len(triage.feature_attributions) == 0 and not domain_intel.is_newly_registered:
+                    basic_score = 0.0
+                else:
+                    basic_score = round(triage.lexical_score * 70.0 + (25.0 if domain_intel.is_newly_registered else 0.0), 1)
                 verdict = "PHISHING" if basic_score >= 70.0 else "SUSPICIOUS" if basic_score >= 35.0 else "BENIGN"
-                confidence = 0.94
+                confidence = 0.98 if basic_score == 0.0 else 0.94
                 triage_msg = triage.triage_reason
 
             challenge = x402_manager.create_payment_challenge(canonical_url, case_id)

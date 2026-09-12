@@ -113,6 +113,9 @@ class FastTriageClassifier:
         
         # Calculate feature attribution / contributions
         attributions: Dict[str, float] = {}
+        if feature_dict.get("brand_in_domain", 0) > 0:
+            attributions["Target enterprise trademark lookalike in domain name"] = +0.55
+            prob_phishing = max(prob_phishing, 0.94)
         if feature_dict.get("brand_in_subdomain", 0) > 0:
             attributions["Brand token in subdomain"] = +0.35
         if feature_dict.get("is_punycode", 0) > 0:
