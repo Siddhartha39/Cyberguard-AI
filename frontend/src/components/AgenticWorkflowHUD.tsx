@@ -49,12 +49,10 @@ export const AgenticWorkflowHUD: React.FC<AgenticWorkflowHUDProps> = ({
     },
     {
       id: 'step-4',
-      stage: 'x402 PAYMENT PROTOCOL',
-      action: isPaid ? 'x402 Challenge Fulfilled on Algorand Testnet' : 'Emitting HTTP 402 Challenge (0.1 ALGO via GoPlausible)',
-      status: isPaid ? 'completed' : currentStage === 3 ? 'paused_for_payment' : currentStage > 3 ? 'completed' : 'pending',
-      detail: isPaid
-        ? `Verified on Algorand Testnet (TXID: ${txId ? txId.slice(0, 16) + '...' : 'Verified'})`
-        : 'Requires micro-payment verification on Algorand Testnet to unlock full forensics.'
+      stage: 'DEEP FORENSIC ESCALATION',
+      action: 'Executing Zero-Cost Deep Sandbox & Vision Analysis',
+      status: currentStage >= 3 ? 'completed' : 'pending',
+      detail: 'Free and open-access execution: Playwright headless DOM interception and visual brand matching.'
     },
     {
       id: 'step-5',
@@ -93,14 +91,14 @@ export const AgenticWorkflowHUD: React.FC<AgenticWorkflowHUDProps> = ({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(75, 85, 99, 0.3)', paddingBottom: '12px', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: 'rgba(6, 182, 212, 0.15)', border: '1px solid rgba(6, 182, 212, 0.5)', padding: '6px', borderRadius: '8px', color: '#38bdf8' }}>
-            <Bot size={20} />
+          <div style={{ background: 'rgba(6, 182, 212, 0.15)', border: '1px solid rgba(6, 182, 212, 0.5)', borderRadius: '10px', padding: '8px', display: 'flex' }}>
+            <Bot size={22} color="#00f0ff" />
           </div>
           <div>
             <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f3f4f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>Autonomous Cyber Intelligence Agent</span>
               <span className="badge-info" style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px' }}>
-                LIVE WORKFLOW
+                100% FREE & OPEN
               </span>
             </div>
             <div className="mono" style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
@@ -111,34 +109,10 @@ export const AgenticWorkflowHUD: React.FC<AgenticWorkflowHUDProps> = ({
 
         {/* Status Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {!isPaid && currentStage === 3 ? (
-            <button
-              onClick={onOpenPaymentModal}
-              style={{
-                background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '6px 14px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 0 15px rgba(2, 132, 199, 0.4)'
-              }}
-            >
-              <Coins size={14} />
-              <span>Unlock via x402 (0.1 ALGO)</span>
-              <ArrowRight size={12} />
-            </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 10px', borderRadius: '12px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-              <span>AGENT ACTIVE &amp; AUTONOMOUS</span>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 10px', borderRadius: '12px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+            <span>AGENT ACTIVE &amp; UNRESTRICTED</span>
+          </div>
         </div>
       </div>
 

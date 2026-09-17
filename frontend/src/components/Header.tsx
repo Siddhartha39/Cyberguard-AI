@@ -83,8 +83,8 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="cyber-font cyber-glitch neon-cyan-glow" style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '0.04em' }}>
                 CYBERGUARD AI
               </h1>
-              <span className="badge-info mono" style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
-                x402 ALGORAND
+              <span className="badge-safe mono" style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
+                100% FREE &amp; OPEN ACCESS
               </span>
             </div>
             <p className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
@@ -116,49 +116,14 @@ export const Header: React.FC<HeaderProps> = ({
           
           <TabButton tab="history" label={`History (${caseCount})`} icon={History} />
           
-          {/* Grouped or less prominent existing tabs */}
+          {/* Grouped or secondary tabs */}
           {hasActiveReport && <TabButton tab="results" label="Results" icon={LayoutDashboard} />}
-          <TabButton tab="x402" label="Premium" icon={Coins} />
           <TabButton tab="extension" label="Ext" icon={Puzzle} />
           <TabButton tab="about" label="Info" icon={HelpCircle} />
         </div>
 
         {/* Global Controls & Theme Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Algorand Wallet Connection Button */}
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={onOpenWalletModal}
-            style={{
-              padding: '8px 15px',
-              borderRadius: '10px',
-              border: isConnected ? '1px solid rgba(0, 255, 136, 0.5)' : '1px solid #00f0ff',
-              background: isConnected ? 'rgba(0, 255, 136, 0.12)' : 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
-              color: isConnected ? '#00ff88' : '#00f0ff',
-              fontSize: '0.76rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: isConnected ? '0 0 14px rgba(0, 255, 136, 0.3)' : '0 0 16px rgba(0, 240, 255, 0.35)',
-              transition: 'all 0.2s'
-            }}
-            title={isConnected && address ? `Connected: ${address}` : 'Connect Algorand Testnet Wallet'}
-          >
-            <Wallet size={14} />
-            {isConnected && address ? (
-              <>
-                <span className="mono hidden sm:inline">{address.slice(0, 5)}...{address.slice(-4)}</span>
-                <span style={{ background: 'rgba(0, 255, 136, 0.2)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800 }}>
-                  {balanceAlgo.toFixed(1)} ALGO
-                </span>
-              </>
-            ) : (
-              <span>Connect</span>
-            )}
-          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.04 }}

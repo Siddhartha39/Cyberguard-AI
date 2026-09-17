@@ -1,13 +1,12 @@
 # 🛡️ CyberGuard AI (v2.0-SOC PRO)
-> **Multi-Modal AI Phishing Intelligence, Exploit Immunity Auditor & Threat Telemetry Platform powered by x402 Micropayments on Algorand Testnet**
+> **Multi-Modal AI Phishing Intelligence, Exploit Immunity Auditor & Threat Telemetry Platform (100% Free & Open Access)**
 
 <div align="center">
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.128.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Algorand](https://img.shields.io/badge/Algorand-Testnet-000000?style=for-the-badge&logo=algorand&logoColor=white)](https://algorand.technologies)
-[![x402 Protocol](https://img.shields.io/badge/x402-HTTP_Payment_Required-0284C7?style=for-the-badge&logo=lightning&logoColor=white)](https://x402.org)
+[![Access](https://img.shields.io/badge/Access-100%25_Free_%26_Open-00ff88?style=for-the-badge&logo=shield&logoColor=black)](#)
 [![Google Gemini](https://img.shields.io/badge/Gemini_AI-2.5_Flash-8E75FF?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.9_Random_Forest-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
@@ -24,14 +23,14 @@
    - [Flowchart 2: Multi-Signal Bayesian Risk Fusion Matrix](#flowchart-2-multi-signal-bayesian-risk-fusion-matrix)
    - [Flowchart 3: Brand-Domain Contradiction & Logo Vision (pHash)](#flowchart-3-brand-domain-contradiction--logo-vision-phash)
    - [Flowchart 4: 7-Stage Adversary Kill-Chain Forensics](#flowchart-4-7-stage-adversary-kill-chain-forensics)
-   - [Flowchart 5: x402 Micropayment & Algorand Testnet Settlement](#flowchart-5-x402-micropayment--algorand-testnet-settlement)
+   - [Flowchart 5: Unrestricted Deep Forensic Execution](#flowchart-5-unrestricted-deep-forensic-execution)
    - [Flowchart 6: Dual-Persona Scanner Architecture](#flowchart-6-dual-persona-scanner-architecture)
 3. [Deep Dive: Backend Inspection Pipeline & Engineering](#-deep-dive-backend-inspection-pipeline--engineering)
 4. [Live Threat Intelligence Feeds & Datasets Used](#-live-threat-intelligence-feeds--datasets-used)
 5. [Developer Website Hardening & Code Injection Immunity](#-developer-website-hardening--code-injection-immunity)
 6. [CyberGuard AI Copilot: Interactive AppSec Assistant](#-cyberguard-ai-copilot-interactive-appsec-assistant)
 7. [Complete Platform Feature Matrix](#-complete-platform-feature-matrix)
-8. [x402 Micropayment Protocol on Algorand Testnet](#-x402-micropayment-protocol-on-algorand-testnet)
+8. [Zero-Paywall Architecture & Open Access](#-zero-paywall-architecture--open-access)
 9. [REST API Reference & Endpoints](#-rest-api-reference--endpoints)
 10. [Local Deployment & Setup Guide](#-local-deployment--setup-guide)
 11. [Manifest V3 Chrome Extension: Autonomous Background Shield](#-manifest-v3-chrome-extension-autonomous-background-shield)
@@ -45,15 +44,15 @@ Modern cyber threats have evolved past the defensive perimeter of legacy reputat
 * **Ephemeral Attack Infrastructure**: Cyber adversaries utilize programmatic DNS provisioning, Cloudflare worker tunnels, and Newly Registered Domains (NRDs) that stay alive for **under 4 hours**—long before centralized blacklists index them.
 * **Stealthy Brand Impersonation**: Phishing kits clone legitimate enterprise login interfaces (e.g. Microsoft 365, PayPal, Google Workspace) with pixel-level fidelity, evading simple string matching using dynamic character obviation and zero-width spaces.
 * **Developer Security Gaps**: Web applications frequently launch missing critical HTTP security controls (`Content-Security-Policy`, `X-Frame-Options`, `HSTS`, `SPF/DMARC`), leaving applications vulnerable to Cross-Site Scripting (XSS), script injection, and Clickjacking.
-* **Prohibitive SaaS Paywalls**: Security analysts, developers, and users face rigid subscription tiers requiring accounts and credit card processing for simple ad-hoc forensic lookups.
+* **Prohibitive SaaS Paywalls**: Security analysts, developers, and students face rigid subscription paywalls and credit card requirements for simple ad-hoc forensic lookups.
 
 ### The Solution
-**CyberGuard AI** is a zero-trust, multi-modal threat intelligence engine and website vulnerability auditor. It operates on a **100% Real Live Telemetry** principle (zero synthetic or fabricated data) and offers:
+**CyberGuard AI** is a zero-trust, multi-modal threat intelligence engine and website vulnerability auditor. It operates on a **100% Real Live Telemetry** principle (zero synthetic or fabricated data) with **100% Free & Open Access**:
 1. **Multi-Modal Threat Triage**: Sub-25ms 24-dimensional lexical machine learning fused with headless Chromium DOM telemetry, 64-bit perceptual visual hashing (`pHash`), and Google Gemini 2.5 Flash threat intelligence.
 2. **Dual-Persona Scanning Mode**:
    - **Persona A (Developer & Webmaster)**: Audits HTTP defense headers, DNS mail authentication, and cryptographic TLS certificates, generating actionable, ready-to-deploy code fixes for Nginx, Apache, Next.js, Node.js Helmet, and Cloudflare.
    - **Persona B (End-User & Security Analyst)**: Unmasks phishing traps, credential harvesters, typo-squatted lookalikes, and brand contradictions.
-3. **x402 Micropayment Protocol on Algorand Testnet**: Implements the official `HTTP 402 Payment Required` standard, enabling frictionless, micro-metered access (0.1 ALGO / ~$0.01 per deep audit) directly through Web3 wallets (Pera, Defly, Exodus, Lute) without account creation or credit card storage.
+3. **100% Free & Unrestricted Access**: All deep forensic audits, headless Chromium sandbox rendering, perceptual logo matching, and Gemini AI insights are completely unlocked for the global security community with zero fees, no wallet requirements, and no paywalls.
 4. **Comprehensive SOC Suite**: Includes real-time Threat Intelligence dashboards, Email Link Extractor, Bulk URL Scanning, Password Strength & k-Anonymity Breach Verification, IP Carrier/ASN Intelligence, and Persistent Domain Watchlists.
 
 ---
@@ -79,18 +78,10 @@ flowchart TD
     end
     
     TRIAGE_OUT --> DECISION{"Deep Forensic Audit Requested?"}
-    DECISION -- "No" --> FREE_REPORT["Render Basic Triage Report in UI"]
-    DECISION -- "Yes" --> X402_GATEWAY["Server Emits HTTP 402 Payment Required<br/>Challenge: 0.1 ALGO (100,000 µALGO)"]
+    DECISION -- "No" --> FREE_REPORT["Render Fast Triage Report in UI"]
+    DECISION -- "Yes" --> L2["🔬 Tier 2: Deep Forensic Audit Pipeline (100% Free)"]
     
-    subgraph X402_LAYER["⛓️ x402 Micropayment & Algorand Testnet Settlement"]
-        X402_GATEWAY --> WALLET_SELECT["User Connects Wallet: Pera / Defly / Exodus / Lute"]
-        WALLET_SELECT --> ONCHAIN_TX["Sign & Broadcast 0.1 ALGO Settlement on Algorand Testnet"]
-        ONCHAIN_TX --> INDEXER_VERIFY["Algorand Indexer Cryptographic Proof Validation<br/>(AlgoNode Cloud / GoPlausible Facilitator)"]
-    end
-    
-    INDEXER_VERIFY --> L2["🔬 Tier 2: Deep Forensic Audit Pipeline"]
-    
-    subgraph L2_PIPELINE["Deep Security & Forensics Execution"]
+    subgraph L2_PIPELINE["Deep Security & Forensics Execution (Zero Paywall)"]
         L2 --> SANDBOX["Isolated Playwright Chromium Sandbox<br/>(SSRF Firewall, 10s Timeout, Headless DOM)"]
         L2 --> TLS_PROBE["Live X.509 Cryptographic TLS Handshake<br/>(DER Peer Cert, Issuer, Validity Countdown)"]
         L2 --> DNS_MATRIX["Full DNS Matrix Resolution<br/>(A, AAAA, MX Mail, Authoritative NS, TXT)"]
@@ -120,8 +111,7 @@ flowchart TD
     GEMINI --> DOSSIER["📋 Production SOC Forensic Dossier<br/>• 7-Stage Attack Kill-Chain<br/>• Exploit Immunity Guidance<br/>• Multi-Platform Code Fixes (Nginx, Apache, Next.js, Helmet)<br/>• Downloadable JSON/Markdown Report"]
 
     style START fill:#0284c7,stroke:#38bdf8,color:#fff
-    style X402_GATEWAY fill:#f59e0b,stroke:#fbbf24,color:#000
-    style INDEXER_VERIFY fill:#000000,stroke:#10b981,color:#fff
+    style L2 fill:#0284c7,stroke:#00f0ff,color:#fff
     style DOSSIER fill:#10b981,stroke:#34d399,color:#fff
 ```
 
@@ -227,38 +217,35 @@ flowchart LR
 
 ---
 
-### Flowchart 5: x402 Micropayment & Algorand Testnet Settlement
+### Flowchart 5: Unrestricted Deep Forensic Execution
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Client as 💻 User / Security Analyst
     participant API as ⚡ CyberGuard FastAPI Gateway
-    participant x402 as 💳 x402 Payment Engine
-    participant Wallet as 📱 Algorand Wallet (Pera/Defly/Lute)
-    participant AlgoNode as ⛓️ Algorand Testnet (Consensus Node)
-    participant Indexer as 🔍 AlgoNode Indexer (Ledger Search)
-    participant Forensic as 🔬 Deep Forensics Pipeline
+    participant Sandbox as 🌐 Playwright Chromium Sandbox
+    participant Vision as 👁️ Brand pHash Engine
+    participant Posture as 🛡️ Defense Posture Auditor
+    participant Gemini as 🤖 Google Gemini 2.5 Flash
 
-    Client->>API: POST /api/premium-scan (Target URL, no payment)
-    API->>x402: generate_challenge("CyberGuard Deep Audit")
-    x402-->>API: 402 Challenge (Escrow: MZM62...6YFY, Amount: 100,000 µALGO)
-    API-->>Client: HTTP 402 Payment Required (WWW-Authenticate: x402 ...)
+    Client->>API: POST /api/premium-scan (Target URL, 100% Free Access)
+    Note over API: Direct Forensic Dispatch (Zero Paywall)
+    
+    par Multi-Modal Forensic Execution
+        API->>Sandbox: Launch Isolated Headless Chromium (SSRF Firewall, 10s Timeout)
+        Sandbox-->>API: DOM Snapshot, Form Targets, Console Logs, Screenshot
+    and
+        API->>Vision: Compute 64-bit pHash & Compare Brand Catalog
+        Vision-->>API: Visual Logo Similarity & Contradiction Verdict
+    and
+        API->>Posture: Audit HSTS, CSP, X-Frame, SPF/DMARC & Live TLS Handshake
+        Posture-->>API: Defensive Posture Score & Hardening Snippets
+    end
 
-    Client->>Wallet: Present Algorand Payment Request (0.1 ALGO)
-    Wallet->>Client: Biometric / Passphrase Cryptographic Signature
-    Client->>AlgoNode: Broadcast Signed Raw Transaction
-    AlgoNode-->>Client: Confirmed Transaction ID (TxID)
-
-    Client->>API: POST /api/premium-scan (Target URL + X-Payment: TxID)
-    API->>x402: verify_algorand_transaction(TxID, Escrow, 100000 µALGO)
-    x402->>Indexer: GET /v2/transactions/{TxID}
-    Indexer-->>x402: 200 OK (Confirmed Round, Sender, Receiver, Amount Verified)
-    x402-->>API: Cryptographic Proof Validated (Non-Replayable)
-
-    API->>Forensic: Execute Deep Sandbox, pHash, SSL & Gemini Analysis
-    Forensic-->>API: Complete Forensic Audit Dossier
-    API-->>Client: HTTP 200 OK (Full Report + Blockchain Receipt + LoRA Link)
+    API->>Gemini: Synthesize Multi-Signal Vectors & Generate Actionable Dossier
+    Gemini-->>API: Executive Summary, Kill-Chain Timeline, Code Remediation
+    API-->>Client: HTTP 200 OK (Full Unrestricted SOC Report)
 ```
 
 ---
@@ -392,9 +379,6 @@ CyberGuard AI strictly enforces a **Zero Synthetic Data Policy**. All outputs ar
 | **ICANN / IANA RDAP** | RESTful RDAP | `https://rdap.org/domain/` | Authoritative domain registration age, expiration date, and sponsoring registrar entity identification. |
 | **HaveIBeenPwned API** | REST k-Anonymity | `https://api.pwnedpasswords.com/range/` | Cryptographic SHA-1 prefix credential breach auditing. Validates if user passwords have leaked. |
 | **IP-API Geolocation** | BGP / ASN Intelligence | `http://ip-api.com/json/` | Autonomous System Number (ASN), ISP carrier, hosting/datacenter classification, and server location. |
-| **AlgoNode Cloud Indexer**| Algorand Testnet Ledger | `https://testnet-idx.algonode.cloud/v2/` | On-chain cryptographic validation of x402 payment transactions and microAlgo settlement. |
-| **AlgoNode Cloud API** | Algorand Consensus Node | `https://testnet-api.algonode.cloud/` | Real-time block round tracking, escrow account balance, and network health verification. |
-| **GoPlausible Facilitator**| x402 Protocol Facilitator | `https://facilitator.goplausible.xyz` | Official x402 payment standard discovery, challenge formatting, and transaction verification. |
 | **Port 43 Socket WHOIS** | TCP RFC 3912 | Direct registry socket | Fallback WHOIS resolution when RDAP endpoints are throttled or unallocated. |
 | **Python Cryptography** | X.509 DER Parsing | Port 443 SSL handshake | Cryptographic validation of TLS peer certificates, Subject Alternative Names, and issuer authority. |
 
@@ -529,74 +513,28 @@ The platform embeds **CyberGuard AI Copilot**, an autonomous defensive cybersecu
 | Scan History & Side-by-Side Comparison Drawer                    |       ✅       |       ✅       |
 | Interactive Cyber Defense AI Chatbot Assistant                   |       ✅       |       ✅       |
 | Manifest V3 Chrome Extension Active Tab Protection               |       ✅       |       ✅       |
-| Headless Playwright Chromium Sandbox Capture & Viewport          |       🔒       |       ✅       |
-| Computer Vision Brand-Domain Contradiction Engine (pHash)        |       🔒       |       ✅       |
-| Live X.509 DER TLS/SSL Peer Certificate Extraction               |       🔒       |       ✅       |
-| Website Security Posture Audit (CSP, HSTS, X-Frame-Options)      |       🔒       |       ✅       |
-| 1-Click Remediation Snippets (Nginx, Apache, Next.js, Cloudflare)|       🔒       |       ✅       |
-| Complete 7-Stage Adversary Kill-Chain Timeline                   |       🔒       |       ✅       |
-| Google Gemini 2.5 Flash Threat Intelligence Dossier              |       🔒       |       ✅       |
-| Micro-Metered Access via Algorand Testnet (x402 Protocol)        |  Free / 0 ALGO |    0.1 ALGO    |
+| Headless Playwright Chromium Sandbox Capture & Viewport          |       ✅       |       ✅       |
+| Computer Vision Brand-Domain Contradiction Engine (pHash)        |       ✅       |       ✅       |
+| Live X.509 DER TLS/SSL Peer Certificate Extraction               |       ✅       |       ✅       |
+| Website Security Posture Audit (CSP, HSTS, X-Frame-Options)      |       ✅       |       ✅       |
+| 1-Click Remediation Snippets (Nginx, Apache, Next.js, Cloudflare)|       ✅       |       ✅       |
+| Complete 7-Stage Adversary Kill-Chain Timeline                   |       ✅       |       ✅       |
+| Google Gemini 2.5 Flash Threat Intelligence Dossier              |       ✅       |       ✅       |
+| Access Model & Cost                                              |  100% Free / $0|  100% Free / $0|
 +------------------------------------------------------------------+----------------+----------------+
 ```
 
 ---
 
-## ⛓️ x402 Micropayment Protocol on Algorand Testnet
+## 🔓 Zero-Paywall Architecture & Open Access
 
-### What is x402?
-The **x402 protocol** implements the native `HTTP 402 Payment Required` standard. It allows API servers to return payment challenges directly in standard HTTP response headers, allowing clients (both browsers and automated autonomous agents) to settle payments on-chain in real time without creating user accounts, sharing personal identity details, or entering credit card numbers.
+### 100% Free & Open-Access Cybersecurity
+CyberGuard AI operates as an open-source, community-accessible cybersecurity intelligence platform. All features that traditionally sit behind expensive SaaS paywalls or API credits are provided **100% free with zero fees**:
 
-### Protocol Parameters
-* **Network CAIP-2 Identifier**: `algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=`
-* **CyberGuard AI Escrow Address**: `MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY`
-* **Audit Price**: `100,000 microAlgos` (= **`0.1 ALGO`**, approximately **`$0.01 USD`**).
-* **Consensus Network Fee**: `1,000 microAlgos` (`0.001 ALGO`).
-* **Supported Wallets**: 🟡 **Pera Wallet**, 🟣 **Defly Wallet**, 🔷 **Exodus**, 🟣 **Lute**.
-* **Public Node**: `https://testnet-api.algonode.cloud`
-* **Public Indexer**: `https://testnet-idx.algonode.cloud`
-* **On-Chain Explorer**: [LoRA Algokit Testnet Explorer](https://lora.algokit.io/testnet)
-
-### HTTP 402 Challenge Specification
-When requesting a protected endpoint without an on-chain receipt:
-```http
-HTTP/1.1 402 Payment Required
-WWW-Authenticate: x402 realm="CyberGuard Premium Audit", network="algorand-testnet", caip2="algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=", recipient="MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY", amount="100000", currency="ALGO", facilitator="https://facilitator.goplausible.xyz"
-X-Payment-Required: true
-Content-Type: application/json
-
-{
-  "status": 402,
-  "error": "Payment Required",
-  "message": "Access to CyberGuard AI Premium Deep Security Audit requires an on-chain micropayment of 0.1 ALGO (100,000 µALGO) on Algorand Testnet.",
-  "challenge": {
-    "challenge_id": "x402-1aeacbb6af29",
-    "network": "algorand-testnet",
-    "caip2_network": "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=",
-    "recipient_address": "MZM62WIYCYOFBA76RGWOYLSIP54PNFVYEFMC3ZYFUJZBBUDLR7MAOX6YFY",
-    "amount_microalgos": 100000,
-    "amount_algo": 0.1,
-    "token_symbol": "ALGO",
-    "facilitator_url": "https://facilitator.goplausible.xyz"
-  }
-}
-```
-
-### Unlocking the Report with Cryptographic Proof
-The client signs the transaction, broadcasts it to Algorand Testnet, and submits the transaction ID:
-```http
-POST /api/premium-scan HTTP/1.1
-Host: localhost:8000
-Content-Type: application/json
-X-Payment: 6V42OBUS4K5OIZ4Z44YVZZT7B22NPPZ7E5AECU3O4M6C3P67ZSQA
-
-{
-  "url": "https://campuskart.shop",
-  "deep_analysis": true,
-  "payment_tx_id": "6V42OBUS4K5OIZ4Z44YVZZT7B22NPPZ7E5AECU3O4M6C3P67ZSQA"
-}
-```
-The server checks the Algorand Indexer ledger. Once confirmed, the Deep Forensic Audit executes and returns `HTTP 200 OK` along with the on-chain confirmation receipt.
+* **Unrestricted Deep Forensic Audits**: Launch headless Chromium sandbox DOM analyses, inspect form targets, and extract raw screenshots on demand.
+* **Computer Vision Brand Contradiction Engine**: Compute 64-bit perceptual image hashes (pHash/dHash) against our verified enterprise brand catalog with zero restrictions.
+* **Google Gemini 2.5 Flash Threat Intelligence**: Automatically synthesize multi-vector findings into actionable kill-chain timelines and code remediation snippets without requiring personal API keys.
+* **Real-Time SOC Tools**: Free access to bulk domain triage, email phishing link extraction, HaveIBeenPwned k-anonymity password breach checking, IP BGP/carrier intelligence, and live threat telemetry.
 
 ---
 
@@ -604,17 +542,17 @@ The server checks the Algorand Indexer ledger. Once confirmed, the Deep Forensic
 
 | Method | Endpoint | Description | Auth / Tier |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/scan/free` | Performs fast lexical ML triage, DoH DNS lookups, and RDAP age checks | Free (L1) |
-| `POST` | `/api/premium-scan` | Executes deep Playwright sandbox, pHash logo matching, TLS DER cert, and Gemini AI | x402 (0.1 ALGO) |
-| `POST` | `/api/scan/bulk` | Parallel batch scanning of up to 20 domains with forensic aggregations | Free Tier |
-| `GET` | `/api/threat/stats` | Returns real-time SOC metrics, top impersonated brands, and risky TLD telemetry | Free Tier |
-| `POST` | `/api/tools/password-strength`| Evaluates password entropy, crack time, and checks HIBP k-anonymity breach database | Free Tier |
-| `POST` | `/api/tools/ip-reputation` | Resolves IP geolocation, carrier ASN, abuse risk index, and reverse DNS (PTR) | Free Tier |
-| `GET` | `/api/watchlist` | Retrieves all domains currently monitored in the watchlist | Free Tier |
-| `POST` | `/api/watchlist` | Adds a domain and metadata tags to the surveillance watchlist | Free Tier |
-| `DELETE`| `/api/watchlist/{id}` | Removes a monitored domain from the surveillance watchlist | Free Tier |
-| `POST` | `/api/chat` | Contextual AI cybersecurity assistant answering questions about scan results | Free Tier |
-| `GET` | `/api/extension/download` | Direct zip package download of the CyberGuard AI Chrome Extension | Free Tier |
+| `POST` | `/api/scan/free` | Performs fast lexical ML triage, DoH DNS lookups, and RDAP age checks | 100% Free |
+| `POST` | `/api/premium-scan` | Executes deep Playwright sandbox, pHash logo matching, TLS DER cert, and Gemini AI | 100% Free |
+| `POST` | `/api/scan/bulk` | Parallel batch scanning of up to 20 domains with forensic aggregations | 100% Free |
+| `GET` | `/api/threat/stats` | Returns real-time SOC metrics, top impersonated brands, and risky TLD telemetry | 100% Free |
+| `POST` | `/api/tools/password-strength`| Evaluates password entropy, crack time, and checks HIBP k-anonymity breach database | 100% Free |
+| `POST` | `/api/tools/ip-reputation` | Resolves IP geolocation, carrier ASN, abuse risk index, and reverse DNS (PTR) | 100% Free |
+| `GET` | `/api/watchlist` | Retrieves all domains currently monitored in the watchlist | 100% Free |
+| `POST` | `/api/watchlist` | Adds a domain and metadata tags to the surveillance watchlist | 100% Free |
+| `DELETE`| `/api/watchlist/{id}` | Removes a monitored domain from the surveillance watchlist | 100% Free |
+| `POST` | `/api/chat` | Contextual AI cybersecurity assistant answering questions about scan results | 100% Free |
+| `GET` | `/api/extension/download` | Direct zip package download of the CyberGuard AI Chrome Extension | 100% Free |
 
 ---
 
@@ -718,7 +656,7 @@ The platform includes a production **Manifest V3 Chrome Extension** (`v2.1.0`) l
 <details>
 <summary><strong>1. Why use a Calibrated Random Forest for Fast Triage instead of calling an LLM directly?</strong></summary>
 
-> **Answer**: Latency, cost, and reliability. The Fast Triage classifier extracts a 24-dimensional handcrafted lexical feature vector and evaluates it in **< 25ms** entirely in local CPU memory without consuming API tokens or incurring network round-trips. This delivers an instant risk assessment for free, reserving the heavier headless Chromium sandbox and Google Gemini 2.5 Flash synthesis for the deep forensic tier unlocked via x402 micropayments.
+> **Answer**: Latency, cost, and reliability. The Fast Triage classifier extracts a 24-dimensional handcrafted lexical feature vector and evaluates it in **< 25ms** entirely in local CPU memory without consuming API tokens or incurring network round-trips. This delivers an instant initial triage score, seamlessly triggering the heavier headless Chromium sandbox and Google Gemini 2.5 Flash synthesis for comprehensive forensic dossiers.
 </details>
 
 <details>
@@ -728,9 +666,9 @@ The platform includes a production **Manifest V3 Chrome Extension** (`v2.1.0`) l
 </details>
 
 <details>
-<summary><strong>3. How does the x402 payment workflow differ from traditional credit card checkouts?</strong></summary>
+<summary><strong>3. Is CyberGuard AI completely free to use?</strong></summary>
 
-> **Answer**: Traditional payments require signups, authentication, credit card tokenization, and high minimum interchange fees ($0.30 + 2.9%). With x402 on Algorand Testnet, payments occur **micro-metered on-chain (0.1 ALGO / ~$0.01)** in sub-second consensus rounds without user accounts or credit cards, enabling both humans and autonomous AI agents to consume intelligence on a strict pay-per-call basis.
+> **Answer**: Yes. CyberGuard AI is 100% free, open-access, and community-driven. All capabilities—including headless Chromium DOM telemetry, 64-bit logo pHash brand matching, security headers/clickjacking auditing, and Google Gemini AI threat intelligence—operate with zero fees and no paywalls.
 </details>
 
 <details>

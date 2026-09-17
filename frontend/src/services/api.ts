@@ -864,7 +864,7 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
       tls_issuer: 'None (Host Inactive)',
       entropy_score: 2.1,
       triage_reason: 'Domain is unregistered / non-existent (NXDOMAIN). No active DNS or hosting infrastructure detected.',
-      deep_audit_locked: true,
+      deep_audit_locked: false,
       x402_challenge: challenge
     };
   }
@@ -946,7 +946,7 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
     entropy_score: 3.42,
     triage_reason: triageReason,
     feature_attributions: featureAttributions,
-    deep_audit_locked: true,
+    deep_audit_locked: false,
     x402_challenge: challenge
   };
 }

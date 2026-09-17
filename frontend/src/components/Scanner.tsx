@@ -197,7 +197,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, isLoading, benchmarkSa
                 <>
                   <Play size={16} fill="currentColor" />
                   <span className="cyber-font">
-                    {scanMode === 'deep' ? 'EXECUTE DEEP AUDIT (x402)' : 'RUN FREE QUICK SCAN'}
+                    {scanMode === 'deep' ? 'EXECUTE DEEP AUDIT (FREE)' : 'RUN FREE SECURITY SCAN'}
                   </span>
                 </>
               )}

@@ -95,7 +95,6 @@ export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps, current
               <div>
                 <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isCompleted || isRunning ? 'var(--text-primary)' : isLocked ? '#38bdf8' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>0{idx + 1}. {step.name}</span>
-                  {isLocked && <span style={{ fontSize: '0.62rem', background: 'rgba(56, 189, 248, 0.18)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>x402</span>}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: isRunning ? 'var(--accent-cyan)' : isLocked ? '#94a3b8' : 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.3 }}>
                   {step.detail}

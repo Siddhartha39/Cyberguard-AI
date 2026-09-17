@@ -83,7 +83,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(DEFAULT_PIPELINE_STEPS);
   const [currentAgentStage, setCurrentAgentStage] = useState<number>(-1);
-  const [agentIsPaid, setAgentIsPaid] = useState<boolean>(false);
+  const [agentIsPaid, setAgentIsPaid] = useState<boolean>(true);
 
   // Cinematic hacker transition overlay state
   const [showHackerOverlay, setShowHackerOverlay] = useState<boolean>(false);
@@ -169,7 +169,7 @@ export function App() {
     setReport(null);
     setFreeScanResult(null);
     setActiveTab('scanner');
-    setAgentIsPaid(deep && agentIsPaid);
+    setAgentIsPaid(true);
 
     // Initialize pipeline steps
     const steps: PipelineStep[] = DEFAULT_PIPELINE_STEPS.map((s) => ({ ...s, status: 'idle' }));
@@ -202,19 +202,19 @@ export function App() {
         await sleep(650);
         steps[2].status = 'completed';
 
-        // Mark remaining stages as locked behind x402 payment
-        steps[3].status = 'locked';
-        steps[3].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
-        steps[4].status = 'locked';
-        steps[4].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
-        steps[5].status = 'locked';
-        steps[5].detail = 'Locked // Requires 0.1 ALGO x402 Micropayment';
+        // Remaining deep stages ready for 1-click execution
+        steps[3].status = 'idle';
+        steps[3].detail = 'Ready // Zero-Cost Playwright Sandbox';
+        steps[4].status = 'idle';
+        steps[4].detail = 'Ready // Visual Brand Contradiction Vision';
+        steps[5].status = 'idle';
+        steps[5].detail = 'Ready // Multi-Signal Risk Fusion & AI';
         setPipelineSteps([...steps]);
 
         const freeRes = await freeScanPromise;
-        setCurrentAgentStage(3); // Paused for x402 payment
+        setCurrentAgentStage(2);
         setFreeScanResult(freeRes);
-        setActiveChallenge(freeRes.x402_challenge || null);
+        setActiveChallenge(null);
       } else {
         // Full Deep Security Audit (Stages 0 through 5)
         const analysisPromise = analyzeDomain(cleanUrl, true, forceRefresh);
@@ -281,12 +281,9 @@ export function App() {
   };
 
   const handleOpenPaymentForFreeScan = async () => {
-    if (freeScanResult) {
-      if (!activeChallenge) {
-        const chal = await fetchPaymentChallenge(freeScanResult.target_url, freeScanResult.case_id);
-        setActiveChallenge(chal);
-      }
-      setShowPaymentModal(true);
+    const target = freeScanResult?.target_url || currentScanningUrl;
+    if (target) {
+      handleScan(target, true, false);
     }
   };
 

@@ -179,7 +179,7 @@ class FreeScanResult(BaseModel):
     tls_issuer: Optional[str] = None
     triage_reason: str
     feature_attributions: Dict[str, float] = Field(default_factory=dict)
-    deep_audit_locked: bool = True
+    deep_audit_locked: bool = False
     x402_challenge: Optional[Dict[str, Any]] = None
 
 # x402 Challenge & Payment Schemas

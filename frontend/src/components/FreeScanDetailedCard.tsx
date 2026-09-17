@@ -46,10 +46,8 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
             <button
               onClick={onUnlockDeepAudit}
               style={{
-                background: isConnected 
-                  ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
-                  : 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
-                color: isConnected ? '#ffffff' : '#070a10',
+                background: 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
+                color: '#070a10',
                 border: 'none',
                 borderRadius: '10px',
                 padding: '12px 22px',
@@ -59,15 +57,11 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 0 20px rgba(2, 132, 199, 0.5)'
+                boxShadow: '0 0 20px rgba(0, 240, 255, 0.45)'
               }}
             >
-              {isConnected ? <Coins size={16} /> : <Wallet size={16} />}
-              <span>
-                {isConnected
-                  ? 'Unlock Premium Deep Audit (0.1 ALGO via x402)'
-                  : 'Connect Wallet to Unlock Deep Audit (0.1 ALGO)'}
-              </span>
+              <Zap size={16} />
+              <span>Launch Complete Deep Audit (Free)</span>
               <ArrowRight size={15} />
             </button>
 
@@ -294,17 +288,17 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ maxWidth: '650px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Coins size={20} color="#38bdf8" />
+              <Zap size={20} color="#00f0ff" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Unlock Premium Deep Security Audit via x402
+                Complete Deep Forensic Security Audit
               </h3>
-              <span className="mono" style={{ fontSize: '0.68rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
-                0.1 ALGO
+              <span className="mono" style={{ fontSize: '0.68rem', background: 'rgba(0, 240, 255, 0.15)', color: '#00f0ff', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
+                100% FREE & OPEN ACCESS
               </span>
             </div>
 
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
-              Enforce the <strong>HTTP 402 protocol</strong> to run the full headless browser sandbox, detect visual brand contradiction, audit clickjacking (X-Frame-Options), reconstruct the 7-stage attack chain, and generate Google Gemini AI threat intelligence.
+              Run the full headless browser sandbox, detect visual brand contradiction, audit clickjacking (X-Frame-Options), reconstruct the 7-stage attack chain, and generate Google Gemini AI threat intelligence — unlocked with zero fees.
             </p>
 
             {/* Feature Badges */}
@@ -327,10 +321,8 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
           <button
             onClick={onUnlockDeepAudit}
             style={{
-              background: isConnected
-                ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
-                : 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
-              color: isConnected ? '#ffffff' : '#070a10',
+              background: 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
+              color: '#070a10',
               border: 'none',
               borderRadius: '10px',
               padding: '14px 28px',
@@ -340,15 +332,11 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 0 25px rgba(2, 132, 199, 0.6)'
+              boxShadow: '0 0 25px rgba(0, 240, 255, 0.4)'
             }}
           >
-            {isConnected ? <Coins size={18} /> : <Wallet size={18} />}
-            <span>
-              {isConnected
-                ? 'Unlock via x402 (0.1 ALGO)'
-                : 'Connect Algorand Wallet to Unlock (0.1 ALGO)'}
-            </span>
+            <Zap size={18} />
+            <span>Launch Deep Forensic Audit (Free)</span>
             <ArrowRight size={16} />
           </button>
         </div>
