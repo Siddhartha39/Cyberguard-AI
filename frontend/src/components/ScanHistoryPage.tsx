@@ -233,8 +233,10 @@ export const ScanHistoryPage: React.FC<ScanHistoryPageProps> = ({
                     <span style={{ color: 'var(--text-secondary)' }}>Audited Date:</span>
                     <span className="mono">{new Date(c.created_at).toLocaleDateString()}</span>
                     
-                    <span style={{ color: 'var(--text-secondary)' }}>Premium Deep Audit:</span>
-                    <span>{c.is_premium ? 'Verified (x402)' : 'Standard'}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Deep Forensic Audit:</span>
+                    <span style={{ color: c.is_premium ? 'var(--accent-green)' : 'var(--text-secondary)', fontWeight: 700 }}>
+                      {c.is_premium ? 'Completed (Deep)' : 'Standard Triage'}
+                    </span>
                   </div>
                   
                   <motion.button

@@ -67,10 +67,10 @@ export const ScanningTelemetryHUD: React.FC<ScanningTelemetryHUDProps> = ({ targ
     },
     {
       id: 'step-5',
-      title: isDeep ? 'Visual Perceptual Hashing (pHash) Brand Match' : 'x402 Protocol Payment Challenge Generation',
+      title: isDeep ? 'Visual Perceptual Hashing (pHash) Brand Match' : 'Visual Asset & Domain Alignment',
       detail: isDeep
         ? 'Comparing 64-bit DCT logo perceptual hashes against enterprise brand catalog'
-        : 'Emitting HTTP 402 challenge on Algorand Testnet for premium forensics',
+        : 'Evaluating visual brand representation against authoritative DNS records',
       icon: Shield,
       color: '#ef4444',
       latency: isDeep ? '180ms' : '15ms'
@@ -91,7 +91,7 @@ export const ScanningTelemetryHUD: React.FC<ScanningTelemetryHUDProps> = ({ targ
     `[+] EXTRACTING 24-DIMENSIONAL LEXICAL TENSOR // ENTROPY: ${entropySim} BITS`,
     `[+] VERIFYING SSL/TLS CERTIFICATE TRANSPARENCY & CIPHER SUITES...`,
     isDeep ? `[+] LAUNCHING ISOLATED PLAYWRIGHT CHROMIUM SANDBOX (NO-SANDBOX / HEADLESS)...` : `[+] EVALUATING FAST HEURISTIC BOUNDARIES...`,
-    isDeep ? `[+] CAPTURING DOM TREE // INTERCEPTING PASSWORD INPUT TARGETS...` : `[+] PREPARING x402 PAYMENT ENCLAVE...`,
+    isDeep ? `[+] CAPTURING DOM TREE // INTERCEPTING PASSWORD INPUT TARGETS...` : `[+] EVALUATING SECURITY HEADERS & EXPLOIT IMMUNITY...`,
     isDeep ? `[+] COMPUTING 64-BIT DCT PERCEPTUAL HASH (pHash) VS BRAND VECTORS...` : `[+] COMPUTING TRIAGE VERDICT...`,
     `[+] EXECUTING PLATT-SCALED MULTI-SIGNAL FUSION MODEL...`,
     `[✓] CALIBRATION COMPLETE // GENERATING EXPLAINABLE FORENSIC DOSSIER`
@@ -189,7 +189,7 @@ export const ScanningTelemetryHUD: React.FC<ScanningTelemetryHUDProps> = ({ targ
                 fontWeight: 800,
                 letterSpacing: '0.04em'
               }}>
-                {isDeep ? 'DEEP FORENSIC AUDIT (x402)' : 'FAST TRIAGE SCAN'}
+                {isDeep ? 'DEEP FORENSIC AUDIT (FREE)' : 'FAST TRIAGE SCAN'}
               </span>
             </div>
 

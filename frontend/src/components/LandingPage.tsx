@@ -107,11 +107,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
     {
       step: 6,
-      name: 'Multi-Signal Fusion & x402',
+      name: 'Multi-Signal Fusion & Gemini AI',
       badge: '0-100 VECTOR',
       color: '#c084fc',
-      summary: 'Platt-scaled calibrated probability scoring with instant on-chain Algorand Testnet x402 micropayments.',
-      detail: 'Aggregates all 5 forensic vectors into a unified calibrated threat score with full attack-chain evidence, backed by sub-4s Algorand cryptographic settlement.'
+      summary: 'Platt-scaled calibrated probability scoring fused with Google Gemini 2.5 Flash threat intelligence.',
+      detail: 'Aggregates all 5 forensic vectors into a unified calibrated threat score with full attack-chain evidence, zero-trust telemetry, and instant 1-click remediation blueprints.'
     }
   ];
 
@@ -259,21 +259,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const handleQuickSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickUrl.trim()) {
-      if (onScanUrl) {
-        onScanUrl(quickUrl.trim());
-      } else {
-        onLaunchScanner();
-      }
+      onLaunchScanner();
+      setTimeout(() => {
+        if (onScanUrl) {
+          onScanUrl(quickUrl.trim());
+        }
+      }, 2900);
     }
   };
 
   const handleSampleClick = (url: string) => {
     setQuickUrl(url);
-    if (onScanUrl) {
-      onScanUrl(url);
-    } else {
-      onLaunchScanner();
-    }
+    onLaunchScanner();
+    setTimeout(() => {
+      if (onScanUrl) {
+        onScanUrl(url);
+      }
+    }, 2900);
   };
 
   return (
@@ -316,8 +318,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </span>
                 <span style={{ color: 'var(--border-color)' }}>•</span>
                 <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Coins size={13} />
-                  <span>ALGORAND TESTNET: Nodely + AlgoNode Multi-Node Live (x402 Active)</span>
+                  <Zap size={13} />
+                  <span>ZERO-TRUST SOC: Multi-Signal Deep Forensics &amp; Brand Vision Active (100% Free)</span>
                 </span>
                 <span style={{ color: 'var(--border-color)' }}>•</span>
                 <span className="mono" style={{ fontSize: '0.74rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -373,7 +375,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <span className="mono cyber-font">CYBER COMMAND TERMINAL // CORE V2.0</span>
           <InfoTooltip
             title="Cyber Command Core V2.0"
-            description="Antigravity-engineered zero-trust cybersecurity operating environment running real-time ML pipelines, live WHOIS RDAP resolvers, and x402 Algorand settlement."
+            description="Antigravity-engineered zero-trust cybersecurity operating environment running real-time ML pipelines, live WHOIS RDAP resolvers, and multi-modal brand vision."
             position="bottom"
           />
         </motion.div>
@@ -506,9 +508,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Scan Protocol Notice */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <Coins size={12} color="var(--accent-cyan)" />
+            <Zap size={12} color="var(--accent-cyan)" />
             <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              Free Initial Triage • Full Headless Sandbox, pHash Vision &amp; Attack-Chain unlocked with <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>0.1 ALGO (x402)</span>
+              100% Free &amp; Open Access • Full Headless Sandbox, Brand pHash Vision &amp; Gemini AI <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Unlocked (No Paywalls)</span>
             </span>
           </div>
         </motion.div>
@@ -630,15 +632,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </motion.div>
 
           <motion.div whileHover={{ y: -3, scale: 1.03 }} transition={{ duration: 0.2 }}>
-            <div className="mono cyber-font" style={{ fontSize: '1.25rem', fontWeight: 900, color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span>x402 PROTOCOL</span>
+            <div className="mono cyber-font" style={{ fontSize: '1.25rem', fontWeight: 900, color: '#00ff88', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span>ZERO PAYWALL</span>
               <InfoTooltip
-                title="Algorand x402 Micropayments"
-                description="On-chain HTTP 402 pay-per-audit integration settling on Algorand Testnet with Pera Wallet."
+                title="100% Free & Open Access"
+                description="Community cybersecurity intelligence platform. All deep forensic audits and AI features are 100% free with zero fees."
                 position="top"
               />
             </div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>ALGORAND SETTLEMENT</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>COMMUNITY ACCESS</div>
           </motion.div>
         </div>
       </motion.div>

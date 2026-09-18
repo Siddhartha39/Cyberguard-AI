@@ -118,7 +118,7 @@ export const AboutPage: React.FC<{ onLaunchScanner: () => void }> = ({ onLaunchS
           Test the Complete Multi-Modal Pipeline
         </h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '18px' }}>
-          Execute a live security scan on any URL to see all 6 intelligence stages and x402 payment verification in action.
+          Execute a live security scan on any URL to see all 6 intelligence stages and multi-modal AI forensics in action.
         </p>
         <button
           onClick={onLaunchScanner}
