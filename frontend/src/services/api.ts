@@ -1346,22 +1346,28 @@ export async function sendChatMessage(
   history?: { role: string; content: string }[],
   apiKey?: string
 ): Promise<ChatResponse> {
-  const effectiveApiKey = apiKey || (typeof window !== 'undefined' ? localStorage.getItem('cyberguard_gemini_api_key') || '' : '');
+  const effectiveApiKey = apiKey ||
+    (typeof window !== 'undefined' ? localStorage.getItem('cyberguard_gemini_api_key') || '' : '') ||
+    ((import.meta as any)?.env?.VITE_GEMINI_API_KEY || '');
 
-  if (isBackendConfigured()) {
-    try {
-      const response = await apiFetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, report, history, api_key: effectiveApiKey || undefined })
-      });
-      if (response && response.ok) {
-        return await response.json();
-      }
-    } catch {}
-  }
+  // 1. First try backend /chat endpoint
+  try {
+    const res = await apiFetch<ChatResponse>('/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        domain: report?.canonical_domain || report?.domain,
+        report,
+        api_key: effectiveApiKey || undefined,
+        history: history?.map(h => ({ role: h.role, content: h.content }))
+      }),
+    });
+    if (res && res.reply) {
+      return res;
+    }
+  } catch {}
 
-  // If user provided a Gemini API Key in browser, attempt direct client-side Gemini generation
+  // 2. If user provided a Gemini API Key, attempt direct client-side Gemini generation
   if (effectiveApiKey) {
     try {
       const rawDomain = report?.canonical_domain || report?.domain;
@@ -1373,33 +1379,40 @@ ${targetDomain ? `Current Target Website Telemetry: Domain=${targetDomain}, Verd
 
 User Question: ${message}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${effectiveApiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
-        })
-      });
+      const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+      for (const modelId of modelsToTry) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${effectiveApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+            })
+          });
 
-      if (res.ok) {
-        const data = await res.json();
-        const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText) {
-          return {
-            reply: replyText.trim(),
-            suggested_actions: targetDomain ? [
-              `Is ${targetDomain} easily hackable?`,
-              `Give steps to fix ${targetDomain}`,
-              `Hardening headers for ${targetDomain}`,
-              `Explain ${targetDomain} risk score`
-            ] : [
-              'How do I audit my website?',
-              'What vulnerabilities does CyberGuard test for?',
-              'Show general Nginx hardening config',
-              'How to prevent code injection & SQLi?'
-            ]
-          };
+          if (res.ok) {
+            const data = await res.json();
+            const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (replyText) {
+              return {
+                reply: replyText.trim(),
+                suggested_actions: targetDomain ? [
+                  `Is ${targetDomain} easily hackable?`,
+                  `Give steps to fix ${targetDomain}`,
+                  `Hardening headers for ${targetDomain}`,
+                  `Explain ${targetDomain} risk score`
+                ] : [
+                  'How do I audit my website?',
+                  'What vulnerabilities does CyberGuard test for?',
+                  'Show general Nginx hardening config',
+                  'How to prevent code injection & SQLi?'
+                ]
+              };
+            }
+          }
+        } catch {
+          continue;
         }
       }
     } catch (e) {

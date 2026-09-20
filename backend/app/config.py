@@ -2,9 +2,11 @@ import os
 from pydantic import BaseModel
 
 # Automatically load .env file from project root or backend if present
+_current_dir = os.path.dirname(os.path.abspath(__file__))
 for _env_path in [
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    os.path.join(os.path.dirname(os.path.dirname(_current_dir)), ".env"),
+    os.path.join(os.path.dirname(_current_dir), ".env"),
+    os.path.join(_current_dir, ".env")
 ]:
     if os.path.exists(_env_path):
         try:
@@ -14,7 +16,7 @@ for _env_path in [
                     if _line and not _line.startswith("#") and "=" in _line:
                         _k, _v = _line.split("=", 1)
                         _k, _v = _k.strip(), _v.strip().strip("'\"")
-                        if _k and _k not in os.environ:
+                        if _k and (_k not in os.environ or not os.environ[_k].strip()) and _v:
                             os.environ[_k] = _v
         except Exception:
             pass

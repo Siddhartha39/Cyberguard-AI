@@ -58,7 +58,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('cyberguard_gemini_api_key') || '' : '';
+    return (typeof window !== 'undefined' ? localStorage.getItem('cyberguard_gemini_api_key') || '' : '') || ((import.meta as any)?.env?.VITE_GEMINI_API_KEY || '');
   });
   const [tempApiKey, setTempApiKey] = useState(geminiApiKey);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);

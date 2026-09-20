@@ -49,25 +49,26 @@ Return a valid JSON object with the following three fields ONLY (no markdown for
 """
 
     if settings.GEMINI_API_KEY:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"}
-            }
-            async with httpx.AsyncClient(timeout=6.0) as client:
-                resp = await client.post(url, json=payload)
-                if resp.status_code == 200:
-                    result = resp.json()
-                    raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
-                    data = json.loads(raw_text)
-                    return GeminiAIInsight(
-                        threat_intel_analysis=data.get("threat_intel_analysis", ""),
-                        hacker_perspective_audit=data.get("hacker_perspective_audit", ""),
-                        remediation_recommendations=data.get("remediation_recommendations", [])
-                    )
-        except Exception as e:
-            pass
+        for model_id in ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={settings.GEMINI_API_KEY}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"}
+                }
+                async with httpx.AsyncClient(timeout=8.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        result = resp.json()
+                        raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                        data = json.loads(raw_text)
+                        return GeminiAIInsight(
+                            threat_intel_analysis=data.get("threat_intel_analysis", ""),
+                            hacker_perspective_audit=data.get("hacker_perspective_audit", ""),
+                            remediation_recommendations=data.get("remediation_recommendations", [])
+                        )
+            except Exception:
+                continue
 
     # High-fidelity built-in fallback if Gemini API is unreachable or rate-limited
     if verdict == "PHISHING":
@@ -280,42 +281,43 @@ If the user asks any general cybersecurity, programming, or technical question, 
     # 1. Try Google Gemini API if key is available
     effective_api_key = (api_key or "").strip() or (settings.GEMINI_API_KEY or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
     if effective_api_key:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={effective_api_key}"
-            contents = [{"parts": [{"text": system_prompt}]}]
-            if history:
-                for h in history[-6:]:
-                    role = "model" if getattr(h, "role", "") == "assistant" or (isinstance(h, dict) and h.get("role") == "assistant") else "user"
-                    content_text = getattr(h, "content", "") if not isinstance(h, dict) else h.get("content", "")
-                    contents.append({"parts": [{"text": f"[{role.upper()}]: {content_text}"}]})
-            contents.append({"parts": [{"text": f"USER QUESTION: {message}"}]})
+        contents = [{"parts": [{"text": system_prompt}]}]
+        if history:
+            for h in history[-6:]:
+                role = "model" if getattr(h, "role", "") == "assistant" or (isinstance(h, dict) and h.get("role") == "assistant") else "user"
+                content_text = getattr(h, "content", "") if not isinstance(h, dict) else h.get("content", "")
+                contents.append({"parts": [{"text": f"[{role.upper()}]: {content_text}"}]})
+        contents.append({"parts": [{"text": f"USER QUESTION: {message}"}]})
 
-            payload = {
-                "contents": contents,
-                "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1500}
-            }
-            async with httpx.AsyncClient(timeout=9.0) as client:
-                resp = await client.post(url, json=payload)
-                if resp.status_code == 200:
-                    result = resp.json()
-                    reply_text = result["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    suggested = [
-                        f"Is {domain} easily hackable?",
-                        f"How to fix Security Grade {grade}?",
-                        "Generate Nginx & Express hardening headers",
-                        "How to prevent SQL injection and XSS?"
-                    ] if has_active_scan and domain else [
-                        "How do I audit my website?",
-                        "What vulnerabilities does CyberGuard test for?",
-                        "Show general Nginx hardening config",
-                        "How to prevent code injection & SQLi?"
-                    ]
-                    return {
-                        "reply": reply_text,
-                        "suggested_actions": suggested
-                    }
-        except Exception:
-            pass
+        payload = {
+            "contents": contents,
+            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048}
+        }
+        for model_id in ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={effective_api_key}"
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        result = resp.json()
+                        reply_text = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        suggested = [
+                            f"Is {domain} easily hackable?",
+                            f"How to fix Security Grade {grade}?",
+                            "Generate Nginx & Express hardening headers",
+                            "How to prevent SQL injection and XSS?"
+                        ] if has_active_scan and domain else [
+                            "How do I audit my website?",
+                            "What vulnerabilities does CyberGuard test for?",
+                            "Show general Nginx hardening config",
+                            "How to prevent code injection & SQLi?"
+                        ]
+                        return {
+                            "reply": reply_text,
+                            "suggested_actions": suggested
+                        }
+            except Exception:
+                continue
 
     # 2. High-fidelity built-in cybersecurity knowledge engine
     msg_lower = message.lower().strip()
