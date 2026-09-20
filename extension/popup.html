@@ -7,22 +7,27 @@
 </head>
 <body>
   <!-- Header -->
-  <div class="header">
+  <header class="header">
     <div class="brand">
-      <img src="icons/icon48.png" alt="CyberGuard" width="22" height="22">
-      <span>CYBERGUARD AI</span>
+      <div class="brand-icon-box">
+        <img src="icons/icon48.png" alt="CyberGuard" width="22" height="22">
+      </div>
+      <div class="brand-info">
+        <span class="brand-title">CYBERGUARD AI</span>
+        <span class="brand-subtitle">REAL-TIME SHIELD</span>
+      </div>
     </div>
-    <div class="header-right">
-      <span id="badge" class="badge badge-safe">SHIELD ACTIVE</span>
-      <button id="rescanBtn" class="icon-btn" title="Force Fresh Re-scan">🔄</button>
-      <button id="settingsToggleBtn" class="icon-btn" title="Engine Settings">⚙️</button>
+    <div class="header-actions">
+      <span id="badge" class="badge badge-safe">🛡️ SAFE</span>
+      <button id="rescanBtn" class="action-icon-btn" title="Force Fresh Re-scan">🔄</button>
+      <button id="settingsToggleBtn" class="action-icon-btn" title="Engine Settings">⚙️</button>
     </div>
-  </div>
+  </header>
 
   <!-- Engine Status Pill -->
   <div class="engine-status-bar">
     <span id="engineStatusDot" class="status-dot online"></span>
-    <span id="engineStatusText">Auto-Shield Background Protection Active</span>
+    <span id="engineStatusText">CyberGuard SOC Core Connected (:8000)</span>
   </div>
 
   <!-- Settings Drawer (Collapsible) -->
@@ -35,20 +40,20 @@
     </div>
     <label class="settings-lbl" for="frontendUrlInput" style="margin-top:8px; display:block;">Frontend Web App URL:</label>
     <div class="settings-row">
-      <input type="text" id="frontendUrlInput" class="settings-input mono" value="https://cyberguard-ai-one.vercel.app" placeholder="https://cyberguard-ai-one.vercel.app">
+      <input type="text" id="frontendUrlInput" class="settings-input mono" value="http://localhost:5173" placeholder="http://localhost:5173">
     </div>
     <div class="settings-note">
-      💡 <em>Works on ANY device:</em> If the local backend is offline, the extension automatically activates the <strong>Autonomous Edge DNS Engine</strong> with zero server required.
+      💡 <em>Works Offline & Anywhere:</em> If the local backend is offline, the extension automatically activates the <strong>Autonomous Edge DNS Engine</strong> with zero server required.
     </div>
   </div>
 
-  <!-- Current Domain Card -->
-  <div class="domain-card">
+  <!-- Active Target Card -->
+  <div class="target-card">
     <div class="card-header">
-      <span class="label">CURRENT ACTIVE TARGET</span>
+      <span class="section-label">CURRENT ACTIVE TARGET</span>
       <span id="protocolBadge" class="proto-badge">HTTPS</span>
     </div>
-    <div id="domainName" class="domain mono">Loading target...</div>
+    <div id="domainName" class="domain-text mono">Loading target...</div>
   </div>
 
   <!-- Risk Score & Security Grade -->
@@ -76,57 +81,67 @@
     </div>
   </div>
 
-  <!-- Infrastructure Telemetry Grid (New Feature) -->
+  <!-- Infrastructure Telemetry Grid (Structured 2x2 Tiles) -->
   <div class="telemetry-card">
-    <div class="label">LIVE INFRASTRUCTURE TELEMETRY</div>
+    <div class="section-label">LIVE INFRASTRUCTURE TELEMETRY</div>
     <div class="telemetry-grid">
-      <div class="tele-item">
-        <span class="tele-icon">🌐</span>
-        <span class="tele-label">DNS Status:</span>
-        <span id="teleDns" class="tele-val mono">Resolving...</span>
+      <div class="tele-tile">
+        <div class="tele-header">
+          <span class="tele-icon">🌐</span>
+          <span class="tele-lbl">DNS Routing</span>
+        </div>
+        <div id="teleDns" class="tele-val mono">Resolving...</div>
       </div>
-      <div class="tele-item">
-        <span class="tele-icon">🔒</span>
-        <span class="tele-label">TLS Protocol:</span>
-        <span id="teleTls" class="tele-val mono">Checking...</span>
+      <div class="tele-tile">
+        <div class="tele-header">
+          <span class="tele-icon">🔒</span>
+          <span class="tele-lbl">TLS Protocol</span>
+        </div>
+        <div id="teleTls" class="tele-val mono">Checking...</div>
       </div>
-      <div class="tele-item">
-        <span class="tele-icon">✉️</span>
-        <span class="tele-label">Mail Security:</span>
-        <span id="teleMail" class="tele-val mono">Auditing...</span>
+      <div class="tele-tile">
+        <div class="tele-header">
+          <span class="tele-icon">✉️</span>
+          <span class="tele-lbl">Mail Security</span>
+        </div>
+        <div id="teleMail" class="tele-val mono">Auditing...</div>
       </div>
-      <div class="tele-item">
-        <span class="tele-icon">🏛️</span>
-        <span class="tele-label">Domain Age:</span>
-        <span id="teleAge" class="tele-val mono">Querying...</span>
+      <div class="tele-tile">
+        <div class="tele-header">
+          <span class="tele-icon">🏛️</span>
+          <span class="tele-lbl">Domain Age</span>
+        </div>
+        <div id="teleAge" class="tele-val mono">Querying...</div>
       </div>
     </div>
   </div>
 
-  <!-- Threat Vector Signals List (New Feature) -->
+  <!-- Audited Defensive Vectors -->
   <div class="vectors-card">
-    <div class="label">AUDITED DEFENSIVE VECTORS</div>
+    <div class="section-label">AUDITED DEFENSIVE VECTORS</div>
     <div id="vectorTags" class="vector-tags">
-      <span class="vector-tag">Lexical Entropy</span>
-      <span class="vector-tag">Brand Contradiction</span>
-      <span class="vector-tag">DNS Infrastructure</span>
-      <span class="vector-tag">Spoofing Immunity</span>
+      <span class="vector-tag pass">✓ Lexical Entropy</span>
+      <span class="vector-tag pass">✓ Zero Contradiction</span>
+      <span class="vector-tag pass">✓ TLS Encryption</span>
+      <span class="vector-tag pass">✓ DNS Routing</span>
     </div>
   </div>
 
-  <!-- AI Intelligence Brief -->
+  <!-- AI Forensic Brief -->
   <div class="recs-card">
-    <div class="label">AI FORENSIC BRIEF</div>
-    <div id="aiSummary" class="text-sm">Evaluating target threat signals...</div>
+    <div class="section-label">AI FORENSIC BRIEF</div>
+    <div id="aiSummary" class="brief-text">Evaluating target threat signals...</div>
   </div>
 
   <!-- Action Buttons -->
   <div class="actions">
     <button id="deepScanBtn" class="btn btn-primary">
-      <span>🔬 Open SOC Deep Audit</span>
+      <span class="btn-emoji">🔬</span>
+      <span>Open SOC Deep Audit</span>
     </button>
     <button id="copyBriefBtn" class="btn btn-secondary">
-      <span>📋 Copy Forensic Brief</span>
+      <span class="btn-emoji">📋</span>
+      <span>Copy Forensic Brief</span>
     </button>
   </div>
 

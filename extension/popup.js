@@ -31,17 +31,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load configured backend URL and frontend URL
   let backendUrl = 'http://localhost:8000';
-  let frontendUrl = 'https://cyberguard-ai-one.vercel.app';
+  let frontendUrl = 'http://localhost:5173';
   try {
     const stored = await chrome.storage.local.get(['cyberguard_backend_url', 'cyberguard_frontend_url']);
     if (stored && stored.cyberguard_backend_url) {
       backendUrl = stored.cyberguard_backend_url;
       backendUrlInput.value = backendUrl;
     }
-    if (stored && stored.cyberguard_frontend_url && !stored.cyberguard_frontend_url.includes('localhost:5173')) {
+    if (stored && stored.cyberguard_frontend_url) {
       frontendUrl = stored.cyberguard_frontend_url;
     } else {
-      frontendUrl = 'https://cyberguard-ai-one.vercel.app';
+      frontendUrl = 'http://localhost:5173';
       await chrome.storage.local.set({ cyberguard_frontend_url: frontendUrl });
     }
     if (frontendUrlInput) frontendUrlInput.value = frontendUrl;
@@ -173,32 +173,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     else secGradeEl.style.color = '#ef4444';
 
     // Verdict Badge
+    let badgeText = 'SAFE';
+    let badgeColor = '#10B981';
+    let iconColor = '#10b981';
+    let isBenign = false;
+
     if (data.verdict === 'PHISHING') {
       badgeEl.className = 'badge badge-danger';
-      badgeEl.innerText = 'PHISHING THREAT';
+      badgeEl.innerHTML = '🚨 PHISHING';
       alertBoxEl.style.display = 'flex';
       alertTitleEl.innerText = 'CRITICAL PHISHING RISK DETECTED';
       alertDescEl.innerText = data.brand_analysis && data.brand_analysis.is_contradiction
         ? data.brand_analysis.contradiction_explanation
         : (data.triage_reason || 'This site exhibits deceptive phishing patterns targeting user credentials.');
+      badgeText = 'WARN';
+      badgeColor = '#EF4444';
+      iconColor = '#ef4444';
     } else if (data.verdict === 'SUSPICIOUS') {
       badgeEl.className = 'badge badge-warning';
-      badgeEl.innerText = 'SUSPICIOUS';
+      badgeEl.innerHTML = '⚠️ SUSPICIOUS';
       alertBoxEl.style.display = 'none';
+      badgeText = 'SUSP';
+      badgeColor = '#F59E0B';
+      iconColor = '#f59e0b';
     } else if (data.verdict === 'UNREGISTERED') {
       badgeEl.className = 'badge badge-warning';
-      badgeEl.innerText = 'UNREGISTERED';
+      badgeEl.innerHTML = '❓ INACTIVE';
       alertBoxEl.style.display = 'none';
+      badgeText = 'NX';
+      badgeColor = '#6B7280';
+      iconColor = '#6b7280';
     } else {
       badgeEl.className = 'badge badge-safe';
-      badgeEl.innerText = 'VERIFIED BENIGN';
+      badgeEl.innerHTML = '🛡️ SAFE';
       alertBoxEl.style.display = 'none';
+      badgeText = 'SAFE';
+      badgeColor = '#10B981';
+      iconColor = '#10b981';
+      isBenign = true;
+    }
+
+    // Ensure Chrome Action Badge & Icon sync with this verdict immediately
+    if (tab && tab.id) {
+      try {
+        chrome.action.setBadgeText({ text: badgeText, tabId: tab.id });
+        chrome.action.setBadgeBackgroundColor({ color: badgeColor, tabId: tab.id });
+        if (chrome.action.setBadgeTextColor) {
+          chrome.action.setBadgeTextColor({ color: '#FFFFFF', tabId: tab.id });
+        }
+
+        const iconCanvas = document.createElement('canvas');
+        iconCanvas.width = 32;
+        iconCanvas.height = 32;
+        const ctx = iconCanvas.getContext('2d');
+        if (ctx) {
+          ctx.beginPath();
+          ctx.arc(16, 16, 14, 0, 2 * Math.PI);
+          ctx.fillStyle = iconColor;
+          ctx.fill();
+
+          if (isBenign) {
+            ctx.beginPath();
+            ctx.moveTo(9, 16);
+            ctx.lineTo(14, 21);
+            ctx.lineTo(23, 11);
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(badgeText === 'WARN' ? '✕' : (badgeText === 'SUSP' ? '!' : '?'), 16, 17);
+          }
+
+          const imgData = ctx.getImageData(0, 0, 32, 32);
+          chrome.action.setIcon({ imageData: imgData, tabId: tab.id });
+        }
+      } catch (err) {
+        console.warn('Action icon/badge update in popup:', err);
+      }
     }
 
     // Telemetry Grid
     const aCount = data.dns_a_records ? data.dns_a_records.length : (data.domain_intel?.dns?.a_records?.length || 0);
     teleDnsEl.innerText = data.verdict === 'UNREGISTERED' ? 'NXDOMAIN' : (aCount > 0 ? `Active (${aCount} IPs)` : 'Resolved');
-    teleTlsEl.innerText = data.tls_valid ? 'Valid TLS (Secure)' : 'Insecure (No TLS)';
+    teleTlsEl.innerText = data.tls_valid ? 'Valid TLS (Secure)' : 'No Encryption';
     teleTlsEl.style.color = data.tls_valid ? '#34d399' : '#f87171';
 
     const hasSpf = data.has_spf !== undefined ? data.has_spf : (data.domain_intel?.dns?.txt_records?.some(t => t.includes('v=spf1')) || false);
@@ -208,10 +269,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       teleMailEl.innerText = 'SPF + DMARC ✓';
       teleMailEl.style.color = '#34d399';
     } else if (hasSpf) {
-      teleMailEl.innerText = isCleanDomain ? 'SPF ✓ (DMARC Advisory)' : 'SPF Only (DMARC Missing)';
-      teleMailEl.style.color = isCleanDomain ? '#fbbf24' : '#f97316';
+      teleMailEl.innerText = 'SPF Configured';
+      teleMailEl.style.color = '#38bdf8';
     } else {
-      teleMailEl.innerText = isCleanDomain ? 'DMARC Recommended' : 'No SPF/DMARC';
+      teleMailEl.innerText = isCleanDomain ? 'DMARC Pending' : 'None Configured';
       teleMailEl.style.color = isCleanDomain ? '#94a3b8' : '#ef4444';
     }
 
@@ -260,6 +321,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Comprehensive brand lookalike mapping aligned with backend
+  const POPUP_BRAND_LOOKALIKES_MAP = {
+    'icloud': ['icloud.com', 'apple.com'],
+    'apple': ['apple.com', 'icloud.com'],
+    'paypal': ['paypal.com'],
+    'microsoft': ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'msn.com'],
+    'google': ['google.com'],
+    'netflix': ['netflix.com'],
+    'amazon': ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.ca', 'amazon.es', 'amazon.it'],
+    'chase': ['chase.com'],
+    'wellsfargo': ['wellsfargo.com'],
+    'bankofamerica': ['bankofamerica.com'],
+    'binance': ['binance.com'],
+    'coinbase': ['coinbase.com'],
+    'metamask': ['metamask.io'],
+    'steam': ['steampowered.com', 'steamcommunity.com'],
+    'whatsapp': ['whatsapp.com'],
+    'instagram': ['instagram.com'],
+    'facebook': ['facebook.com', 'fb.com'],
+    'dropbox': ['dropbox.com'],
+    'twitter': ['twitter.com', 'x.com'],
+    'linkedin': ['linkedin.com']
+  };
+
+  const POPUP_DOUBLE_TLDS = new Set([
+    'com.br', 'net.br', 'org.br', 'gov.br', 'co.uk', 'org.uk', 'me.uk',
+    'com.au', 'net.au', 'org.au', 'co.nz', 'net.nz', 'org.nz', 'co.jp',
+    'com.sg', 'com.hk', 'co.za', 'com.mx', 'com.ar', 'com.tr', 'co.in',
+    'net.in', 'org.in', 'gen.in', 'firm.in', 'ind.in'
+  ]);
+
+  function getPopupRegDomain(host) {
+    const parts = host.toLowerCase().split('.');
+    if (parts.length <= 2) return host.toLowerCase();
+    const lastTwo = parts.slice(-2).join('.');
+    if (POPUP_DOUBLE_TLDS.has(lastTwo) && parts.length >= 3) {
+      return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
+  }
+
+  function auditPopupBrandSpoofing(host) {
+    const regDomain = getPopupRegDomain(host);
+    const hostLower = host.toLowerCase();
+
+    for (const [brand, authorizedDomains] of Object.entries(POPUP_BRAND_LOOKALIKES_MAP)) {
+      if (hostLower.includes(brand)) {
+        const isAuthorized = authorizedDomains.some(auth =>
+          regDomain === auth || regDomain.endsWith('.' + auth)
+        );
+        if (!isAuthorized) {
+          return {
+            isSpoof: true,
+            brand,
+            regDomain,
+            reason: `Critical Brand Lookalike: Domain '${regDomain}' contains protected trademark '${brand}' on unauthorized infrastructure.`
+          };
+        }
+      }
+    }
+    return { isSpoof: false, brand: null, regDomain, reason: null };
+  }
+
   // Autonomous Edge Fallback
   async function runAutonomousClientAnalysis(url, host, isSecure) {
     let aRecords = [];
@@ -296,21 +420,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hasSpf = txtRecords.some(t => typeof t === 'string' && t.toLowerCase().includes('v=spf1'));
     const hasDmarc = txtRecords.some(t => typeof t === 'string' && t.toLowerCase().includes('v=dmarc1'));
 
-    const brandKeywords = ['paypal', 'microsoft', 'google', 'apple', 'amazon', 'netflix', 'chase', 'bankofamerica', 'meta', 'facebook', 'login', 'verify', 'update', 'secure', 'banking'];
-    const parts = host.split('.');
-    const tld = parts.length > 1 ? parts[parts.length - 1] : '';
-    const rootDomain = parts.length > 2 ? parts.slice(-2).join('.') : host;
-    const subdomains = parts.length > 2 ? parts.slice(0, -2).join('.') : '';
+    const brandAudit = auditPopupBrandSpoofing(host);
+    const isContradiction = brandAudit.isSpoof;
+    const brandDetected = brandAudit.brand;
 
-    let brandDetected = null;
-    let isContradiction = false;
-    for (const b of brandKeywords) {
-      if (subdomains.includes(b) && !rootDomain.includes(b)) {
-        brandDetected = b;
-        isContradiction = true;
-        break;
-      }
-    }
+    const regDomain = getPopupRegDomain(host);
+    const parts = regDomain.split('.');
+    const tld = parts.length > 1 ? parts[parts.length - 1] : '';
 
     const riskyTlds = ['xyz', 'top', 'buzz', 'club', 'work', 'fit', 'gq', 'tk', 'ml', 'cf', 'ga'];
     const isRiskyTld = riskyTlds.includes(tld.toLowerCase());
@@ -322,21 +438,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       verdict = 'UNREGISTERED';
       score = 0.0;
     } else if (isContradiction) {
-      score = 92.0;
+      score = 94.0;
       verdict = 'PHISHING';
     } else if (isRiskyTld && hostEntropy > 4.2) {
-      score = 55.0;
+      score = 65.0;
       verdict = 'SUSPICIOUS';
     } else if (!isSecure) {
       score = 30.0;
       verdict = 'SUSPICIOUS';
     } else if (hostEntropy > 4.5) {
-      score = 42.0;
+      score = 45.0;
       verdict = 'SUSPICIOUS';
     }
 
     return {
-      canonical_domain: host,
+      canonical_domain: regDomain,
       basic_risk_score: score,
       overall_risk_score: score,
       verdict: verdict,
@@ -348,7 +464,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       has_dmarc: hasDmarc,
       tls_valid: isSecure,
       triage_reason: isContradiction 
-        ? `Brand contradiction alert: Subdomain mimics '${brandDetected}' but root domain is '${rootDomain}'.`
+        ? brandAudit.reason
         : (!isRegistered ? 'Domain is not registered in global root DNS (NXDOMAIN).' : (isSecure ? 'Lexical and DNS signals conform to benign baseline.' : 'Insecure unencrypted HTTP connection detected.')),
       is_autonomous: true
     };
@@ -363,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (const host of uniqueHosts) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2800);
+        const timeoutId = setTimeout(() => controller.abort(), 6500);
         const res = await fetch(`${host}/api/scan/free`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

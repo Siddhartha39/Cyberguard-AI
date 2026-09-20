@@ -6,6 +6,69 @@ const inMemoryCache = new Map();
 const activeScanPromises = new Map();
 const lastScannedUrls = new Map();
 
+// Comprehensive brand lookalike mapping aligned with backend
+const BRAND_LOOKALIKES_MAP = {
+  'icloud': ['icloud.com', 'apple.com'],
+  'apple': ['apple.com', 'icloud.com'],
+  'paypal': ['paypal.com'],
+  'microsoft': ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'msn.com'],
+  'google': ['google.com'],
+  'netflix': ['netflix.com'],
+  'amazon': ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.ca', 'amazon.es', 'amazon.it'],
+  'chase': ['chase.com'],
+  'wellsfargo': ['wellsfargo.com'],
+  'bankofamerica': ['bankofamerica.com'],
+  'binance': ['binance.com'],
+  'coinbase': ['coinbase.com'],
+  'metamask': ['metamask.io'],
+  'steam': ['steampowered.com', 'steamcommunity.com'],
+  'whatsapp': ['whatsapp.com'],
+  'instagram': ['instagram.com'],
+  'facebook': ['facebook.com', 'fb.com'],
+  'dropbox': ['dropbox.com'],
+  'twitter': ['twitter.com', 'x.com'],
+  'linkedin': ['linkedin.com']
+};
+
+const DOUBLE_TLDS = new Set([
+  'com.br', 'net.br', 'org.br', 'gov.br', 'co.uk', 'org.uk', 'me.uk',
+  'com.au', 'net.au', 'org.au', 'co.nz', 'net.nz', 'org.nz', 'co.jp',
+  'com.sg', 'com.hk', 'co.za', 'com.mx', 'com.ar', 'com.tr', 'co.in',
+  'net.in', 'org.in', 'gen.in', 'firm.in', 'ind.in'
+]);
+
+function getRegistrableDomain(hostname) {
+  const parts = hostname.toLowerCase().split('.');
+  if (parts.length <= 2) return hostname.toLowerCase();
+  const lastTwo = parts.slice(-2).join('.');
+  if (DOUBLE_TLDS.has(lastTwo) && parts.length >= 3) {
+    return parts.slice(-3).join('.');
+  }
+  return parts.slice(-2).join('.');
+}
+
+function checkBrandSpoofing(hostname) {
+  const regDomain = getRegistrableDomain(hostname);
+  const hostLower = hostname.toLowerCase();
+
+  for (const [brand, authorizedDomains] of Object.entries(BRAND_LOOKALIKES_MAP)) {
+    if (hostLower.includes(brand)) {
+      const isAuthorized = authorizedDomains.some(auth =>
+        regDomain === auth || regDomain.endsWith('.' + auth)
+      );
+      if (!isAuthorized) {
+        return {
+          isSpoof: true,
+          brand,
+          regDomain,
+          reason: `Critical Brand Lookalike: Domain '${regDomain}' contains protected trademark '${brand}' on unauthorized infrastructure.`
+        };
+      }
+    }
+  }
+  return { isSpoof: false, brand: null, regDomain, reason: null };
+}
+
 // Helper: Calculate Shannon Entropy
 function calculateEntropy(str) {
   if (!str) return 0;
@@ -58,27 +121,14 @@ async function runAutonomousEdgeAnalysis(url, hostname, isHttps) {
   const hasSpf = txtRecords.some(t => typeof t === 'string' && t.toLowerCase().includes('v=spf1'));
   const hasDmarc = txtRecords.some(t => typeof t === 'string' && t.toLowerCase().includes('v=dmarc1'));
 
-  // Brand Impersonation check
-  const brandKeywords = [
-    'paypal', 'microsoft', 'google', 'apple', 'amazon', 'netflix',
-    'chase', 'bankofamerica', 'meta', 'facebook', 'instagram', 'binance',
-    'coinbase', 'login', 'verify', 'update', 'secure', 'banking', 'support', 'account'
-  ];
+  // Brand Lookalike & Impersonation check
+  const brandAudit = checkBrandSpoofing(hostname);
+  const isContradiction = brandAudit.isSpoof;
+  const brandDetected = brandAudit.brand;
 
-  const parts = hostname.split('.');
+  const regDomain = getRegistrableDomain(hostname);
+  const parts = regDomain.split('.');
   const tld = parts.length > 1 ? parts[parts.length - 1] : '';
-  const rootDomain = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
-  const subdomains = parts.length > 2 ? parts.slice(0, -2).join('.') : '';
-
-  let brandDetected = null;
-  let isContradiction = false;
-  for (const b of brandKeywords) {
-    if (subdomains.includes(b) && !rootDomain.includes(b)) {
-      brandDetected = b;
-      isContradiction = true;
-      break;
-    }
-  }
 
   // Risky TLDs
   const riskyTlds = ['xyz', 'top', 'buzz', 'club', 'work', 'fit', 'gq', 'tk', 'ml', 'cf', 'ga', 'click', 'link'];
@@ -91,21 +141,21 @@ async function runAutonomousEdgeAnalysis(url, hostname, isHttps) {
     verdict = 'UNREGISTERED';
     score = 0.0;
   } else if (isContradiction) {
-    score = 92.0;
+    score = 94.0;
     verdict = 'PHISHING';
   } else if (isRiskyTld && hostEntropy > 4.2) {
-    score = 55.0;
+    score = 65.0;
     verdict = 'SUSPICIOUS';
   } else if (!isHttps) {
     score = 30.0;
     verdict = 'SUSPICIOUS';
   } else if (hostEntropy > 4.5) {
-    score = 42.0;
+    score = 45.0;
     verdict = 'SUSPICIOUS';
   }
 
   return {
-    canonical_domain: hostname,
+    canonical_domain: regDomain,
     basic_risk_score: score,
     overall_risk_score: score,
     verdict: verdict,
@@ -117,11 +167,11 @@ async function runAutonomousEdgeAnalysis(url, hostname, isHttps) {
     has_dmarc: hasDmarc,
     tls_valid: isHttps,
     triage_reason: isContradiction
-      ? `Brand contradiction alert: Subdomain mimics '${brandDetected}' but root domain is '${rootDomain}'.`
+      ? brandAudit.reason
       : (!isRegistered ? 'Domain is not registered in global root DNS (NXDOMAIN).' : (isHttps ? 'Lexical and DNS signals conform to benign baseline.' : 'Insecure unencrypted HTTP connection detected.')),
     ai_insights: {
       threat_intel_analysis: isContradiction
-        ? `High-confidence phishing pattern detected targeting ${brandDetected}. Recommended action: Do not input credentials.`
+        ? `High-confidence phishing pattern detected targeting ${brandDetected}. Protected trademark hosted on unverified third-party infrastructure.`
         : (isHttps ? `Domain ${hostname} verified safe. TLS encryption active, no brand spoofing patterns identified.` : `Insecure connection. Data transmitted to ${hostname} is unencrypted.`)
     },
     is_autonomous: true,
@@ -163,7 +213,7 @@ async function performScan(url, hostname, isHttps) {
   for (const host of uniqueHosts) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2800);
+      const timeoutId = setTimeout(() => controller.abort(), 6500);
       const res = await fetch(`${host}/api/scan/free`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,13 +261,18 @@ function updateBadge(tabId, data) {
   if (!tabId || !data) return;
 
   const verdict = data.verdict;
+  let badgeText = 'SAFE';
+  let badgeBg = '#10B981';
+  let titleText = `CyberGuard AI: Verified Benign (${data.canonical_domain || 'Clean'})`;
+  let iconBg = '#10b981';
+  let iconSymbol = '✓';
+
   if (verdict === 'PHISHING') {
-    chrome.action.setBadgeText({ text: 'ALERT', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#EF4444', tabId });
-    chrome.action.setTitle({
-      title: `CyberGuard AI: CRITICAL PHISHING RISK on ${data.canonical_domain || 'this site'}!`,
-      tabId
-    });
+    badgeText = 'ALERT';
+    badgeBg = '#EF4444';
+    titleText = `CyberGuard AI: CRITICAL PHISHING RISK on ${data.canonical_domain || 'this site'}!`;
+    iconBg = '#ef4444';
+    iconSymbol = '!';
 
     // Native Desktop Notification for Phishing Threat
     try {
@@ -232,20 +287,60 @@ function updateBadge(tabId, data) {
       }
     } catch (e) {}
   } else if (verdict === 'SUSPICIOUS' || verdict === 'UNREGISTERED') {
-    chrome.action.setBadgeText({ text: 'WARN', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#F97316', tabId });
-    chrome.action.setTitle({
-      title: `CyberGuard AI: Suspicious site telemetry on ${data.canonical_domain || 'this site'}`,
-      tabId
-    });
-  } else {
-    chrome.action.setBadgeText({ text: 'SAFE', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#10B981', tabId });
-    chrome.action.setTitle({
-      title: `CyberGuard AI: Verified Benign (${data.canonical_domain || 'Clean'})`,
-      tabId
-    });
+    badgeText = 'WARN';
+    badgeBg = '#F97316';
+    titleText = `CyberGuard AI: Suspicious site telemetry on ${data.canonical_domain || 'this site'}`;
+    iconBg = '#f97316';
+    iconSymbol = '⚠';
   }
+
+  // 1. Update text badge, background color, and white text color
+  try {
+    chrome.action.setBadgeText({ text: badgeText, tabId });
+    chrome.action.setBadgeBackgroundColor({ color: badgeBg, tabId });
+    if (chrome.action.setBadgeTextColor) {
+      chrome.action.setBadgeTextColor({ color: '#FFFFFF', tabId });
+    }
+    chrome.action.setTitle({ title: titleText, tabId });
+  } catch (e) {}
+
+  // 2. Dynamically paint status icon (Safe Checkmark, Warning, or Alert)
+  try {
+    if (typeof OffscreenCanvas !== 'undefined') {
+      const canvas = new OffscreenCanvas(32, 32);
+      const ctx = canvas.getContext('2d');
+      // Draw background rounded badge circle
+      ctx.beginPath();
+      ctx.arc(16, 16, 14, 0, 2 * Math.PI);
+      ctx.fillStyle = iconBg;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      // Draw symbol
+      if (iconSymbol === '✓') {
+        ctx.beginPath();
+        ctx.moveTo(8, 16);
+        ctx.lineTo(13, 21);
+        ctx.lineTo(24, 10);
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(iconSymbol, 16, 17);
+      }
+
+      const imgData = ctx.getImageData(0, 0, 32, 32);
+      chrome.action.setIcon({ imageData: imgData, tabId });
+    }
+  } catch (e) {}
 }
 
 // Auto-Scan Handler for Tab
@@ -377,5 +472,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+// 5. Sweep and audit currently active tabs on extension install/startup/init
+async function sweepActiveTabs() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true });
+    for (const t of tabs) {
+      if (t.id && t.url && t.url.startsWith('http')) {
+        handleAutoScan(t.id, t.url);
+      }
+    }
+  } catch (e) {}
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  sweepActiveTabs();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  sweepActiveTabs();
+});
+
+sweepActiveTabs();
 
 console.log('🛡️ CyberGuard AI Real-Time Background Shield initialized.');

@@ -1,15 +1,20 @@
-body {
-  width: 360px;
-  margin: 0;
-  padding: 14px;
-  background-color: #080c14;
-  color: #f3f4f6;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  box-sizing: border-box;
-}
+/* CyberGuard AI - High-Precision Threat Shield Extension Stylesheet */
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 390px;
+  margin: 0;
+  padding: 14px;
+  background-color: #070b12;
+  background-image: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.08) 0%, transparent 60%);
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .mono {
@@ -21,65 +26,116 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: #38bdf8;
-  letter-spacing: 0.08em;
+  flex-shrink: 0;
 }
 
-.header-right {
+.brand-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-icon-box img {
+  display: block;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.brand-subtitle {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
-.icon-btn {
-  background: transparent;
-  border: none;
+.action-icon-btn {
+  width: 26px;
+  height: 26px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-  color: #9ca3af;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.2s ease;
 }
 
-.icon-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.action-icon-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #f8fafc;
+  transform: translateY(-1px);
 }
 
+/* Verdict Badge */
 .badge {
   font-size: 0.65rem;
   font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 12px;
-  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .badge-safe {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
 }
 
 .badge-warning {
-  background: rgba(249, 115, 22, 0.15);
-  color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.4);
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
 }
 
 .badge-danger {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.22);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
 }
 
 /* Engine Status Bar */
@@ -87,18 +143,20 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.68rem;
-  color: #9ca3af;
+  font-size: 0.67rem;
+  color: #94a3b8;
   margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  border-radius: 6px;
 }
 
 .status-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  display: inline-block;
+  flex-shrink: 0;
 }
 
 .status-dot.online {
@@ -117,7 +175,7 @@ body {
 
 /* Settings Drawer */
 .settings-drawer {
-  background: rgba(15, 23, 42, 0.95);
+  background: #0f172a;
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
   padding: 10px;
@@ -172,48 +230,52 @@ body {
 }
 
 .settings-note {
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   color: #94a3b8;
   line-height: 1.35;
 }
 
-/* Domain Card */
-.domain-card {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 8px;
+/* Target Domain Card */
+.target-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-left: 3px solid #38bdf8;
+  border-radius: 7px;
   padding: 8px 10px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
-.label {
+.section-label {
   font-size: 0.62rem;
   color: #94a3b8;
   font-weight: 700;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .proto-badge {
-  font-size: 0.6rem;
-  font-weight: 700;
-  background: rgba(56, 189, 248, 0.15);
+  font-size: 0.58rem;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.14);
   color: #38bdf8;
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 4px;
+  letter-spacing: 0.05em;
 }
 
-.domain {
-  font-size: 0.88rem;
+.domain-text {
+  font-size: 0.94rem;
   color: #ffffff;
   font-weight: 700;
   word-break: break-all;
+  line-height: 1.2;
 }
 
 /* Metrics Grid */
@@ -221,19 +283,19 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .metric-box {
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 7px;
+  padding: 9px 8px;
   text-align: center;
 }
 
 .metric-val {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 900;
   color: #38bdf8;
   line-height: 1.1;
@@ -241,11 +303,11 @@ body {
 }
 
 .metric-lbl {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   color: #94a3b8;
   font-weight: 700;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .metric-sub {
@@ -255,7 +317,8 @@ body {
 }
 
 .progress-track {
-  width: 100%;
+  width: 80%;
+  margin: 0 auto;
   height: 4px;
   background: rgba(51, 65, 85, 0.5);
   border-radius: 2px;
@@ -265,7 +328,7 @@ body {
 .progress-fill {
   height: 100%;
   background: #10b981;
-  transition: width 0.6s ease, background 0.4s ease;
+  transition: width 0.5s ease, background 0.4s ease;
 }
 
 /* Alert Box */
@@ -274,13 +337,13 @@ body {
   gap: 8px;
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 8px 10px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .alert-icon {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .alert-content strong {
@@ -292,57 +355,69 @@ body {
 
 .alert-content p {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   color: #cbd5e1;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 /* Telemetry Card */
 .telemetry-card {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(56, 189, 248, 0.18);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 9px 10px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .telemetry-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
+  gap: 6px;
   margin-top: 6px;
 }
 
-.tele-item {
+.tele-tile {
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 5px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tele-header {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.66rem;
 }
 
 .tele-icon {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
-.tele-label {
+.tele-lbl {
+  font-size: 0.59rem;
   color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .tele-val {
+  font-size: 0.73rem;
+  font-weight: 700;
   color: #f1f5f9;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
 }
 
 /* Vector Tags */
 .vectors-card {
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.55);
   border: 1px solid rgba(56, 189, 248, 0.15);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 8px 10px;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .vector-tags {
@@ -353,38 +428,39 @@ body {
 }
 
 .vector-tag {
-  font-size: 0.62rem;
+  font-size: 0.61rem;
   font-weight: 600;
   background: rgba(56, 189, 248, 0.1);
   border: 1px solid rgba(56, 189, 248, 0.25);
   color: #bae6fd;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
 }
 
 .vector-tag.pass {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.14);
   border-color: rgba(16, 185, 129, 0.35);
   color: #6ee7b7;
 }
 
 .vector-tag.fail {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.14);
   border-color: rgba(239, 68, 68, 0.35);
   color: #fca5a5;
 }
 
-/* AI Intelligence Brief */
+/* AI Forensic Brief */
 .recs-card {
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 8px;
-  padding: 9px 10px;
-  margin-bottom: 12px;
+  border-left: 3px solid #0284c7;
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
 }
 
-.text-sm {
-  font-size: 0.72rem;
+.brief-text {
+  font-size: 0.7rem;
   color: #cbd5e1;
   line-height: 1.4;
   margin-top: 4px;
@@ -398,74 +474,66 @@ body {
 
 .btn {
   flex: 1;
-  padding: 8px 10px;
+  height: 36px;
+  padding: 0 10px;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  transition: transform 0.15s, opacity 0.15s;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-emoji {
+  font-size: 0.88rem;
+  line-height: 1;
 }
 
 .btn:hover {
-  opacity: 0.92;
+  opacity: 0.95;
   transform: translateY(-1px);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35);
 }
 
 .btn-secondary {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   color: #38bdf8;
+}
+
+.btn-secondary:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #ffffff;
 }
 
 .toast {
   position: fixed;
-  bottom: 10px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   background: #10b981;
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
   animation: fadeIn 0.2s ease-in;
+  z-index: 100;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translate(-50%, 5px); }
   to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.spinning {
-  display: inline-block;
-  animation: spin 0.8s linear infinite;
-}
-
-.auto-shield-badge {
-  font-size: 0.58rem;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 4px;
-  padding: 1px 5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
 }
