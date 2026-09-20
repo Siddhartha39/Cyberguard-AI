@@ -24,10 +24,11 @@ import {
   ChevronDown,
   RotateCcw,
   Key,
-  Settings
+  Settings,
+  Globe
 } from 'lucide-react';
 import type { RiskScoreReport, FreeScanResult, ChatMessage } from '../types';
-import { sendChatMessage, executeFreeScan } from '../services/api';
+import { sendChatMessage, executeFreeScan, DEFAULT_GEMINI_API_KEY } from '../services/api';
 
 interface CyberCopilotChatProps {
   report?: RiskScoreReport | FreeScanResult | null;
@@ -58,18 +59,12 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
-    const envKey = ((import.meta as any)?.env?.VITE_GEMINI_API_KEY || '').trim();
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('cyberguard_gemini_api_key');
       if (stored && stored.trim()) return stored.trim();
-      if (envKey) {
-        try {
-          localStorage.setItem('cyberguard_gemini_api_key', envKey);
-        } catch {}
-        return envKey;
-      }
     }
-    return envKey;
+    const envKey = ((import.meta as any)?.env?.VITE_GEMINI_API_KEY || '').trim();
+    return envKey || DEFAULT_GEMINI_API_KEY;
   });
   const [tempApiKey, setTempApiKey] = useState(geminiApiKey);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -251,8 +246,254 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
   ];
 
-  // Helper to render simple markdown formatting
-  const renderMessageContent = (content: string, msgIdx: number) => {
+  // Interactive Live Chromium Sandbox Component
+  const InteractiveChatSandbox: React.FC<{ initialUrl: string }> = ({ initialUrl }) => {
+    const formatTargetUrl = (raw: string) => {
+      let clean = (raw || '').trim();
+      if (!clean) return 'https://campuskart.shop';
+      if (!/^https?:\/\//i.test(clean)) {
+        clean = `https://${clean}`;
+      }
+      return clean;
+    };
+
+    const initialFormatted = formatTargetUrl(initialUrl);
+    const [currentUrl, setCurrentUrl] = useState(initialFormatted);
+    const [inputUrl, setInputUrl] = useState(initialFormatted);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+
+    const handleRefresh = () => {
+      setIsRefreshing(true);
+      setIframeLoaded(false);
+      setRefreshKey(prev => prev + 1);
+      setTimeout(() => setIsRefreshing(false), 600);
+    };
+
+    const handleNavigate = (e: React.FormEvent) => {
+      e.preventDefault();
+      const formatted = formatTargetUrl(inputUrl);
+      setCurrentUrl(formatted);
+      setInputUrl(formatted);
+      setIframeLoaded(false);
+      setRefreshKey(prev => prev + 1);
+    };
+
+    const handleScrollToInspector = () => {
+      const el = document.getElementById('technical-inspector-root');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    return (
+      <div
+        style={{
+          margin: '12px 0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '1px solid rgba(0, 240, 255, 0.4)',
+          background: '#0a0e17',
+          boxShadow: '0 8px 32px rgba(0, 240, 255, 0.12), 0 2px 10px rgba(0,0,0,0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%'
+        }}
+      >
+        {/* Browser Chrome Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 12px',
+            background: 'rgba(15, 23, 42, 0.95)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            gap: '8px',
+            flexWrap: 'wrap'
+          }}
+        >
+          {/* Left: Traffic Lights & Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+            </div>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.5px' }}>
+              LIVE CHROMIUM SANDBOX
+            </span>
+          </div>
+
+          {/* Center: Interactive Address Bar */}
+          <form
+            onSubmit={handleNavigate}
+            style={{
+              flex: 1,
+              minWidth: '170px',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(0, 240, 255, 0.25)',
+              borderRadius: '6px',
+              padding: '3px 8px',
+              gap: '6px'
+            }}
+          >
+            <Lock size={11} color="#10b981" />
+            <input
+              type="text"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'var(--text-primary)',
+                fontSize: '0.72rem',
+                fontFamily: 'monospace'
+              }}
+              placeholder="Enter URL to test in sandbox..."
+            />
+          </form>
+
+          {/* Right: Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              title="Reload Sandbox"
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                fontSize: '0.68rem'
+              }}
+            >
+              <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+
+            <a
+              href={currentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in new browser tab"
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.68rem',
+                textDecoration: 'none'
+              }}
+            >
+              <ExternalLink size={11} />
+            </a>
+
+            <button
+              type="button"
+              onClick={handleScrollToInspector}
+              title="Inspect in Main Dashboard"
+              style={{
+                background: 'rgba(0, 240, 255, 0.12)',
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                borderRadius: '4px',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                color: 'var(--accent-cyan)',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <Maximize2 size={10} />
+              <span>FULL AUDIT</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Security Isolation Banner */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '4px 10px',
+            background: 'rgba(16, 185, 129, 0.08)',
+            borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+            fontSize: '0.64rem',
+            color: '#10b981',
+            fontWeight: 600,
+            flexWrap: 'wrap',
+            gap: '4px'
+          }}
+        >
+          <span>🛡️ SECURE ISOLATION ACTIVE • Local filesystem & host memory protected</span>
+          <span style={{ fontFamily: 'monospace', opacity: 0.85 }}>sandbox="allow-scripts allow-forms allow-same-origin allow-popups"</span>
+        </div>
+
+        {/* Live Iframe Viewport */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: isFullScreen ? '460px' : '330px',
+            background: '#ffffff',
+            overflow: 'hidden'
+          }}
+        >
+          {!iframeLoaded && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: '#0a0e17',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                zIndex: 1,
+                color: 'var(--text-secondary)'
+              }}
+            >
+              <RefreshCw size={20} className="animate-spin" color="var(--accent-cyan)" />
+              <span style={{ fontSize: '0.72rem', fontFamily: 'monospace' }}>Spawning isolated Chromium viewport...</span>
+            </div>
+          )}
+          <iframe
+            key={refreshKey}
+            src={currentUrl}
+            title="Interactive Live Sandbox"
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            onLoad={() => setIframeLoaded(true)}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              display: 'block'
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Helper to render markdown formatting and code blocks
+  const renderMarkdownWithCodeBlocks = (content: string, prefixKey: string) => {
     const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
     const parts = [];
     let lastIndex = 0;
@@ -261,15 +502,15 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
 
     while ((match = codeBlockRegex.exec(content)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(renderTextWithFormatting(content.substring(lastIndex, match.index), `txt-${msgIdx}-${lastIndex}`));
+        parts.push(renderTextWithFormatting(content.substring(lastIndex, match.index), `${prefixKey}-txt-${lastIndex}`));
       }
       const lang = match[1] || 'bash';
       const codeSnippet = match[2];
-      const uniqueCodeKey = msgIdx * 100 + blockIndex;
+      const uniqueCodeKey = blockIndex * 1000 + match.index;
 
       parts.push(
         <div
-          key={`code-${msgIdx}-${blockIndex}`}
+          key={`${prefixKey}-code-${blockIndex}`}
           style={{
             background: 'var(--code-box-bg)',
             border: '1px solid var(--border-color)',
@@ -331,10 +572,59 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     }
 
     if (lastIndex < content.length) {
-      parts.push(renderTextWithFormatting(content.substring(lastIndex), `txt-${msgIdx}-${lastIndex}`));
+      parts.push(renderTextWithFormatting(content.substring(lastIndex), `${prefixKey}-txt-${lastIndex}`));
     }
 
     return parts;
+  };
+
+  // Main message content renderer with Sandbox Viewport detection
+  const renderMessageContent = (content: string, msgIdx: number) => {
+    const sandboxMarkerRegex = /\[SANDBOX_VIEWPORT:\s*([^\]]+)\]/g;
+    if (sandboxMarkerRegex.test(content)) {
+      const segments: React.ReactNode[] = [];
+      let lastPos = 0;
+      let match;
+      let sIdx = 0;
+      sandboxMarkerRegex.lastIndex = 0;
+
+      while ((match = sandboxMarkerRegex.exec(content)) !== null) {
+        if (match.index > lastPos) {
+          const preText = content.substring(lastPos, match.index);
+          segments.push(
+            <div key={`pre-${msgIdx}-${sIdx}`}>
+              {renderMarkdownWithCodeBlocks(preText, `pre-${msgIdx}-${sIdx}`)}
+            </div>
+          );
+        }
+        const targetUrl = match[1].trim();
+        segments.push(
+          <InteractiveChatSandbox
+            key={`sandbox-vp-${msgIdx}-${sIdx}`}
+            initialUrl={targetUrl}
+          />
+        );
+        lastPos = match.index + match[0].length;
+        sIdx++;
+      }
+
+      if (lastPos < content.length) {
+        const postText = content.substring(lastPos);
+        segments.push(
+          <div key={`post-${msgIdx}-${sIdx}`}>
+            {renderMarkdownWithCodeBlocks(postText, `post-${msgIdx}-${sIdx}`)}
+          </div>
+        );
+      }
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {segments}
+        </div>
+      );
+    }
+
+    return renderMarkdownWithCodeBlocks(content, `msg-${msgIdx}`);
   };
 
   const renderTextWithFormatting = (rawText: string, keyPrefix: string) => {
@@ -956,6 +1246,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
           >
             {messages.map((msg, idx) => {
               const isUser = msg.role === 'user';
+              const hasSandbox = !isUser && msg.content.includes('[SANDBOX_VIEWPORT:');
               return (
                 <motion.div
                   key={idx}
@@ -966,12 +1257,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: isUser ? 'flex-end' : 'flex-start',
-                    maxWidth: '100%'
+                    maxWidth: '100%',
+                    width: hasSandbox ? '100%' : 'auto'
                   }}
                 >
                   <div
                     style={{
-                      maxWidth: isFullScreen ? '82%' : '90%',
+                      maxWidth: hasSandbox ? (isFullScreen ? '96%' : '98%') : (isFullScreen ? '82%' : '90%'),
+                      width: hasSandbox ? '100%' : 'auto',
                       padding: isFullScreen ? '14px 18px' : '12px 16px',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       background: isUser

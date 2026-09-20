@@ -30,7 +30,7 @@ export const TechnicalInspector: React.FC<TechnicalInspectorProps> = ({ report, 
   const currentScreenshotUrl = backendScreenshotUrl || cloudScreenshotUrl;
 
   return (
-    <div className="glass-panel" style={{ padding: '24px', margin: '0 24px 20px 24px' }}>
+    <div id="technical-inspector-root" className="glass-panel" style={{ padding: '24px', margin: '0 24px 20px 24px' }}>
       {/* Tab Navigation Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
