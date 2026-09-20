@@ -31,7 +31,7 @@ export const PremiumAuditPage: React.FC<PremiumAuditPageProps> = ({
     { name: 'Playwright Sandbox Headless DOM Inspection', free: false, premium: true },
     { name: 'Computer Vision Brand-Domain Contradiction (pHash)', free: false, premium: true },
     { name: 'Reconstructed 7-Stage Attack Chain Graph', free: false, premium: true },
-    { name: 'Google Gemini AI Threat Explainer & Analysis', free: false, premium: true },
+    { name: 'CyberGuard AI Threat Explainer & Analysis', free: false, premium: true },
     { name: 'Actionable Developer 1-Click Code Fixes', free: false, premium: true },
     { name: 'Downloadable Forensic Markdown & JSON Report', free: false, premium: true },
   ];

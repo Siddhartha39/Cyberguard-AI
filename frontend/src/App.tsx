@@ -64,7 +64,7 @@ const DEFAULT_PIPELINE_STEPS: PipelineStep[] = [
   { id: '3', name: 'SSL/TLS & Posture', detail: 'Validating certificate chain, HSTS, CSP, and SPF/DMARC', status: 'idle' },
   { id: '4', name: 'Browser Sandbox Crawl', detail: 'Playwright headless DOM inspection & form trap auditing', status: 'idle' },
   { id: '5', name: 'Brand Contradiction', detail: 'Visual logo pHash matching against authorized domains', status: 'idle' },
-  { id: '6', name: 'Multi-Signal Fusion & AI', detail: 'Calibrating 0-100 risk score and Gemini threat insights', status: 'idle' }
+  { id: '6', name: 'Multi-Signal Fusion & AI', detail: 'Calibrating 0-100 risk score and AI threat insights', status: 'idle' }
 ];
 
 export function App() {

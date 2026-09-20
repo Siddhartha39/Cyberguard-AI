@@ -21,7 +21,7 @@ Overall Risk Score: ${report.overall_risk_score} / 100 (${report.verdict})
 Security Posture Grade: ${report.security_audit?.security_grade || 'N/A'}
 Recommended Action: ${report.recommended_action}
 
-## 1. GEMINI AI THREAT & HACKER-PERSPECTIVE AUDIT
+## 1. CYBERGUARD AI THREAT & HACKER-PERSPECTIVE AUDIT
 Threat Intel Analysis: ${report.ai_insights?.threat_intel_analysis || 'N/A'}
 Hacker Perspective Assessment: ${report.ai_insights?.hacker_perspective_audit || 'N/A'}
 
@@ -174,7 +174,7 @@ ${report.ai_insights?.remediation_recommendations.map((r, i) => `${i + 1}. ${r}`
             {report.ai_insights && (
               <div style={{ marginBottom: '18px', background: 'rgba(6, 182, 212, 0.1)', padding: '12px', borderRadius: '6px', borderLeft: '3px solid #06b6d4' }}>
                 <h4 style={{ color: '#38bdf8', fontSize: '0.9rem', fontWeight: 700, marginBottom: '4px' }}>
-                  🤖 Gemini AI Threat & Penetration Audit
+                  🤖 CyberGuard AI Threat & Penetration Audit
                 </h4>
                 <p style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '6px' }}>
                   {report.ai_insights.threat_intel_analysis}

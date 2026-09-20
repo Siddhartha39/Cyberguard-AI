@@ -852,7 +852,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={20} color="var(--accent-cyan)" />
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Google Gemini AI Settings
+                  CyberGuard AI Engine Settings
                 </h3>
               </div>
               <button
@@ -864,12 +864,12 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             </div>
 
             <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Connect your <strong>Google Gemini API Key</strong> to enable conversational AI reasoning (ChatGPT &amp; Gemini style) on any programming or cybersecurity question. If left blank, CyberGuard AI's built-in forensic intelligence engine handles queries locally.
+              Connect your <strong>Custom AI Engine API Key</strong> to enable conversational AI reasoning on any programming or cybersecurity question. If left blank, CyberGuard AI's built-in forensic intelligence engine handles queries locally.
             </p>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
-                Gemini API Key
+                AI Engine API Key
               </label>
               <input
                 type="password"
@@ -1013,7 +1013,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     fontWeight: 700
                   }}
                 >
-                  ⚡ Gemini AI
+                  ⚡ CyberAI Active
                 </span>
               ) : (
                 <span
@@ -1038,14 +1038,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {/* Gemini API Key Button */}
+          {/* AI Engine API Key Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               setTempApiKey(geminiApiKey);
               setShowApiKeyModal(true);
             }}
-            title={geminiApiKey ? 'Gemini 2.5 Flash Connected (Click to edit key)' : 'Connect Google Gemini API Key'}
+            title={geminiApiKey ? 'Custom AI Engine Connected (Click to edit key)' : 'Configure AI Engine API Key'}
             style={{
               background: geminiApiKey ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
               border: geminiApiKey ? '1px solid var(--accent-cyan)' : 'none',

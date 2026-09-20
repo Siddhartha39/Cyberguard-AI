@@ -208,7 +208,7 @@ app.use(helmet({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Bot size={18} color="var(--accent-cyan)" />
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--accent-cyan)', letterSpacing: '0.05em' }}>
-              GEMINI AI THREAT &amp; EXPLOITABILITY AUDIT
+              CYBERGUARD AI THREAT &amp; EXPLOITABILITY AUDIT
             </span>
           </div>
 

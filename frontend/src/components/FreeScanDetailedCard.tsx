@@ -298,7 +298,7 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
             </div>
 
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
-              Run the full headless browser sandbox, detect visual brand contradiction, audit clickjacking (X-Frame-Options), reconstruct the 7-stage attack chain, and generate Google Gemini AI threat intelligence — unlocked with zero fees.
+              Run the full headless browser sandbox, detect visual brand contradiction, audit clickjacking (X-Frame-Options), reconstruct the 7-stage attack chain, and generate CyberGuard AI threat intelligence — unlocked with zero fees.
             </p>
 
             {/* Feature Badges */}
@@ -313,7 +313,7 @@ export const FreeScanDetailedCard: React.FC<FreeScanDetailedCardProps> = ({
                 <Lock size={12} /> HSTS/CSP/X-Frame Audit
               </span>
               <span className="badge-info" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '6px' }}>
-                <Cpu size={12} /> Gemini AI Remediation
+                <Cpu size={12} /> AI Remediation
               </span>
             </div>
           </div>

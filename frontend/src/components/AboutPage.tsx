@@ -40,8 +40,8 @@ export const AboutPage: React.FC<{ onLaunchScanner: () => void }> = ({ onLaunchS
     },
     {
       num: '06',
-      name: 'Multi-Signal Fusion & Gemini AI',
-      model: 'Platt Sigmoid Fusion & Google Gemini 2.0',
+      name: 'Multi-Signal Fusion & CyberAI',
+      model: 'Platt Sigmoid Fusion & Neural LLM',
       dataset: 'Calibrated Threat Probability Matrix',
       detail: 'Aggregates all 5 vectors into a calibrated 0–100 Risk Score, reconstructs the 7-stage attack chain, and outputs plain-language SOC threat intelligence and 1-click remediation code.'
     }

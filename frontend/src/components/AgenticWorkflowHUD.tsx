@@ -71,7 +71,7 @@ export const AgenticWorkflowHUD: React.FC<AgenticWorkflowHUDProps> = ({
     {
       id: 'step-7',
       stage: 'MULTI-SIGNAL FUSION & AI',
-      action: 'Synthesizing Calibrated 0-100 Score & Gemini Threat Intel',
+      action: 'Synthesizing Calibrated 0-100 Score & Threat Intelligence',
       status: currentStage >= 6 ? 'completed' : currentStage === 6 ? 'running' : 'pending',
       detail: 'Fuses all 6 vectors into calibrated risk score and generates actionable 1-click remediation.'
     }

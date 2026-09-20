@@ -174,7 +174,7 @@ export const CyberScrollText = () => {
     "RDAP Registry",
     "SPF & DMARC",
     "HSTS & CSP",
-    "Gemini AI",
+    "CyberAI Core",
     "Chrome Shield",
   ];
   const iconCenterIndex = Math.floor(cyberTechStack.length / 2);

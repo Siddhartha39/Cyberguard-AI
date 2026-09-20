@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Access](https://img.shields.io/badge/Access-100%25_Free_%26_Open-00ff88?style=for-the-badge&logo=shield&logoColor=black)](#)
-[![Google Gemini](https://img.shields.io/badge/Gemini_AI-2.5_Flash-8E75FF?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![CyberGuard AI](https://img.shields.io/badge/CyberAI-LLM_Engine-8E75FF?style=for-the-badge&logo=openai&logoColor=white)](#)
 [![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.9_Random_Forest-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
 [![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-Manifest_V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/)
@@ -48,11 +48,11 @@ Modern cyber threats have evolved past the defensive perimeter of legacy reputat
 
 ### The Solution
 **CyberGuard AI** is a zero-trust, multi-modal threat intelligence engine and website vulnerability auditor. It operates on a **100% Real Live Telemetry** principle (zero synthetic or fabricated data) with **100% Free & Open Access**:
-1. **Multi-Modal Threat Triage**: Sub-25ms 24-dimensional lexical machine learning fused with headless Chromium DOM telemetry, 64-bit perceptual visual hashing (`pHash`), and Google Gemini 2.5 Flash threat intelligence.
+1. **Multi-Modal Threat Triage**: Sub-25ms 24-dimensional lexical machine learning fused with headless Chromium DOM telemetry, 64-bit perceptual visual hashing (`pHash`), and autonomous neural AI threat intelligence.
 2. **Dual-Persona Scanning Mode**:
    - **Persona A (Developer & Webmaster)**: Audits HTTP defense headers, DNS mail authentication, and cryptographic TLS certificates, generating actionable, ready-to-deploy code fixes for Nginx, Apache, Next.js, Node.js Helmet, and Cloudflare.
    - **Persona B (End-User & Security Analyst)**: Unmasks phishing traps, credential harvesters, typo-squatted lookalikes, and brand contradictions.
-3. **100% Free & Unrestricted Access**: All deep forensic audits, headless Chromium sandbox rendering, perceptual logo matching, and Gemini AI insights are completely unlocked for the global security community with zero fees, no wallet requirements, and no paywalls.
+3. **100% Free & Unrestricted Access**: All deep forensic audits, headless Chromium sandbox rendering, perceptual logo matching, and CyberGuard AI insights are completely unlocked for the global security community with zero fees, no wallet requirements, and no paywalls.
 4. **Comprehensive SOC Suite**: Includes real-time Threat Intelligence dashboards, Email Link Extractor, Bulk URL Scanning, Password Strength & k-Anonymity Breach Verification, IP Carrier/ASN Intelligence, and Persistent Domain Watchlists.
 
 ---
@@ -103,12 +103,12 @@ flowchart TD
     OVERRIDE -- "Authentic Verified Trademark" --> SAFE_FLAG["Cap Risk Score <= 12.0 (BENIGN)"]
     OVERRIDE -- "Standard Telemetry" --> CALIB_SCORE["Weighted Final Risk Score (0 - 100)"]
     
-    CRIT_FLAG --> GEMINI["Google Gemini 2.5 Flash Threat Synthesizer"]
-    UNREG_FLAG --> GEMINI
-    SAFE_FLAG --> GEMINI
-    CALIB_SCORE --> GEMINI
+    CRIT_FLAG --> AI_SYNTH["Autonomous AI Threat Synthesizer"]
+    UNREG_FLAG --> AI_SYNTH
+    SAFE_FLAG --> AI_SYNTH
+    CALIB_SCORE --> AI_SYNTH
     
-    GEMINI --> DOSSIER["📋 Production SOC Forensic Dossier<br/>• 7-Stage Attack Kill-Chain<br/>• Exploit Immunity Guidance<br/>• Multi-Platform Code Fixes (Nginx, Apache, Next.js, Helmet)<br/>• Downloadable JSON/Markdown Report"]
+    AI_SYNTH --> DOSSIER["📋 Production SOC Forensic Dossier<br/>• 7-Stage Attack Kill-Chain<br/>• Exploit Immunity Guidance<br/>• Multi-Platform Code Fixes (Nginx, Apache, Next.js, Helmet)<br/>• Downloadable JSON/Markdown Report"]
 
     style START fill:#0284c7,stroke:#38bdf8,color:#fff
     style L2 fill:#0284c7,stroke:#00f0ff,color:#fff
@@ -227,7 +227,7 @@ sequenceDiagram
     participant Sandbox as 🌐 Playwright Chromium Sandbox
     participant Vision as 👁️ Brand pHash Engine
     participant Posture as 🛡️ Defense Posture Auditor
-    participant Gemini as 🤖 Google Gemini 2.5 Flash
+    participant AI as 🤖 Autonomous AI Threat Engine
 
     Client->>API: POST /api/premium-scan (Target URL, 100% Free Access)
     Note over API: Direct Forensic Dispatch (Zero Paywall)
@@ -243,8 +243,8 @@ sequenceDiagram
         Posture-->>API: Defensive Posture Score & Hardening Snippets
     end
 
-    API->>Gemini: Synthesize Multi-Signal Vectors & Generate Actionable Dossier
-    Gemini-->>API: Executive Summary, Kill-Chain Timeline, Code Remediation
+    API->>AI: Synthesize Multi-Signal Vectors & Generate Actionable Dossier
+    AI-->>API: Executive Summary, Kill-Chain Timeline, Code Remediation
     API-->>Client: HTTP 200 OK (Full Unrestricted SOC Report)
 ```
 
@@ -360,8 +360,8 @@ The CyberGuard AI backend is engineered in **FastAPI / Python 3.11+**, leveragin
   - CyberGuard AI strictly outputs `UNREGISTERED`, suppressing fake data, synthetic IP addresses, or placeholder SSL certificates.
   - UI displays an `UNREGISTERED DOMAIN (NXDOMAIN)` notice informing the operator that no active server or network route exists.
 
-### 5. Google Gemini 2.5 Flash Threat Intelligence (`backend/app/ml/ai_explainer.py`)
-* The multi-signal telemetry payload is formatted into a structured schema and dispatched to **Google Gemini 2.5 Flash** (`gemini-2.5-flash`).
+### 5. Autonomous Neural Threat Intelligence (`backend/app/ml/ai_explainer.py`)
+* The multi-signal telemetry payload is formatted into a structured schema and dispatched to the **Autonomous Neural LLM Engine**.
 * The LLM synthesizes the technical data into:
   - An executive threat summary in plain English.
   - Explanations of how attackers weaponized the target domain.
@@ -519,7 +519,7 @@ The platform embeds **CyberGuard AI Copilot**, an autonomous defensive cybersecu
 | Website Security Posture Audit (CSP, HSTS, X-Frame-Options)      |       ✅       |       ✅       |
 | 1-Click Remediation Snippets (Nginx, Apache, Next.js, Cloudflare)|       ✅       |       ✅       |
 | Complete 7-Stage Adversary Kill-Chain Timeline                   |       ✅       |       ✅       |
-| Google Gemini 2.5 Flash Threat Intelligence Dossier              |       ✅       |       ✅       |
+| CyberGuard AI Threat Intelligence Dossier                        |       ✅       |       ✅       |
 | Access Model & Cost                                              |  100% Free / $0|  100% Free / $0|
 +------------------------------------------------------------------+----------------+----------------+
 ```
@@ -533,7 +533,7 @@ CyberGuard AI operates as an open-source, community-accessible cybersecurity int
 
 * **Unrestricted Deep Forensic Audits**: Launch headless Chromium sandbox DOM analyses, inspect form targets, and extract raw screenshots on demand.
 * **Computer Vision Brand Contradiction Engine**: Compute 64-bit perceptual image hashes (pHash/dHash) against our verified enterprise brand catalog with zero restrictions.
-* **Google Gemini 2.5 Flash Threat Intelligence**: Automatically synthesize multi-vector findings into actionable kill-chain timelines and code remediation snippets without requiring personal API keys.
+* **CyberGuard AI Threat Intelligence**: Automatically synthesize multi-vector findings into actionable kill-chain timelines and code remediation snippets without requiring personal API keys.
 * **Real-Time SOC Tools**: Free access to bulk domain triage, email phishing link extraction, HaveIBeenPwned k-anonymity password breach checking, IP BGP/carrier intelligence, and live threat telemetry.
 
 ---
@@ -543,7 +543,7 @@ CyberGuard AI operates as an open-source, community-accessible cybersecurity int
 | Method | Endpoint | Description | Auth / Tier |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/scan/free` | Performs fast lexical ML triage, DoH DNS lookups, and RDAP age checks | 100% Free |
-| `POST` | `/api/premium-scan` | Executes deep Playwright sandbox, pHash logo matching, TLS DER cert, and Gemini AI | 100% Free |
+| `POST` | `/api/premium-scan` | Executes deep Playwright sandbox, pHash logo matching, TLS DER cert, and CyberAI | 100% Free |
 | `POST` | `/api/scan/bulk` | Parallel batch scanning of up to 20 domains with forensic aggregations | 100% Free |
 | `GET` | `/api/threat/stats` | Returns real-time SOC metrics, top impersonated brands, and risky TLD telemetry | 100% Free |
 | `POST` | `/api/tools/password-strength`| Evaluates password entropy, crack time, and checks HIBP k-anonymity breach database | 100% Free |
@@ -656,7 +656,7 @@ The platform includes a production **Manifest V3 Chrome Extension** (`v2.1.0`) l
 <details>
 <summary><strong>1. Why use a Calibrated Random Forest for Fast Triage instead of calling an LLM directly?</strong></summary>
 
-> **Answer**: Latency, cost, and reliability. The Fast Triage classifier extracts a 24-dimensional handcrafted lexical feature vector and evaluates it in **< 25ms** entirely in local CPU memory without consuming API tokens or incurring network round-trips. This delivers an instant initial triage score, seamlessly triggering the heavier headless Chromium sandbox and Google Gemini 2.5 Flash synthesis for comprehensive forensic dossiers.
+> **Answer**: Latency, cost, and reliability. The Fast Triage classifier extracts a 24-dimensional handcrafted lexical feature vector and evaluates it in **< 25ms** entirely in local CPU memory without consuming API tokens or incurring network round-trips. This delivers an instant initial triage score, seamlessly triggering the heavier headless Chromium sandbox and autonomous neural AI synthesis for comprehensive forensic dossiers.
 </details>
 
 <details>
@@ -668,7 +668,7 @@ The platform includes a production **Manifest V3 Chrome Extension** (`v2.1.0`) l
 <details>
 <summary><strong>3. Is CyberGuard AI completely free to use?</strong></summary>
 
-> **Answer**: Yes. CyberGuard AI is 100% free, open-access, and community-driven. All capabilities—including headless Chromium DOM telemetry, 64-bit logo pHash brand matching, security headers/clickjacking auditing, and Google Gemini AI threat intelligence—operate with zero fees and no paywalls.
+> **Answer**: Yes. CyberGuard AI is 100% free, open-access, and community-driven. All capabilities—including headless Chromium DOM telemetry, 64-bit logo pHash brand matching, security headers/clickjacking auditing, and autonomous AI threat intelligence—operate with zero fees and no paywalls.
 </details>
 
 <details>

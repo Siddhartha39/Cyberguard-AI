@@ -154,12 +154,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       copilotPrompt: 'How does the CyberGuard AI Chrome extension protect users in real-time?'
     },
     {
-      id: 'gemini-ai',
+      id: 'cyberguard-ai',
       category: 'ml',
-      title: 'Gemini AI Threat Insights & Hacker Perspective',
+      title: 'CyberGuard AI Threat Insights & Hacker Perspective',
       icon: <Radar size={20} color="#f59e0b" />,
       shortDesc: 'Hacker-perspective audit & developer remediation steps.',
-      details: 'Connected to Google Gemini AI to analyze forensic telemetry and explain in plain English how a malicious actor would exploit the target domain, along with step-by-step mitigation instructions.',
+      details: 'Powered by advanced neural AI to analyze forensic telemetry and explain in plain English how a malicious actor would exploit the target domain, along with step-by-step mitigation instructions.',
       impact: 'Translates raw security telemetries into executive summaries and developer action plans.',
       copilotPrompt: 'How does the AI penetration explainer assess exploitability and write server hardening fixes?'
     }

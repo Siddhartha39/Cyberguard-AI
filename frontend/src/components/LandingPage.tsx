@@ -107,10 +107,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
     {
       step: 6,
-      name: 'Multi-Signal Fusion & Gemini AI',
+      name: 'Multi-Signal Fusion & AI Reasoning',
       badge: '0-100 VECTOR',
       color: '#c084fc',
-      summary: 'Platt-scaled calibrated probability scoring fused with Google Gemini 2.5 Flash threat intelligence.',
+      summary: 'Platt-scaled calibrated probability scoring fused with autonomous AI threat intelligence.',
       detail: 'Aggregates all 5 forensic vectors into a unified calibrated threat score with full attack-chain evidence, zero-trust telemetry, and instant 1-click remediation blueprints.'
     }
   ];
@@ -510,7 +510,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
             <Zap size={12} color="var(--accent-cyan)" />
             <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              100% Free &amp; Open Access • Full Headless Sandbox, Brand pHash Vision &amp; Gemini AI <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Unlocked (No Paywalls)</span>
+              100% Free &amp; Open Access • Full Headless Sandbox, Brand pHash Vision &amp; CyberAI <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Unlocked (No Paywalls)</span>
             </span>
           </div>
         </motion.div>

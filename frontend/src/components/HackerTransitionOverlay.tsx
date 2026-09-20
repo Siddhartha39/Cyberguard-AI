@@ -19,7 +19,7 @@ export const HackerTransitionOverlay: React.FC<HackerTransitionOverlayProps> = (
     { text: '[+] CALIBRATING 24-DIMENSIONAL LEXICAL ML CLASSIFIER...', icon: <Activity size={15} color="#3b82f6" /> },
     { text: '[+] ARMING PLAYWRIGHT ISOLATED BROWSER (ANTI-SSRF GUARD)...', icon: <Eye size={15} color="#f59e0b" /> },
     { text: '[+] LOADING PERCEPTUAL PHASH BRAND VISION CATALOG...', icon: <Shield size={15} color="#c084fc" /> },
-    { text: '[+] SYNCING GOOGLE GEMINI AI EXPLOIT ENGINE...', icon: <Sparkles size={15} color="#00f0ff" /> },
+    { text: '[+] SYNCING NEURAL AI EXPLOIT ENGINE...', icon: <Sparkles size={15} color="#00f0ff" /> },
     { text: '[+] CHECKING CLICKJACKING & DMARC SPOOFING AUDITORS...', icon: <Zap size={15} color="#f97316" /> },
     { text: '[✓] ZERO-TRUST ENCLAVE ARMED // ACCESS GRANTED', icon: <Shield size={15} color="#00ff88" /> }
   ];
