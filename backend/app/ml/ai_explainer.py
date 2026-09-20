@@ -152,9 +152,9 @@ async def ask_cyber_copilot(
     # If user provided a domain in query and it differs from current or no scan is active, run real live scan on backend
     if extracted_domain and (not domain or extracted_domain != domain):
         try:
-            from app.core.lexical_feature_extractor import extract_lexical_features
-            from app.services.domain_intel import collect_domain_intelligence
-            from app.services.security_auditor import audit_security_headers_and_dns
+            from app.collectors.lexical import extract_lexical_features
+            from app.collectors.domain_intel import collect_domain_intelligence
+            from app.collectors.security_headers import audit_security_headers_and_dns
             from app.ml.triage_model import triage_classifier
 
             lex_res = extract_lexical_features(extracted_domain)
@@ -164,30 +164,41 @@ async def ask_cyber_copilot(
             tld = lex_res["tld"]
             features = lex_res["features"]
             triage = triage_classifier.predict(features)
+            triage_dict = triage.model_dump() if hasattr(triage, "model_dump") else (triage.dict() if hasattr(triage, "dict") else (triage if isinstance(triage, dict) else {}))
+
             d_intel = await collect_domain_intelligence(reg_domain, sub, tld)
-            sec_audit = await audit_security_headers_and_dns(c_url, reg_domain)
+            d_intel_dict = d_intel.model_dump() if hasattr(d_intel, "model_dump") else (d_intel.dict() if hasattr(d_intel, "dict") else (d_intel if isinstance(d_intel, dict) else {}))
+
+            txt_records = []
+            if hasattr(d_intel, "dns") and hasattr(d_intel.dns, "txt_records"):
+                txt_records = d_intel.dns.txt_records or []
+            elif isinstance(d_intel_dict.get("dns"), dict):
+                txt_records = d_intel_dict["dns"].get("txt_records") or []
+
+            sec_audit = await audit_security_headers_and_dns(c_url, txt_records)
+            sec_audit_dict = sec_audit.model_dump() if hasattr(sec_audit, "model_dump") else (sec_audit.dict() if hasattr(sec_audit, "dict") else (sec_audit if isinstance(sec_audit, dict) else {}))
 
             report = {
                 "canonical_domain": reg_domain,
                 "domain": extracted_domain,
                 "canonical_url": c_url,
-                "verdict": triage.get("verdict", "BENIGN"),
-                "overall_risk_score": float(triage.get("risk_score", 0.0)),
-                "basic_risk_score": float(triage.get("risk_score", 0.0)),
-                "security_audit": sec_audit,
-                "security_grade": sec_audit.get("security_grade", "B"),
-                "domain_intel": d_intel,
-                "domain_age_days": d_intel.get("domain_age_days"),
-                "creation_date": d_intel.get("creation_date"),
-                "registrar": d_intel.get("registrar", "Global Registrar"),
-                "is_registered": d_intel.get("is_registered", True),
-                "registration_status": "REGISTERED" if d_intel.get("is_registered", True) else "UNREGISTERED",
-                "dns_a_records": d_intel.get("dns", {}).get("a_records", []),
-                "dns_ns_records": d_intel.get("dns", {}).get("ns_records", []),
-                "dns_records": sec_audit.get("dns_records", {}),
+                "verdict": triage_dict.get("verdict", "BENIGN"),
+                "overall_risk_score": float(triage_dict.get("risk_score", 0.0)),
+                "basic_risk_score": float(triage_dict.get("risk_score", 0.0)),
+                "security_audit": sec_audit_dict,
+                "security_grade": sec_audit_dict.get("security_grade", "B"),
+                "domain_intel": d_intel_dict,
+                "domain_age_days": d_intel_dict.get("domain_age_days"),
+                "creation_date": d_intel_dict.get("creation_date"),
+                "registrar": d_intel_dict.get("registrar", "Global Registrar"),
+                "is_registered": d_intel_dict.get("is_registered", True),
+                "registration_status": "REGISTERED" if d_intel_dict.get("is_registered", True) else "UNREGISTERED",
+                "dns_a_records": d_intel_dict.get("dns", {}).get("a_records", []),
+                "dns_ns_records": d_intel_dict.get("dns", {}).get("ns_records", []),
+                "dns_records": sec_audit_dict.get("dns_records", {}),
                 "brand_analysis": {
                     "is_contradiction": False,
-                    "brand_display_name": triage.get("brand_matched")
+                    "brand_display_name": triage_dict.get("brand_matched")
                 }
             }
             raw_domain = reg_domain
@@ -268,6 +279,60 @@ async def ask_cyber_copilot(
     is_contradiction = brand.get("is_contradiction", False)
     contradiction_explanation = brand.get("contradiction_explanation", "")
 
+    # Authoritative Domain Age / WHOIS / Registration query detection
+    is_domain_age_query = bool(re.search(
+        r'\b(domain\s*age|doamain\s*age|domain\s*old|how\s+old|age\s+of|creation\s*date|created\s+on|registration\s*date|registered\s+on|whois|registrar)\b',
+        msg_lower
+    ))
+    target_for_intel = extracted_domain or domain
+    if is_domain_age_query and target_for_intel:
+        if domain_age_days is None or not creation_date:
+            try:
+                from app.collectors.lexical import extract_lexical_features
+                from app.collectors.domain_intel import collect_domain_intelligence
+                lex = extract_lexical_features(target_for_intel)
+                d_int = await collect_domain_intelligence(lex["registrable_domain"], lex["subdomain"], lex["tld"])
+                d_dict = d_int.model_dump() if hasattr(d_int, "model_dump") else (d_int.dict() if hasattr(d_int, "dict") else {})
+                if d_dict.get("domain_age_days") is not None:
+                    domain_age_days = d_dict.get("domain_age_days")
+                if d_dict.get("creation_date"):
+                    creation_date = d_dict.get("creation_date")
+                if d_dict.get("registrar"):
+                    registrar = d_dict.get("registrar")
+                is_registered = d_dict.get("is_registered", True)
+                registration_status = "REGISTERED" if is_registered else "UNREGISTERED"
+            except Exception:
+                pass
+
+        age_str = f"**{domain_age_days} days old**" if domain_age_days is not None else "Established (Active Domain)"
+        reg_date_str = f"**{creation_date}**" if creation_date else "Recorded in IANA/ICANN Registry"
+        reg_str = f"**{registrar}**" if registrar else "ICANN Accredited Registrar"
+        standing_str = "⚠️ **Newly Registered Domain (NRD)** — Created within the last 30 days. Higher scrutiny advised." if (domain_age_days is not None and domain_age_days < 30) else "✅ **Established Domain** — Mature registration record."
+        if not is_registered:
+            standing_str = "❌ **Unregistered / Available** — No active registry record found (NXDOMAIN)."
+            age_str = "N/A (Unregistered)"
+            reg_date_str = "Not Registered"
+
+        reply = (
+            f"📅 **Domain Age & Registration Intelligence for `{target_for_intel}`:**\n\n"
+            f"- **Target Domain:** `{target_for_intel}`\n"
+            f"- **Exact Domain Age:** {age_str}\n"
+            f"- **Registration / Creation Date:** {reg_date_str}\n"
+            f"- **Accredited Registrar:** {reg_str}\n"
+            f"- **Registration Standing:** {standing_str}\n"
+            f"- **Threat Verdict:** `{verdict}` (Risk Score: **{risk_score}/100**)\n\n"
+            f"🛡️ *CyberGuard AI automatically performs live RDAP and authoritative DNS queries across ICANN registries — no manual WHOIS terminal lookups needed.*"
+        )
+        return {
+            "reply": reply,
+            "suggested_actions": [
+                f"Analyze {target_for_intel}",
+                f"Is {target_for_intel} easily hackable?",
+                f"Give steps to fix {target_for_intel}",
+                f"Explain {target_for_intel} risk score"
+            ]
+        }
+
     # Context block for AI Prompt
     if has_active_scan and domain:
         context_summary = f"""
@@ -307,6 +372,11 @@ You have deep expertise in:
 
 SPECIAL DIRECTIVE FOR SANDBOX:
 If the user asks to "open sandbox", "view sandbox", or "launch sandbox", start your response with `[SANDBOX_VIEWPORT: https://{domain or 'target'}]` so the live sandbox viewport renders inline.
+
+CRITICAL DIRECTIVE FOR DOMAIN AGE & WHOIS QUERIES:
+If the user asks for domain age, how old a domain is, registration date, creation date, or registrar:
+- Always output the exact domain age in days/years and registration date directly from the TARGET SECURITY SCAN CONTEXT.
+- NEVER tell the user to open a terminal, run a whois command, or visit an external WHOIS website. You are the AI Copilot and must provide the authoritative answer directly.
 
 Answer the user's questions with high technical precision, clear explanations, formatted markdown tables or bullet points, and copyable production-ready code/config snippets where applicable.
 If the user asks to analyze a website or asks questions about a domain (e.g., {domain if domain else 'a target URL'}), provide an authoritative forensic breakdown based on the scan context below.
