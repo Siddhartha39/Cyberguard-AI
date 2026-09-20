@@ -594,7 +594,8 @@ async def chat_with_copilot(req: ChatRequest):
     result = await ask_cyber_copilot(
         message=req.message.strip(),
         report=req.report,
-        history=req.history
+        history=req.history,
+        api_key=req.api_key
     )
     return ChatResponse(
         reply=result.get("reply", "No response generated."),

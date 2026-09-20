@@ -21,10 +21,13 @@ import {
   MessageSquare,
   Lock,
   Layers,
-  ChevronDown
+  ChevronDown,
+  RotateCcw,
+  Key,
+  Settings
 } from 'lucide-react';
 import type { RiskScoreReport, FreeScanResult, ChatMessage } from '../types';
-import { sendChatMessage } from '../services/api';
+import { sendChatMessage, executeFreeScan } from '../services/api';
 
 interface CyberCopilotChatProps {
   report?: RiskScoreReport | FreeScanResult | null;
@@ -33,6 +36,7 @@ interface CyberCopilotChatProps {
   pendingPrompt?: string | null;
   onClearPendingPrompt?: () => void;
   onOpenAboutTopic?: (topicId: string) => void;
+  onScanReportLoaded?: (report: FreeScanResult | RiskScoreReport) => void;
 }
 
 export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
@@ -41,26 +45,42 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   onToggle,
   pendingPrompt,
   onClearPendingPrompt,
-  onOpenAboutTopic
+  onOpenAboutTopic,
+  onScanReportLoaded
 }) => {
+  const [activeReport, setActiveReport] = useState<any>(report);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('cyberguard_gemini_api_key') || '' : '';
+  });
+  const [tempApiKey, setTempApiKey] = useState(geminiApiKey);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const rawDomain = (report as any)?.canonical_domain || (report as any)?.domain;
+  // Sync external report with active report
+  useEffect(() => {
+    if (report) {
+      setActiveReport(report);
+    }
+  }, [report]);
+
+  const rawDomain = (activeReport as any)?.canonical_domain || (activeReport as any)?.domain;
   const hasScannedSite = Boolean(rawDomain && typeof rawDomain === 'string' && rawDomain.trim() && rawDomain.trim().toLowerCase() !== 'target website');
   const domain = hasScannedSite ? rawDomain.trim() : null;
-  const verdict = (report as any)?.verdict;
-  const riskScore = (report as any)?.overall_risk_score ?? (report as any)?.basic_risk_score ?? (report as any)?.fast_risk_score;
-  const grade = (report as any)?.security_audit?.security_grade || (report as any)?.security_grade;
+  const verdict = (activeReport as any)?.verdict;
+  const riskScore = (activeReport as any)?.overall_risk_score ?? (activeReport as any)?.basic_risk_score ?? (activeReport as any)?.fast_risk_score;
+  const grade = (activeReport as any)?.security_audit?.security_grade || (activeReport as any)?.security_grade;
 
   // Initialize or reset welcome message when report changes
   useEffect(() => {
-    if (report && hasScannedSite && domain) {
+    if (activeReport && hasScannedSite && domain) {
       setMessages([
         {
           role: 'assistant',
@@ -71,7 +91,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       setMessages([
         {
           role: 'assistant',
-          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your real-time defensive cybersecurity analyst. No website URL is currently selected.\n\nTo audit your website's hackability and get tailored security fixes, enter your URL in the **Scanner** tab above. Or ask me any general cybersecurity question below!`
+          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your autonomous defensive cybersecurity analyst and technical AI assistant. No website URL is currently selected.\n\nType **\`analyze amazon.in\`** (or any domain) for an instant live audit, or ask me any general cybersecurity question below!`
         }
       ]);
     }
@@ -105,6 +125,37 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     }
   }, [isOpen, isMinimized]);
 
+  const handleClearChat = () => {
+    if (activeReport && hasScannedSite && domain) {
+      setMessages([
+        {
+          role: 'assistant',
+          content: `👋 **CyberGuard AI Copilot Active**\n\nI have loaded live forensic intelligence for **\`${domain}\`**:\n- **Verdict:** \`${verdict || 'ANALYZED'}\`\n- **Risk Score:** \`${riskScore !== undefined ? `${riskScore}/100` : 'Evaluated'}\`\n- **Security Grade:** \`${grade || 'Active'}\`\n\nAsk me anything about \`${domain}\`: Is it easily hackable? How do I fix missing defensive headers? What vulnerabilities does it have?`
+        }
+      ]);
+    } else {
+      setMessages([
+        {
+          role: 'assistant',
+          content: `👋 **CyberGuard AI Copilot Online**\n\nI am your autonomous defensive cybersecurity analyst and technical AI assistant. No website URL is currently selected.\n\nType **\`analyze amazon.in\`** (or any domain) for an instant live audit, or ask me any general cybersecurity question below!`
+        }
+      ]);
+    }
+  };
+
+  const handleSaveApiKey = () => {
+    const trimmed = tempApiKey.trim();
+    setGeminiApiKey(trimmed);
+    if (typeof window !== 'undefined') {
+      if (trimmed) {
+        localStorage.setItem('cyberguard_gemini_api_key', trimmed);
+      } else {
+        localStorage.removeItem('cyberguard_gemini_api_key');
+      }
+    }
+    setShowApiKeyModal(false);
+  };
+
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputValue).trim();
     if (!query || isLoading) return;
@@ -115,9 +166,36 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     setInputValue('');
     setIsLoading(true);
 
+    let currentContextReport = activeReport;
+
+    // Check if query is asking to audit a domain or contains a domain
+    const domainExtractRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][-a-zA-Z0-9]*\.(?:[a-zA-Z]{2,}|in|co|org|net|com|gov|edu|io|ai|xyz|top|shop|dev|app|cloud|site|tech|online|store)(?:\.[a-zA-Z]{2,})?)/i;
+    const domainMatch = query.match(domainExtractRegex);
+    const isAnalyzeCommand = /\b(analyze|scan|check|inspect|audit|test|lookup|review)\b/i.test(query) || (domainMatch && query.trim().split(/\s+/).length <= 3);
+
+    if (domainMatch && isAnalyzeCommand) {
+      const candidateDomain = domainMatch[1].toLowerCase().replace(/^www\./, '');
+      const currentActiveDomain = ((activeReport as any)?.canonical_domain || (activeReport as any)?.domain || '').toLowerCase();
+
+      if (candidateDomain !== currentActiveDomain) {
+        setStatusNotice(`Running live multi-signal forensic audit for ${candidateDomain}...`);
+        try {
+          const freshScanResult = await executeFreeScan(candidateDomain);
+          currentContextReport = freshScanResult;
+          setActiveReport(freshScanResult);
+          if (onScanReportLoaded) {
+            onScanReportLoaded(freshScanResult);
+          }
+        } catch (e) {
+          console.warn('Live scan error in chat:', e);
+        }
+      }
+    }
+
     try {
+      setStatusNotice(null);
       const chatHistory = newHistory.map(m => ({ role: m.role, content: m.content }));
-      const response = await sendChatMessage(query, report, chatHistory);
+      const response = await sendChatMessage(query, currentContextReport, chatHistory, geminiApiKey);
 
       setMessages(prev => [
         ...prev,
@@ -134,6 +212,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       ]);
     } finally {
       setIsLoading(false);
+      setStatusNotice(null);
     }
   };
 
@@ -385,37 +464,192 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       exit={{ opacity: 0, y: 30, scale: 0.95 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className="glass-panel"
-      style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 99995,
-        width: '450px',
-        maxWidth: 'calc(100vw - 32px)',
-        height: isMinimized ? '60px' : '620px',
-        maxHeight: 'calc(100vh - 40px)',
-        background: 'var(--bg-card)',
-        border: '1.5px solid var(--border-focus)',
-        borderRadius: '16px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        transition: 'height 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-      }}
+      style={
+        isFullScreen
+          ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              zIndex: 999999,
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              borderRadius: 0,
+              background: 'var(--bg-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxShadow: 'none',
+              border: 'none'
+            }
+          : {
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              zIndex: 99995,
+              width: '460px',
+              maxWidth: 'calc(100vw - 32px)',
+              height: isMinimized ? '60px' : '620px',
+              maxHeight: 'calc(100vh - 40px)',
+              background: 'var(--bg-card)',
+              border: '1.5px solid var(--border-focus)',
+              borderRadius: '16px',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              transition: 'height 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s'
+            }
+      }
     >
+      {/* Gemini API Key Configuration Modal Overlay */}
+      {showApiKeyModal && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(7, 10, 16, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowApiKeyModal(false)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1.5px solid var(--accent-cyan)',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '460px',
+              width: '100%',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 25px rgba(0,240,255,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={20} color="var(--accent-cyan)" />
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Google Gemini AI Settings
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowApiKeyModal(false)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Connect your <strong>Google Gemini API Key</strong> to enable conversational AI reasoning (ChatGPT &amp; Gemini style) on any programming or cybersecurity question. If left blank, CyberGuard AI's built-in forensic intelligence engine handles queries locally.
+            </p>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                Gemini API Key
+              </label>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.85rem',
+                  boxSizing: 'border-box',
+                  outline: 'none'
+                }}
+              />
+              <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--accent-cyan)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <span>Get a free key from Google AI Studio</span>
+                  <ExternalLink size={11} />
+                </a>
+                {geminiApiKey && (
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>● Active in Browser</span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              {geminiApiKey && (
+                <button
+                  onClick={() => {
+                    setTempApiKey('');
+                    setGeminiApiKey('');
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('cyberguard_gemini_api_key');
+                    }
+                    setShowApiKeyModal(false);
+                  }}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >
+                  Remove Key
+                </button>
+              )}
+              <button
+                onClick={handleSaveApiKey}
+                style={{
+                  background: 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
+                  color: '#070a10',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 18px',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  fontWeight: 800
+                }}
+              >
+                Save &amp; Activate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div
         style={{
-          padding: '12px 16px',
+          padding: isFullScreen ? '14px 24px' : '12px 16px',
           background: 'linear-gradient(90deg, rgba(7, 10, 16, 0.95) 0%, rgba(13, 21, 37, 0.95) 100%)',
-          borderBottom: isMinimized ? 'none' : '1px solid var(--border-color)',
+          borderBottom: isMinimized && !isFullScreen ? 'none' : '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          cursor: isMinimized ? 'pointer' : 'default'
+          cursor: isMinimized && !isFullScreen ? 'pointer' : 'default',
+          flexShrink: 0
         }}
-        onClick={isMinimized ? () => setIsMinimized(false) : undefined}
+        onClick={isMinimized && !isFullScreen ? () => setIsMinimized(false) : undefined}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
@@ -433,7 +667,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="cyber-font" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+              <span className="cyber-font" style={{ fontSize: isFullScreen ? '1rem' : '0.9rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
                 CYBER COPILOT AI
               </span>
               <span
@@ -445,20 +679,71 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                   boxShadow: '0 0 8px #10b981'
                 }}
               />
+              {geminiApiKey ? (
+                <span
+                  style={{
+                    background: 'rgba(0, 240, 255, 0.15)',
+                    color: 'var(--accent-cyan)',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.62rem',
+                    fontWeight: 700
+                  }}
+                >
+                  ⚡ Gemini 2.5 Flash
+                </span>
+              ) : (
+                <span
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10b981',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.62rem',
+                    fontWeight: 700
+                  }}
+                >
+                  🛡️ Autonomous
+                </span>
+              )}
             </div>
             <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-              Real-Time Security &amp; Forensic Assistant
+              {isFullScreen ? 'Autonomous Forensic & Penetration Testing Assistant • Fullscreen Mode' : 'Real-Time Security & Forensic Assistant'}
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Gemini API Key Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setIsMinimized(!isMinimized);
+              setTempApiKey(geminiApiKey);
+              setShowApiKeyModal(true);
             }}
-            title={isMinimized ? 'Expand' : 'Minimize'}
+            title={geminiApiKey ? 'Gemini 2.5 Flash Connected (Click to edit key)' : 'Connect Google Gemini API Key'}
+            style={{
+              background: geminiApiKey ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
+              border: geminiApiKey ? '1px solid var(--accent-cyan)' : 'none',
+              color: geminiApiKey ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <Sparkles size={16} />
+          </button>
+
+          {/* Clear Conversation Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearChat();
+            }}
+            title="Clear Conversation"
             style={{
               background: 'transparent',
               border: 'none',
@@ -468,11 +753,57 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               borderRadius: '6px'
             }}
           >
-            {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+            <RotateCcw size={15} />
           </button>
+
+          {/* Full Screen Toggle Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
+              setIsFullScreen(!isFullScreen);
+              setIsMinimized(false);
+            }}
+            title={isFullScreen ? 'Exit Full Screen' : 'Full Screen View'}
+            style={{
+              background: isFullScreen ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+              border: isFullScreen ? '1px solid var(--accent-cyan)' : 'none',
+              color: isFullScreen ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+
+          {/* Minimize Drawer Button (Only when not in full screen) */}
+          {!isFullScreen && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(!isMinimized);
+              }}
+              title={isMinimized ? 'Expand' : 'Minimize'}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '6px'
+              }}
+            >
+              <ChevronDown size={17} style={{ transform: isMinimized ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+          )}
+
+          {/* Close Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isFullScreen) setIsFullScreen(false);
               onToggle();
             }}
             title="Close"
@@ -490,23 +821,33 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         </div>
       </div>
 
-      {!isMinimized && (
-        <>
+      {(!isMinimized || isFullScreen) && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: isFullScreen ? '1080px' : '100%',
+            margin: isFullScreen ? '0 auto' : undefined
+          }}
+        >
           {/* Active Target Banner */}
-          {report && domain ? (
+          {activeReport && domain ? (
             <div
               style={{
-                padding: '8px 14px',
+                padding: '8px 16px',
                 background: 'rgba(0, 240, 255, 0.06)',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontSize: '0.72rem'
+                fontSize: '0.74rem'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                <Terminal size={12} color="var(--accent-cyan)" />
+                <Terminal size={13} color="var(--accent-cyan)" />
                 <span className="mono" style={{ color: 'var(--text-primary)', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   Target: {domain}
                 </span>
@@ -515,7 +856,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 {verdict && (
                   <span
                     className={verdict === 'PHISHING' ? 'badge-critical' : verdict === 'SUSPICIOUS' ? 'badge-high' : 'badge-safe'}
-                    style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 800 }}
+                    style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800 }}
                   >
                     {verdict}
                   </span>
@@ -526,7 +867,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     style={{
                       background: riskScore >= 70 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                       color: riskScore >= 70 ? '#ef4444' : '#10b981',
-                      padding: '2px 6px',
+                      padding: '2px 8px',
                       borderRadius: '4px',
                       fontWeight: 800,
                       fontSize: '0.68rem'
@@ -535,23 +876,57 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     {riskScore}/100
                   </span>
                 )}
+                {grade && (
+                  <span
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      color: 'var(--accent-cyan)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontWeight: 800,
+                      fontSize: '0.68rem'
+                    }}
+                  >
+                    Grade {grade}
+                  </span>
+                )}
               </div>
             </div>
           ) : (
             <div
               style={{
-                padding: '6px 14px',
+                padding: '6px 16px',
                 background: 'rgba(56, 189, 248, 0.04)',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.7rem',
+                gap: '8px',
+                fontSize: '0.72rem',
                 color: 'var(--text-secondary)'
               }}
             >
-              <Sparkles size={11} color="var(--accent-cyan)" />
-              <span>General Cybersecurity Mode • Audit any site in the Scanner</span>
+              <Sparkles size={12} color="var(--accent-cyan)" />
+              <span>General AI Mode • Type <strong>analyze amazon.in</strong> to audit any site on-the-fly!</span>
+            </div>
+          )}
+
+          {/* Live Status Notice if scanning */}
+          {statusNotice && (
+            <div
+              style={{
+                padding: '6px 16px',
+                background: 'rgba(0, 240, 255, 0.12)',
+                borderBottom: '1px solid var(--accent-cyan)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.75rem',
+                color: 'var(--accent-cyan)',
+                fontWeight: 700
+              }}
+            >
+              <div style={{ width: '12px', height: '12px', border: '2px solid var(--accent-cyan)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <span>{statusNotice}</span>
             </div>
           )}
 
@@ -560,10 +935,10 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '14px',
+              padding: isFullScreen ? '20px 24px' : '14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: '14px',
               background: 'var(--bg-secondary)'
             }}
           >
@@ -584,8 +959,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 >
                   <div
                     style={{
-                      maxWidth: '90%',
-                      padding: '12px 16px',
+                      maxWidth: isFullScreen ? '82%' : '90%',
+                      padding: isFullScreen ? '14px 18px' : '12px 16px',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       background: isUser
                         ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
@@ -595,7 +970,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                       boxShadow: isUser
                         ? '0 4px 15px rgba(37, 99, 235, 0.3)'
                         : '0 4px 15px rgba(0, 0, 0, 0.2)',
-                      fontSize: '0.84rem',
+                      fontSize: isFullScreen ? '0.9rem' : '0.84rem',
+                      lineHeight: '1.5',
                       wordBreak: 'break-word'
                     }}
                   >
@@ -612,18 +988,18 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
                   padding: '10px 16px',
                   borderRadius: '14px',
                   width: 'fit-content',
-                  fontSize: '0.78rem',
+                  fontSize: '0.8rem',
                   color: 'var(--accent-cyan)'
                 }}
               >
                 <div style={{ width: '14px', height: '14px', border: '2px solid var(--accent-cyan)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <span>Copilot is analyzing cybersecurity telemetry...</span>
+                <span>Copilot is analyzing forensic telemetry...</span>
               </motion.div>
             )}
             <div ref={messagesEndRef} />
@@ -632,11 +1008,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
           {/* Interactive Quick Prompts Chips */}
           <div
             style={{
-              padding: '8px 12px',
+              padding: isFullScreen ? '10px 20px' : '8px 12px',
               borderTop: '1px solid var(--border-color)',
               background: 'var(--bg-card)',
               display: 'flex',
-              gap: '6px',
+              gap: '8px',
               overflowX: 'auto',
               whiteSpace: 'nowrap',
               scrollbarWidth: 'none'
@@ -651,14 +1027,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                   background: 'var(--bg-primary)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '16px',
-                  padding: '5px 12px',
-                  fontSize: '0.72rem',
+                  padding: '6px 14px',
+                  fontSize: '0.74rem',
                   color: 'var(--text-primary)',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: '6px',
                   transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => {
@@ -683,18 +1059,18 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               handleSendMessage();
             }}
             style={{
-              padding: '12px 14px',
+              padding: isFullScreen ? '16px 24px' : '12px 14px',
               borderTop: '1px solid var(--border-color)',
               background: 'var(--bg-primary)',
               display: 'flex',
-              gap: '8px',
+              gap: '10px',
               alignItems: 'center'
             }}
           >
             <input
               ref={inputRef}
               type="text"
-              placeholder={domain ? `Ask Copilot about ${domain}...` : "Ask a cybersecurity question (e.g. 'Is this site safe?')..."}
+              placeholder={domain ? `Ask Copilot about ${domain} (or 'analyze otherdomain.com')...` : "Ask any question (e.g. 'analyze amazon.in' or 'how to secure Nginx')..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isLoading}
@@ -702,9 +1078,9 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 flex: 1,
                 background: 'var(--bg-card)',
                 border: '1.5px solid var(--border-color)',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                fontSize: '0.85rem',
+                borderRadius: '12px',
+                padding: isFullScreen ? '12px 18px' : '10px 14px',
+                fontSize: isFullScreen ? '0.92rem' : '0.85rem',
                 color: 'var(--text-primary)',
                 outline: 'none',
                 boxSizing: 'border-box'
@@ -721,8 +1097,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 background: !inputValue.trim() || isLoading ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
                 color: !inputValue.trim() || isLoading ? 'var(--text-secondary)' : '#070a10',
                 border: 'none',
-                borderRadius: '10px',
-                padding: '10px 16px',
+                borderRadius: '12px',
+                padding: isFullScreen ? '12px 22px' : '10px 16px',
                 cursor: !inputValue.trim() || isLoading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -730,11 +1106,12 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 boxShadow: !inputValue.trim() || isLoading ? 'none' : '0 0 14px rgba(0, 240, 255, 0.4)'
               }}
             >
-              <Send size={16} />
+              <Send size={18} />
             </motion.button>
           </form>
-        </>
+        </div>
       )}
     </motion.div>
   );
 };
+

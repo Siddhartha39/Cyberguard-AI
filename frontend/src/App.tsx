@@ -687,6 +687,7 @@ export function App() {
           pendingPrompt={pendingCopilotPrompt}
           onClearPendingPrompt={() => setPendingCopilotPrompt(null)}
           onOpenAboutTopic={handleOpenAboutTopic}
+          onScanReportLoaded={(newReport) => setFreeScanResult(newReport as any)}
         />
       </div>
     </AlgorandWalletProvider>

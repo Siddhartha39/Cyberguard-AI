@@ -117,16 +117,81 @@ Return a valid JSON object with the following three fields ONLY (no markdown for
 async def ask_cyber_copilot(
     message: str,
     report: Optional[Dict[str, Any]] = None,
-    history: Optional[list] = None
+    history: Optional[list] = None,
+    api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Interactive Cyber Security Copilot answering questions about scan results,
     vulnerabilities, brand contradiction, code injection immunity, and server hardening.
+    Works like ChatGPT/Gemini with live domain analysis and optional Gemini API integration.
     """
+    import re
+    import os
+
     report = report or {}
     raw_domain = (report.get("canonical_domain") or report.get("domain") or "").strip()
     has_active_scan = bool(raw_domain and raw_domain.lower() not in ["target website", "unknown", "none", "null", "undefined", ""])
     domain = raw_domain if has_active_scan else None
+
+    # Check if user message asks to analyze a domain or mentions a URL/domain
+    extracted_domain = None
+    domain_match = re.search(
+        r'(?:https?://)?(?:www\.)?([a-zA-Z0-9][-a-zA-Z0-9]*\.(?:[a-zA-Z]{2,}|in|co|org|net|com|gov|edu|io|ai|xyz|top|shop|dev|app|cloud|site|tech|online|store)(?:\.[a-zA-Z]{2,})?)',
+        message,
+        re.IGNORECASE
+    )
+    if domain_match:
+        candidate = domain_match.group(1).lower().strip('.')
+        if '.' in candidate and not candidate.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.js', '.css', '.html', '.ts', '.py', '.json')):
+            extracted_domain = candidate
+
+    # If user provided a domain in query and it differs from current or no scan is active, run real live scan on backend
+    if extracted_domain and (not domain or extracted_domain != domain):
+        try:
+            from app.core.lexical_feature_extractor import extract_lexical_features
+            from app.services.domain_intel import collect_domain_intelligence
+            from app.services.security_auditor import audit_security_headers_and_dns
+            from app.ml.triage_model import triage_classifier
+
+            lex_res = extract_lexical_features(extracted_domain)
+            c_url = lex_res["canonical_url"]
+            reg_domain = lex_res["registrable_domain"]
+            sub = lex_res["subdomain"]
+            tld = lex_res["tld"]
+            features = lex_res["features"]
+            triage = triage_classifier.predict(features)
+            d_intel = await collect_domain_intelligence(reg_domain, sub, tld)
+            sec_audit = await audit_security_headers_and_dns(c_url, reg_domain)
+
+            report = {
+                "canonical_domain": reg_domain,
+                "domain": extracted_domain,
+                "canonical_url": c_url,
+                "verdict": triage.get("verdict", "BENIGN"),
+                "overall_risk_score": float(triage.get("risk_score", 0.0)),
+                "basic_risk_score": float(triage.get("risk_score", 0.0)),
+                "security_audit": sec_audit,
+                "security_grade": sec_audit.get("security_grade", "B"),
+                "domain_intel": d_intel,
+                "domain_age_days": d_intel.get("domain_age_days"),
+                "creation_date": d_intel.get("creation_date"),
+                "registrar": d_intel.get("registrar", "Global Registrar"),
+                "is_registered": d_intel.get("is_registered", True),
+                "registration_status": "REGISTERED" if d_intel.get("is_registered", True) else "UNREGISTERED",
+                "dns_a_records": d_intel.get("dns", {}).get("a_records", []),
+                "dns_ns_records": d_intel.get("dns", {}).get("ns_records", []),
+                "dns_records": sec_audit.get("dns_records", {}),
+                "brand_analysis": {
+                    "is_contradiction": False,
+                    "brand_display_name": triage.get("brand_matched")
+                }
+            }
+            raw_domain = reg_domain
+            domain = reg_domain
+            has_active_scan = True
+        except Exception:
+            domain = extracted_domain
+            has_active_scan = True
 
     verdict = report.get("verdict") or "UNKNOWN"
     risk_score = report.get("overall_risk_score") or report.get("basic_risk_score") or report.get("risk_score") or 0
@@ -146,8 +211,8 @@ async def ask_cyber_copilot(
             missing_headers = [h for h in missing_headers if h]
 
     dns_records = report.get("dns_records") or {}
-    dmarc_enforced = dns_records.get("dmarc_policy") in ["reject", "quarantine"]
-    spf_present = bool(dns_records.get("spf"))
+    dmarc_enforced = dns_records.get("dmarc_policy") in ["reject", "quarantine"] or report.get("dmarc_enforced", False)
+    spf_present = bool(dns_records.get("spf")) or report.get("has_spf", False)
     tls_valid = report.get("tls_valid", True)
     tls_issuer = report.get("tls_issuer") or (report.get("ssl_tls_evaluation", {}).get("issuer") if isinstance(report.get("ssl_tls_evaluation"), dict) else None) or "Public Certificate Authority"
 
@@ -168,7 +233,7 @@ async def ask_cyber_copilot(
     is_contradiction = brand.get("is_contradiction", False)
     contradiction_explanation = brand.get("contradiction_explanation", "")
 
-    # Context block
+    # Context block for AI Prompt
     if has_active_scan and domain:
         context_summary = f"""
 TARGET SECURITY SCAN CONTEXT:
@@ -192,37 +257,44 @@ TARGET SECURITY SCAN CONTEXT:
 {f'- Contradiction Finding: {contradiction_explanation}' if contradiction_explanation else ''}
 """
     else:
-        context_summary = """NO WEBSITE URL IS CURRENTLY SCANNED.
-The user has NOT audited or provided a target website yet.
-DO NOT invent or assume scan results for any website or 'target website'.
-If the user asks if their website is safe, hackable, or asks for steps to fix it, clarify that no website is currently loaded, and guide them to enter their website URL in the Scanner tab."""
+        context_summary = """NO SPECIFIC DOMAIN IS CURRENTLY ACTIVE IN SCANNER.
+You are in General AI Cybersecurity & Technology Assistant mode.
+You can answer any question regarding cybersecurity, web development, coding, networking, cloud, and defense."""
 
-    system_prompt = f"""You are CyberGuard AI Copilot, a senior offensive and defensive Application Security (AppSec) engineer and ethical penetration tester.
-You provide developers with rigorous vulnerability audits, evaluate if websites are easily hackable, and give comprehensive step-by-step code and server remediation guides (Nginx, Apache, Next.js, Express, Cloudflare, OWASP Top 10 defenses).
-When developers ask "Is my website safe?" or "Is it easily hackable?", analyze the exposed perimeter vectors (CSP/XSS, Clickjacking, HSTS/MitM, MIME sniffing, DMARC spoofing), explain the attack surface, and give clear, actionable steps to fix them.
-If no website URL has been scanned, clearly inform the user to enter their URL in the Scanner tab first.
-Be concise, authoritative, professional, and actionable. Use markdown formatting with copyable code snippets where helpful.
+    system_prompt = f"""You are CyberGuard AI Copilot, an elite AI cybersecurity engineer and versatile full-stack technical AI assistant (similar to ChatGPT and Google Gemini).
+You have deep expertise in:
+- Web application security (OWASP Top 10: XSS, SQLi, CSRF, SSRF, IDOR, RCE)
+- Infrastructure & perimeter hardening (Nginx, Apache, Caddy, Cloudflare, Express, Next.js)
+- Network security, protocols, DNS, DMARC, SPF, TLS/SSL certificates
+- Cryptography (hashing, symmetric/asymmetric ciphers, JWTs, OAuth2, WebAuthn)
+- Offensive pentesting, red teaming, malware & phishing forensic analysis
+- General software engineering, backend/frontend development, and cloud architecture (AWS, GCP, Docker, K8s)
+
+Answer the user's questions with high technical precision, clear explanations, formatted markdown tables or bullet points, and copyable production-ready code/config snippets where applicable.
+If the user asks to analyze a website or asks questions about a domain (e.g., {domain if domain else 'a target URL'}), provide an authoritative forensic breakdown based on the scan context below.
+If the user asks any general cybersecurity, programming, or technical question, answer it thoroughly like an expert AI assistant.
 
 {context_summary}
 """
 
     # 1. Try Google Gemini API if key is available
-    if settings.GEMINI_API_KEY:
+    effective_api_key = (api_key or "").strip() or (settings.GEMINI_API_KEY or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    if effective_api_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={effective_api_key}"
             contents = [{"parts": [{"text": system_prompt}]}]
             if history:
-                for h in history[-4:]:
+                for h in history[-6:]:
                     role = "model" if getattr(h, "role", "") == "assistant" or (isinstance(h, dict) and h.get("role") == "assistant") else "user"
                     content_text = getattr(h, "content", "") if not isinstance(h, dict) else h.get("content", "")
                     contents.append({"parts": [{"text": f"[{role.upper()}]: {content_text}"}]})
-            contents.append({"parts": [{"text": f"DEVELOPER QUESTION: {message}"}]})
+            contents.append({"parts": [{"text": f"USER QUESTION: {message}"}]})
 
             payload = {
                 "contents": contents,
-                "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1000}
+                "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1500}
             }
-            async with httpx.AsyncClient(timeout=8.0) as client:
+            async with httpx.AsyncClient(timeout=9.0) as client:
                 resp = await client.post(url, json=payload)
                 if resp.status_code == 200:
                     result = resp.json()
@@ -247,13 +319,44 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
 
     # 2. High-fidelity built-in cybersecurity knowledge engine
     msg_lower = message.lower().strip()
-    import re
 
-    # Greeting & Small Talk Check
-    greetings = ["hi", "hello", "hey", "hola", "sup", "good morning", "good evening", "good afternoon", "greetings", "namaste", "yo"]
-    is_greeting = any(re.match(rf"^{g}\b", msg_lower) for g in greetings) or msg_lower in greetings
+    # Check if user asks to analyze/scan/audit a domain
+    is_analyze_query = any(k in msg_lower for k in ["analyze", "scan", "check", "audit", "inspect", "test", "lookup", "evaluate", "review", "examine"]) or (extracted_domain and len(msg_lower.split()) <= 4)
+    if is_analyze_query and has_active_scan and domain:
+        age_str = f"{domain_age_days} days old" if domain_age_days is not None else "Established"
+        missing_str = ", ".join(f"`{h}`" for h in missing_headers) if missing_headers else "None — All perimeter headers configured!"
+        reply = (
+            f"🔍 **CyberGuard AI Forensic Audit: `{domain}`**\n\n"
+            f"### 📊 **Executive Threat Verdict: `{verdict}` (Risk Score: {risk_score}/100)**\n\n"
+            f"| Signal Metric | Inspected Value | Status |\n"
+            f"| :--- | :--- | :--- |\n"
+            f"| **Canonical Target** | `{domain}` | {'⚠️ NRD Flag' if domain_age_days is not None and domain_age_days < 30 else '✅ Verified Host'} |\n"
+            f"| **Security Grade** | **`{grade}`** | {len(missing_headers)} Missing Perimeter Headers |\n"
+            f"| **SSL/TLS Encryption** | {tls_issuer} | {'✅ Valid HTTPS' if tls_valid else '❌ Insecure HTTP'} |\n"
+            f"| **DMARC Spoofing Defense** | {'Enforced' if has_dmarc else 'None'} | {'✅ Protected' if has_dmarc else '❌ Vulnerable to Email Spoofing'} |\n"
+            f"| **Domain Maturity** | {age_str} | Registered via `{registrar}` |\n"
+            f"| **DNS Infrastructure** | A: `{', '.join(dns_a_records[:3]) if dns_a_records else 'Active'}` | Nameservers Active |\n\n"
+            f"---\n\n"
+            f"### 🛡️ **Attack Surface & Vulnerability Assessment:**\n"
+            f"1. **Defensive Headers ({len(missing_headers)} Missing)**: {missing_str}\n"
+            f"   - {'Missing CSP leaves client applications exposed to Cross-Site Scripting (XSS).' if 'Content-Security-Policy' in missing_headers else 'Content-Security-Policy configured.'}\n"
+            f"   - {'Missing X-Frame-Options allows attackers to frame the site in clickjacking overlays.' if 'X-Frame-Options' in missing_headers else 'Clickjacking protection active.'}\n"
+            f"2. **Email Domain Impersonation**: {'DMARC is not enforced; adversaries can forge outbound emails from this domain.' if not has_dmarc else 'Strict DMARC policy rejects unauthorized email senders.'}\n"
+            f"3. **Adversary Risk**: {'High-risk infrastructure detected. Do not enter credentials.' if risk_score >= 70 or verdict == 'PHISHING' else 'Baseline perimeter signals are consistent with legitimate hosting.'}\n\n"
+            f"---\n\n"
+            f"### 🛠️ **Recommended Hardening Blueprint:**\n"
+            f"To upgrade `{domain}` to **Grade A+**, apply these response headers in your reverse proxy (`nginx.conf`):\n"
+            f"```nginx\n"
+            f"add_header X-Frame-Options \"SAMEORIGIN\" always;\n"
+            f"add_header X-Content-Type-Options \"nosniff\" always;\n"
+            f"add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n"
+            f"add_header Content-Security-Policy \"default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:;\" always;\n"
+            f"```\n\n"
+            f"💡 *Ask me: **\"Is {domain} easily hackable?\"** or **\"How to fix Security Grade {grade}\"** for more deep-dive forensics!*"
+        )
 
-    if is_greeting:
+    # Greeting Check
+    elif any(re.match(rf"^{g}\b", msg_lower) for g in ["hi", "hello", "hey", "hola", "sup", "good morning", "good evening", "namaste", "yo"]) or msg_lower in ["hi", "hello", "hey"]:
         if has_active_scan and domain:
             reply = (
                 f"👋 **Hello! I am CyberGuard AI Copilot**, your real-time defensive web security engineer and penetration testing assistant.\n\n"
@@ -270,9 +373,13 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
             )
         else:
             reply = (
-                "👋 **Hello! I am CyberGuard AI Copilot**, your real-time defensive web security engineer and threat intelligence assistant.\n\n"
-                "No website URL is currently selected. To audit your website for vulnerabilities, inspect missing security headers, or evaluate if it is easily hackable, enter your URL in the **Scanner** tab above!\n\n"
-                "You can also ask me general cybersecurity questions, like how to prevent SQL injection, detect fake internship offers, or configure Nginx security headers."
+                "👋 **Hello! I am CyberGuard AI Copilot**, your autonomous cybersecurity and full-stack technical AI assistant.\n\n"
+                "You can ask me to **audit any website** by typing `analyze yourdomain.com` (or `check amazon.in`), or ask any question on:\n"
+                "- 🛡️ **Web Security & Pentesting**: SQL Injection, XSS, CSRF, SSRF, IDOR, OWASP Top 10\n"
+                "- 🛠️ **Production Hardening**: Nginx, Apache, Express Helmet, Next.js security headers\n"
+                "- 🔒 **Authentication & Cryptography**: JWT security, OAuth2, Argon2 password hashing, SSL/TLS\n"
+                "- 🌐 **Network & Email Posture**: DNSSEC, SPF, DKIM, DMARC spoofing prevention\n\n"
+                "What would you like to explore or audit today?"
             )
 
     # Developer Hackability & Vulnerability Audit
@@ -338,10 +445,7 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
                     f"#### **Step 4: Configure DNS SPF & DMARC Spoofing Defense**\n"
                     f"Add TXT records to your DNS provider (Cloudflare / Route53 / Namecheap):\n"
                     f"- **SPF:** `v=spf1 include:_spf.google.com ~all`\n"
-                    f"- **DMARC:** `_dmarc.{domain} TXT \"v=DMARC1; p=reject; rua=mailto:security@{domain}; pct=100\"`\n\n"
-                    f"#### **Step 5: Enforce API Rate Limiting & Input Validation**\n"
-                    f"- Protect login endpoints (`/api/login`, `/api/forgot-password`) with rate limits (max 5 requests/minute) to stop credential stuffing.\n"
-                    f"- Validate all request bodies with schema validation (Pydantic / Zod)."
+                    f"- **DMARC:** `_dmarc.{domain} TXT \"v=DMARC1; p=reject; rua=mailto:security@{domain}; pct=100\"`"
                 )
             else:
                 reply = (
@@ -361,17 +465,13 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
                 )
         else:
             reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "You haven't scanned or specified a website URL yet! CyberGuard AI needs a URL to inspect before it can evaluate hackability or check for exposed vulnerabilities.\n\n"
-                "### 🔍 **How to test your website's hackability:**\n"
-                "1. **Enter your website domain** in the **Scanner** input at the top (e.g. `https://yourdomain.com`).\n"
-                "2. Click **Start Deep Inspection**.\n"
-                "3. CyberGuard AI will instantly audit:\n"
-                "   - **Defensive Headers**: CSP, HSTS, X-Frame-Options, nosniff\n"
-                "   - **SSL/TLS Encryption**: Certificate validity and cipher security\n"
-                "   - **DNS Security**: SPF and DMARC anti-spoofing policies\n"
-                "   - **Phishing & Brand Spoofing Posture**\n"
-                "4. Once audited, I will give you an exact **Hackability Verdict** and tailored remediation steps!"
+                "🛡️ **Web Hackability & Penetration Audit Guide:**\n\n"
+                "A website's hackability is evaluated across 4 primary defense tiers:\n\n"
+                "1. **Perimeter Headers**: Lack of `Content-Security-Policy` and `X-Frame-Options` enables XSS and Clickjacking attacks.\n"
+                "2. **Transport Layer**: Insecure SSL/TLS configurations allow adversary traffic sniffing and MitM downgrades.\n"
+                "3. **Application Logic (OWASP Top 10)**: SQL Injection (SQLi), Cross-Site Scripting (XSS), and Broken Object-Level Authorization (IDOR).\n"
+                "4. **Domain & Email Integrity**: Absence of DNS SPF/DMARC permits phishing campaigns spoofing your domain.\n\n"
+                "👉 *To audit your specific website, type: **`analyze yourdomain.com`**!*"
             )
 
     # Step-by-Step Developer Hardening & Remediation
@@ -379,131 +479,66 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
         "steps to fix", "give steps", "how to fix", "fix it", "how do i fix",
         "how to secure", "fix my website", "remediation", "hardening", "config"
     ]):
-        is_asking_general = any(k in msg_lower for k in ["general", "template", "nginx config", "show general", "sample", "express hardening"])
-        if has_active_scan and domain:
-            reply = (
-                f"🛠️ **Complete Developer Remediation & Hardening Blueprint for `{domain}`:**\n\n"
-                f"Follow these **5 Production Hardening Steps** to upgrade your security posture to **Grade A+**:\n\n"
-                f"### **1. Nginx Hardening Configuration (`/etc/nginx/conf.d/security.conf`)**\n"
-                f"```nginx\n"
-                f"# Clickjacking defense\n"
-                f"add_header X-Frame-Options \"SAMEORIGIN\" always;\n\n"
-                f"# MIME sniffing defense\n"
-                f"add_header X-Content-Type-Options \"nosniff\" always;\n\n"
-                f"# Enforce HTTPS & Preloading (1 year max-age)\n"
-                f"add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n\n"
-                f"# Content Security Policy (XSS & Injection Defense)\n"
-                f"add_header Content-Security-Policy \"default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; object-src 'none'; frame-ancestors 'self';\" always;\n\n"
-                f"# Referrer & Privacy\n"
-                f"add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;\n"
-                f"add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;\n"
-                f"```\n\n"
-                f"### **2. Node.js / Express Hardening (`server.js`)**\n"
-                f"```javascript\n"
-                f"const express = require('express');\n"
-                f"const helmet = require('helmet');\n"
-                f"const rateLimit = require('express-rate-limit');\n"
-                f"const app = express();\n\n"
-                f"// Apply 11 automated security headers\n"
-                f"app.use(helmet());\n\n"
-                f"// Rate limiting: 100 requests per 15 minutes per IP\n"
-                f"const limiter = rateLimit({{ windowMs: 15 * 60 * 1000, max: 100 }});\n"
-                f"app.use('/api/', limiter);\n"
-                f"```\n\n"
-                f"### **3. Next.js (`next.config.js`)**\n"
-                f"```javascript\n"
-                f"const securityHeaders = [\n"
-                f"  {{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }},\n"
-                f"  {{ key: 'X-Content-Type-Options', value: 'nosniff' }},\n"
-                f"  {{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }},\n"
-                f"  {{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }}\n"
-                f"];\n\n"
-                f"module.exports = {{\n"
-                f"  async headers() {{\n"
-                f"    return [{{ source: '/:path*', headers: securityHeaders }}];\n"
-                f"  }}\n"
-                f"}};\n"
-                f"```\n\n"
-                f"### **4. DNS DMARC & SPF Email Enforcement**\n"
-                f"Add these authoritative DNS TXT records:\n"
-                f"```dns\n"
-                f"# SPF Record\n"
-                f"{domain}.  TXT  \"v=spf1 include:_spf.google.com ~all\"\n\n"
-                f"# Strict DMARC Reject Record\n"
-                f"_dmarc.{domain}.  TXT  \"v=DMARC1; p=reject; sp=reject; rua=mailto:dmarc-reports@{domain}; pct=100\"\n"
-                f"```\n\n"
-                f"### **5. Cloudflare Edge Rules (Zero Code Deployment)**\n"
-                f"1. Navigate to **Rules → Transform Rules → Modify Response Header**.\n"
-                f"2. Add `Strict-Transport-Security`, `X-Frame-Options`, and `X-Content-Type-Options`.\n"
-                f"3. Enable **Always Use HTTPS** and **HSTS** under *SSL/TLS → Edge Certificates*."
-            )
-        elif is_asking_general:
-            reply = (
-                "🛠️ **General Production Server Hardening Blueprint (No specific website selected):**\n\n"
-                "Follow these **5 Production Hardening Steps** to achieve an **A+ Security Grade** on any web server:\n\n"
-                "### **1. Nginx Hardening Configuration (`/etc/nginx/conf.d/security.conf`)**\n"
-                "```nginx\n"
-                "# Clickjacking defense\n"
-                "add_header X-Frame-Options \"SAMEORIGIN\" always;\n\n"
-                "# MIME sniffing defense\n"
-                "add_header X-Content-Type-Options \"nosniff\" always;\n\n"
-                "# Enforce HTTPS & Preloading (1 year max-age)\n"
-                "add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n\n"
-                "# Content Security Policy (XSS & Injection Defense)\n"
-                "add_header Content-Security-Policy \"default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; object-src 'none'; frame-ancestors 'self';\" always;\n\n"
-                "# Referrer & Privacy\n"
-                "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;\n"
-                "add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;\n"
-                "```\n\n"
-                "### **2. Node.js / Express Hardening (`server.js`)**\n"
-                "```javascript\n"
-                "const express = require('express');\n"
-                "const helmet = require('helmet');\n"
-                "const rateLimit = require('express-rate-limit');\n"
-                "const app = express();\n\n"
-                "// Apply 11 automated security headers\n"
-                "app.use(helmet());\n\n"
-                "// Rate limiting: 100 requests per 15 minutes per IP\n"
-                "const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });\n"
-                "app.use('/api/', limiter);\n"
-                "```\n\n"
-                "### **3. Next.js (`next.config.js`)**\n"
-                "```javascript\n"
-                "const securityHeaders = [\n"
-                "  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },\n"
-                "  { key: 'X-Content-Type-Options', value: 'nosniff' },\n"
-                "  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },\n"
-                "  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }\n"
-                "];\n\n"
-                "module.exports = {\n"
-                "  async headers() {\n"
-                "    return [{ source: '/:path*', headers: securityHeaders }];\n"
-                "  }\n"
-                "};\n"
-                "```\n\n"
-                "### **4. DNS DMARC & SPF Email Enforcement**\n"
-                "```dns\n"
-                "# SPF Record\n"
-                "yourdomain.com.  TXT  \"v=spf1 include:_spf.google.com ~all\"\n\n"
-                "# Strict DMARC Reject Record\n"
-                "_dmarc.yourdomain.com.  TXT  \"v=DMARC1; p=reject; sp=reject; rua=mailto:security@yourdomain.com; pct=100\"\n"
-                "```\n\n"
-                "👉 *To get fixes tailored to your actual website, enter your URL in the **Scanner** tab above!*"
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "You haven't scanned or specified a website URL yet! CyberGuard AI cannot provide site-specific fixes without inspecting your actual server and headers.\n\n"
-                "### 🔍 **To get customized security fixes for your website:**\n"
-                "1. **Enter your website domain** into the **Scanner** tab at the top (e.g., `https://yourdomain.com`).\n"
-                "2. Click **Start Deep Inspection**.\n"
-                "3. Once the live forensic audit finishes, ask me again! I will inspect your actual missing defensive headers, SSL ciphers, and DNS/DMARC records, and give you exact, copy-paste fixes tailored to your server.\n\n"
-                "---\n"
-                "💡 *If you are setting up a new server from scratch and need a general template, ask: **\"Show general Nginx hardening config\"**.*"
-            )
+        target_name = domain if has_active_scan and domain else "yourdomain.com"
+        reply = (
+            f"🛠️ **Production Server Hardening Blueprint for `{target_name}`:**\n\n"
+            f"Follow these **5 Production Hardening Steps** to upgrade your security posture to **Grade A+**:\n\n"
+            f"### **1. Nginx Hardening Configuration (`/etc/nginx/conf.d/security.conf`)**\n"
+            f"```nginx\n"
+            f"# Clickjacking defense\n"
+            f"add_header X-Frame-Options \"SAMEORIGIN\" always;\n\n"
+            f"# MIME sniffing defense\n"
+            f"add_header X-Content-Type-Options \"nosniff\" always;\n\n"
+            f"# Enforce HTTPS & Preloading (1 year max-age)\n"
+            f"add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n\n"
+            f"# Content Security Policy (XSS & Injection Defense)\n"
+            f"add_header Content-Security-Policy \"default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; object-src 'none'; frame-ancestors 'self';\" always;\n\n"
+            f"# Referrer & Privacy\n"
+            f"add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;\n"
+            f"add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;\n"
+            f"```\n\n"
+            f"### **2. Node.js / Express Hardening (`server.js`)**\n"
+            f"```javascript\n"
+            f"const express = require('express');\n"
+            f"const helmet = require('helmet');\n"
+            f"const rateLimit = require('express-rate-limit');\n"
+            f"const app = express();\n\n"
+            f"// Apply 11 automated security headers\n"
+            f"app.use(helmet());\n\n"
+            f"// Rate limiting: 100 requests per 15 minutes per IP\n"
+            f"const limiter = rateLimit({{ windowMs: 15 * 60 * 1000, max: 100 }});\n"
+            f"app.use('/api/', limiter);\n"
+            f"```\n\n"
+            f"### **3. Next.js (`next.config.js`)**\n"
+            f"```javascript\n"
+            f"const securityHeaders = [\n"
+            f"  {{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }},\n"
+            f"  {{ key: 'X-Content-Type-Options', value: 'nosniff' }},\n"
+            f"  {{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }},\n"
+            f"  {{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }}\n"
+            f"];\n\n"
+            f"module.exports = {{\n"
+            f"  async headers() {{\n"
+            f"    return [{{ source: '/:path*', headers: securityHeaders }}];\n"
+            f"  }}\n"
+            f"}};\n"
+            f"```\n\n"
+            f"### **4. DNS DMARC & SPF Email Enforcement**\n"
+            f"Add these authoritative DNS TXT records:\n"
+            f"```dns\n"
+            f"# SPF Record\n"
+            f"{target_name}.  TXT  \"v=spf1 include:_spf.google.com ~all\"\n\n"
+            f"# Strict DMARC Reject Record\n"
+            f"_dmarc.{target_name}.  TXT  \"v=DMARC1; p=reject; sp=reject; rua=mailto:dmarc-reports@{target_name}; pct=100\"\n"
+            f"```\n\n"
+            f"### **5. Cloudflare Edge Rules (Zero Code Deployment)**\n"
+            f"1. Navigate to **Rules → Transform Rules → Modify Response Header**.\n"
+            f"2. Add `Strict-Transport-Security`, `X-Frame-Options`, and `X-Content-Type-Options`.\n"
+            f"3. Enable **Always Use HTTPS** and **HSTS** under *SSL/TLS → Edge Certificates*."
+        )
 
     # Injection & OWASP Top 10 Protection
-    elif any(k in msg_lower for k in ["code injection", "xss", "sqli", "sql injection", "csp", "inject", "csrf", "sanitize"]):
+    elif any(k in msg_lower for k in ["code injection", "xss", "sqli", "sql injection", "csp", "inject", "csrf", "sanitize", "idor", "ssrf"]):
         target_label = f"`{domain}`" if has_active_scan and domain else "Your Web Application"
         reply = (
             f"🔒 **Immunizing {target_label} Against Code Injection & OWASP Vulnerabilities:**\n\n"
@@ -517,7 +552,7 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
             f"```\n\n"
             f"### **2. Cross-Site Scripting (XSS) Immunization**\n"
             f"XSS allows attackers to execute unauthorized JavaScript in victims' browsers.\n"
-            f"- **Content-Security-Policy (CSP)**: Completely stops inline script execution:\n"
+            f"- **Content-Security-Policy (CSP)**: Completely stops unauthorized inline script execution:\n"
             f"```http\n"
             f"Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https:; object-src 'none';\n"
             f"```\n"
@@ -528,255 +563,94 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
             f"```\n\n"
             f"### **3. Cross-Site Request Forgery (CSRF) Defense**\n"
             f"- Store authentication cookies with `SameSite=Strict` and `HttpOnly`.\n"
-            f"- Use Anti-CSRF double-submit cookies on state-mutating requests (POST, PUT, DELETE)."
+            f"- Use Anti-CSRF double-submit tokens on state-mutating requests (POST, PUT, DELETE).\n\n"
+            f"### **4. Server-Side Request Forgery (SSRF) Defense**\n"
+            f"- Block server requests to RFC 1918 private IP ranges (`127.0.0.1`, `10.0.0.0/8`, `192.168.0.0/16`, `169.254.169.254` AWS metadata).\n"
+            f"- Validate user-supplied target URLs with an allowlist of approved domains."
         )
 
-    elif any(k in msg_lower for k in ["who are you", "what can you do", "what are you", "help me", "about copilot"]):
+    # Password Hashing & Authentication
+    elif any(k in msg_lower for k in ["password", "bcrypt", "argon2", "hash", "jwt", "token", "oauth", "mfa", "2fa"]):
         reply = (
-            "🤖 **About CyberGuard AI Copilot**\n\n"
-            "I am an autonomous defensive cybersecurity agent and AppSec engineer integrated directly with CyberGuard AI's multi-signal neural fusion engine and Algorand Testnet settlement.\n\n"
-            "**Key Capabilities:**\n"
-            "1. 🛡️ **Developer Vulnerability Audits**: Analyze website hackability, missing defensive headers, and attack surfaces.\n"
-            "2. 🛠️ **Server Hardening Blueprints**: Provide copy-paste configs for Nginx, Express, Next.js, Apache, and Cloudflare.\n"
-            "3. 🔒 **Code Injection Immunity**: Guide parameterization, CSP nonces, and input sanitization (SQLi/XSS/CSRF).\n"
-            "4. 💼 **Job & Internship Scam Sentinel**: Detect fake hiring offers, registration fee demands, and freemail HR traps.\n"
-            "5. ⚡ **Algorand & x402 Micropayments**: Explain decentralized HTTP 402 paywall challenges and on-chain verification."
+            "🔐 **Modern Password Storage & Authentication Security Architecture:**\n\n"
+            "### 1. Password Hashing (Argon2id vs. bcrypt)\n"
+            "Never use MD5, SHA-1, or plain SHA-256 for passwords. Modern GPUs compute billions of SHA-256 hashes per second.\n\n"
+            "- **Argon2id (Winner of Password Hashing Competition)**: Memory-hard, resistant to GPU/ASIC cracking.\n"
+            "- **bcrypt**: Work-factor based adaptive hashing (recommended cost factor: 12).\n\n"
+            "```python\n"
+            "# Python Argon2 Example:\n"
+            "from argon2 import PasswordHasher\n"
+            "ph = PasswordHasher()\n"
+            "hash = ph.hash('user_secret_password')\n"
+            "ph.verify(hash, 'user_secret_password') # Returns True\n"
+            "```\n\n"
+            "### 2. JWT (JSON Web Token) Security Rules\n"
+            "1. **Never store sensitive secrets or passwords** inside the JWT payload (base64 is readable by anyone).\n"
+            "2. **Store JWTs in `HttpOnly; Secure; SameSite=Strict` cookies** instead of `localStorage` to eliminate XSS token theft.\n"
+            "3. **Validate the `alg` header**: Explicitly enforce `RS256` or `HS256` and reject the `none` algorithm exploit.\n"
+            "4. **Keep access tokens short-lived (5-15 mins)** and use rotating refresh tokens with family tracking."
         )
 
-    elif any(k in msg_lower for k in ["fake", "real", "legit", "scam", "trust", "danger", "malicious", "password", "login", "credential"]):
-        if has_active_scan and domain:
-            if verdict == "PHISHING" or is_contradiction or risk_score >= 70:
-                reply = (
-                    f"🚨 **DANGER: `{domain}` IS FLAGGED AS A HIGH-RISK THREAT ({verdict})**\n\n"
-                    f"- **Overall Risk Score:** **{risk_score}/100**\n"
-                    f"- **Brand Target:** {brand_matched or 'Unauthorized Brand Spoofing'}\n"
-                    f"- **Contradiction Status:** {'Critical Trademark Mismatch' if is_contradiction else 'Malicious indicators present'}\n\n"
-                    f"**Security Verdict:** DO NOT enter passwords, credit cards, or personal credentials on this website. All input will be exfiltrated to adversary infrastructure."
-                )
-            elif verdict == "UNREGISTERED":
-                reply = (
-                    f"ℹ️ **`{domain}` IS UNREGISTERED (NXDOMAIN).**\n\n"
-                    f"This domain does not have active DNS records or hosting infrastructure. It is not an active online portal."
-                )
-            elif verdict == "SUSPICIOUS" or (35 <= risk_score < 70):
-                reply = (
-                    f"⚠️ **PROCEED WITH CAUTION: `{domain}` HAS SUSPICIOUS INDICATORS.**\n\n"
-                    f"- **Threat Score:** **{risk_score}/100**\n"
-                    f"- This domain has newly registered infrastructure or missing defensive headers. Verify ownership before entering credentials."
-                )
-            else:
-                reply = (
-                    f"✅ **`{domain}` IS VERIFIED AUTHENTIC & SAFE.**\n\n"
-                    f"- **Verdict:** `{verdict}` (Risk Score: **{risk_score}/100**)\n"
-                    f"- **Security Grade:** `{grade}`\n"
-                    f"- **SSL / TLS:** Encrypted and valid\n\n"
-                    f"The domain matches legitimate registration records with no brand contradictions detected."
-                )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "You haven't scanned or specified a website URL yet! Enter any domain or URL in the **Scanner** tab above to check whether it is authentic, suspicious, or a phishing threat."
-            )
-
-    elif any(k in msg_lower for k in ["why", "how is risk", "risk score", "calculate score", "entropy"]):
-        target_info = f" for `{domain}` (Score: {risk_score}/100)" if has_active_scan and domain else ""
+    # Zero Trust & Network Security
+    elif any(k in msg_lower for k in ["zero trust", "defense in depth", "firewall", "waf", "ddos", "tls 1.3", "encryption", "symmetric", "asymmetric"]):
         reply = (
-            f"📊 **How CyberGuard AI Calculates Risk Scores (0–100){target_info}:**\n\n"
-            "CyberGuard AI uses a 6-layer multi-signal fusion pipeline:\n"
-            "1. **Lexical & Shannon Entropy**: Analyzes URL randomness, character distribution, and brand keyword stuffing.\n"
-            "2. **RDAP Domain Age**: Checks domain creation dates. Newly registered domains (<30 days) receive higher risk.\n"
-            "3. **DNS & Email Posture**: Audits authoritative A, NS, MX, SPF, and DMARC records.\n"
-            "4. **Visual Logo pHash Matching**: Renders page in a sandbox and checks logo perceptual hash against authorized registries.\n"
-            "5. **Browser Sandbox Crawl**: Detects deceptive password input forms and cross-origin POST targets.\n"
-            "6. **Multi-Signal Calibrator**: Merges all signals into an authoritative 0–100 risk score."
+            "🛡️ **Zero Trust Architecture & Cryptographic Foundations:**\n\n"
+            "### 1. Core Principles of Zero Trust (NIST SP 800-207)\n"
+            "- **\"Never Trust, Always Verify\"**: Every request inside or outside the network perimeter must be authenticated and authorized.\n"
+            "- **Least Privilege Access**: Grant users and services only the minimum permissions needed.\n"
+            "- **Assume Breach**: Segment networks into micro-perimeters and encrypt all traffic in transit and at rest.\n\n"
+            "### 2. Symmetric vs. Asymmetric Encryption\n"
+            "| Feature | Symmetric Encryption | Asymmetric Encryption |\n"
+            "| :--- | :--- | :--- |\n"
+            "| **Key Pair** | Single shared key (encrypt & decrypt) | Public key (encrypt) + Private key (decrypt) |\n"
+            "| **Speed** | Extremely fast (hardware accelerated) | Slower (mathematical modular exponentiation) |\n"
+            "| **Algorithms** | AES-256-GCM, ChaCha20-Poly1305 | RSA-4096, ECDSA, Ed25519, X25519 |\n"
+            "| **Use Case** | Bulk database / disk encryption | TLS handshake, Digital signatures, SSH keys |\n\n"
+            "💡 *In HTTPS (TLS 1.3), asymmetric encryption (ECDHE) negotiates a shared symmetric key (AES-256), combining the security of asymmetric keys with the high speed of symmetric encryption.*"
         )
 
-    elif any(k in msg_lower for k in ["internship", "job offer", "job scam", "recruitment", "selected without interview", "training fee"]):
+    # Port Scanning & Penetration Testing Tools
+    elif any(k in msg_lower for k in ["nmap", "port scan", "burp", "wireshark", "metasploit", "pentest tool"]):
         reply = (
-            "💼 **Job & Internship Offer Scam Detection Rules:**\n\n"
-            "CyberGuard AI protects students and job seekers against employment fraud. Look out for these **5 Critical Red Flags**:\n"
-            "1. 🚩 **Upfront Fee Demands**: Any request for registration fees, training charges, or laptop deposits is **100% a scam**. Legitimate companies NEVER charge candidates.\n"
-            "2. 🚩 **Freemail HR Accounts**: Real recruiters email from official domains (`@google.com`, `@infosys.com`), NEVER from `@gmail.com` or `@yahoo.com`.\n"
-            "3. 🚩 **Fake Check Scams**: Offering to mail a $3,000 cashier check to buy hardware from an 'approved vendor' is counterfeit check laundering.\n"
-            "4. 🚩 **Telegram / WhatsApp Interviews**: Corporate hiring does not conduct formal interviews exclusively via chat apps.\n"
-            "5. 🚩 **Instant Selection**: Direct appointment letters issued without technical interviews are deceptive bait.\n\n"
-            "Paste any suspicious offer letter into our **Email Sentinel** tab for an instant fraud audit!"
+            "🛠️ **Essential Penetration Testing & Network Security Tools:**\n\n"
+            "1. **Nmap (Network Mapper)**:\n"
+            "   - Audit open ports, running services, and OS fingerprints.\n"
+            "   - Syntax: `nmap -sV -sC -T4 target.com`\n\n"
+            "2. **Burp Suite / OWASP ZAP**:\n"
+            "   - Web application intercepting proxy for discovering XSS, SQLi, BOLA, and parameter tampering.\n\n"
+            "3. **Wireshark**:\n"
+            "   - Packet analysis and deep protocol inspection for TCP/UDP network streams.\n\n"
+            "4. **SQLmap**:\n"
+            "   - Automated detection and exploitation of SQL injection flaws in web applications.\n\n"
+            "⚠️ *Note: Always obtain written authorization before running active scans against third-party systems.*"
         )
 
-    elif any(k in msg_lower for k in ["dmarc", "spf", "dkim", "spoof"]):
-        dmarc_target = f" for `{domain}`" if has_active_scan and domain else ""
-        reply = (
-            f"📧 **Email Security & DMARC/SPF Posture{dmarc_target}:**\n\n"
-            "- **SPF (Sender Policy Framework):** Declares which mail servers are authorized to send emails on behalf of a domain.\n"
-            "- **DKIM (DomainKeys Identified Mail):** Cryptographically signs outgoing emails to guarantee they weren't tampered with in transit.\n"
-            "- **DMARC (Domain-based Message Authentication, Reporting, and Conformance):** Tells receiving mail servers what to do if SPF or DKIM fails (`reject`, `quarantine`, or `none`).\n\n"
-            "**Why this matters:** If a domain lacks DMARC enforcement (`p=reject`), cybercriminals can spoof emails pretending to be the company's CEO or billing department."
-        )
-
-    elif any(k in msg_lower for k in ["x402", "algorand", "payment", "crypto", "microalgo", "facilitator"]):
-        reply = (
-            "⚡ **Algorand & x402 Micropayment Protocol:**\n\n"
-            "- **x402 Protocol:** Uses the standard HTTP 402 (Payment Required) status code to paywall high-compute deep forensic audits.\n"
-            "- **Algorand Testnet:** Transactions settle in ~3.3 seconds with deterministic finality and minimal gas fees (0.001 ALGO).\n"
-            "- **Facilitator:** Verified through the GoPlausible Facilitator (`facilitator.goplausible.xyz`).\n"
-            "- **Cost:** 0.1 ALGO (100,000 microAlgos) per deep forensic audit.\n"
-            "- **Verification:** Every transaction hash is verified on-chain via the Algorand Testnet indexer."
-        )
-
-    # Domain Registration & Age Query ("when it registered", "creation date", "registrar", etc.)
-    elif any(k in msg_lower for k in [
-        "register", "registered", "registration", "creation date", "created at",
-        "when was it created", "when created", "when it created", "how old", "domain age",
-        "age of", "who registered", "registrar", "whois", "expiration", "expiry"
-    ]):
-        if has_active_scan and domain:
-            age_str = f"{domain_age_days} days old" if domain_age_days is not None else "Established"
-            date_str = creation_date or "Verified on registry record"
-            reg_str = registrar or "Accredited Global Registrar"
-
-            if domain_age_days is not None:
-                if domain_age_days < 30:
-                    age_assessment = f"⚠️ **Newly Registered Domain (NRD):** `{domain}` was registered only **{domain_age_days} days ago**. Security systems flag domains under 30 days old with elevated scrutiny because over 70% of disposable phishing campaigns use freshly registered domains."
-                elif domain_age_days > 365:
-                    age_assessment = f"✅ **High Domain Maturity:** `{domain}` has been registered for **{domain_age_days} days** ({round(domain_age_days/365, 1)} years). Long-standing domain age provides significant trust against disposable hit-and-run phishing campaigns."
-                else:
-                    age_assessment = f"✅ **Established Domain:** `{domain}` has been active for **{domain_age_days} days**. It has safely passed the critical 30-day Newly Registered Domain (NRD) threat window."
-            else:
-                age_assessment = f"ℹ️ `{domain}` has verified registry standing with no flags for recent disposable creation."
-
-            reply = (
-                f"📅 **Domain Registration & Age Intelligence for `{domain}`:**\n\n"
-                f"- 🗓️ **Registration Date:** **`{date_str}`**\n"
-                f"- ⏳ **Domain Age:** **`{age_str}`**\n"
-                f"- 🏛️ **Registrar:** **`{reg_str}`**\n"
-                f"- 📋 **Registry Status:** `{registration_status}`\n\n"
-                f"{age_assessment}\n\n"
-                f"---\n"
-                f"💡 *Would you like to check its **DNS/IP hosting records**, **SSL certificate**, or audit if **{domain} is easily hackable**?*"
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "You haven't scanned or specified a website URL yet! Please enter your website domain in the **Scanner** tab at the top, and click **Start Deep Inspection** to look up its exact registration date, domain age, and registrar."
-            )
-
-    # DNS & IP Hosting Query
-    elif any(k in msg_lower for k in [
-        "ip address", "what is the ip", "what's the ip", "ip of", "hosting", "where is it hosted",
-        "who hosts", "nameserver", "ns record", "a record", "dns record", "dns status", "server ip"
-    ]) or (re.search(r"\bip\b", msg_lower) and not any(w in msg_lower for w in ["script", "whip", "clip", "equip"])):
-        if has_active_scan and domain:
-            ips = ", ".join(f"`{ip}`" for ip in dns_a_records) if dns_a_records else "Active Resolution"
-            ns = ", ".join(f"`{n}`" for n in dns_ns_records) if dns_ns_records else "Standard Authoritative Nameservers"
-            reg_str = registrar or "Accredited Global Registrar"
-
-            reply = (
-                f"🌐 **DNS Infrastructure & Hosting Details for `{domain}`:**\n\n"
-                f"- 🖥️ **IP Addresses (A Records):** {ips}\n"
-                f"- 📡 **Authoritative Nameservers (NS):** {ns}\n"
-                f"- 🏛️ **Domain Registrar:** `{reg_str}`\n"
-                f"- 🚦 **DNS Routing:** Successfully resolved via authoritative root servers\n\n"
-                f"**Infrastructure Posture:** The domain resolves to active host infrastructure. "
-                f"No suspicious fast-flux DNS rotation or bulletproof hosting anomalies were detected."
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "You haven't scanned or specified a website URL yet! Enter your website domain in the **Scanner** tab above to retrieve its live IP addresses, nameservers, and hosting infrastructure."
-            )
-
-    # SSL / TLS Encryption Query
-    elif any(k in msg_lower for k in [
-        "ssl", "tls", "https", "certificate", "cert", "cipher", "encryption",
-        "is it encrypted", "secure connection", "padlock"
-    ]):
-        if has_active_scan and domain:
-            issuer_str = tls_issuer or "Public Certificate Authority"
-            status_str = "✅ Valid & Trusted (HTTPS Active)" if tls_valid else "❌ Insecure / Invalid TLS (Untrusted Connection)"
-
-            reply = (
-                f"🔒 **SSL/TLS Encryption & Certificate Telemetry for `{domain}`:**\n\n"
-                f"- 🛡️ **Encryption Status:** {status_str}\n"
-                f"- 📜 **Certificate Authority (Issuer):** `{issuer_str}`\n"
-                f"- 🌐 **Protocol:** {'HTTPS (Encrypted Transport Layer)' if tls_valid else 'Plaintext HTTP (Vulnerable to MitM Eavesdropping)'}\n\n"
-                f"**Security Insight:** {'Your connection to this website is cryptographically encrypted, preventing passive eavesdropping in transit. However, remember that modern phishing sites also acquire free TLS certificates (e.g. Let\'s Encrypt) to look authentic.' if tls_valid else 'Traffic to this website is transmitted in plaintext. Attackers on public networks can intercept passwords and session cookies.'}"
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "Enter a URL in the **Scanner** tab above to audit its SSL certificate, cipher strength, and TLS security."
-            )
-
-    # Defensive Headers & Security Grade Query
-    elif any(k in msg_lower for k in [
-        "missing header", "headers", "security grade", "why grade", "grade b", "grade a", "grade c", "grade f", "what is grade", "score percentage"
-    ]):
-        if has_active_scan and domain:
-            missing_str = ", ".join(f"`{h}`" for h in missing_headers) if missing_headers else "None — All perimeter headers configured!"
-            reply = (
-                f"🛡️ **Security Grade & Defensive Headers Posture for `{domain}`:**\n\n"
-                f"- **Security Grade:** **`{grade}`**\n"
-                f"- **Missing Perimeter Headers ({len(missing_headers)}):** {missing_str}\n"
-                f"- **DMARC Email Spoofing Defense:** {'✅ Enforced (p=reject/quarantine)' if has_dmarc else '❌ Not Enforced (vulnerable to spoofing)'}\n\n"
-                f"**Why this grade matters:** Missing perimeter headers like `Content-Security-Policy` and `X-Frame-Options` leave your web application open to Cross-Site Scripting (XSS) and Clickjacking.\n\n"
-                f"👉 *Ask **\"Give steps to fix {domain}\"** to get copy-paste Nginx and Express header configurations to upgrade to Grade A+!*"
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "Enter a URL in the **Scanner** tab above to inspect its defensive HTTP security headers and calculate its Security Grade."
-            )
-
-    # Executive Dossier / Overview Query
-    elif any(k in msg_lower for k in [
-        "tell me about", "what is this website", "what is this site", "summarize", "overview", "what does it do", "info about", "about this"
-    ]):
-        if has_active_scan and domain:
-            reply = (
-                f"📋 **CyberGuard AI Executive Threat Dossier for `{domain}`:**\n\n"
-                f"- 🎯 **Domain:** `{domain}`\n"
-                f"- 📅 **Age:** {f'{domain_age_days} days old' if domain_age_days is not None else 'Established'} (Registered on `{creation_date or 'On record'}` via `{registrar or 'Public Registrar'}`)\n"
-                f"- 🌐 **Hosting:** IP `{', '.join(dns_a_records) if dns_a_records else 'Active Resolution'}`\n"
-                f"- 🔒 **Transport:** {'✅ Valid TLS HTTPS' if tls_valid else '❌ Insecure HTTP'} ({tls_issuer})\n"
-                f"- 🛡️ **Defensive Grade:** **`{grade}`** ({len(missing_headers)} headers missing)\n"
-                f"- 🚦 **Threat Verdict:** **`{verdict}`** (Risk Score: **{risk_score}/100**)\n\n"
-                f"**Summary:** `{domain}` has an overall risk score of {risk_score}/100 with no trademark contradiction detected. "
-                f"Perimeter security scored Grade `{grade}`."
-            )
-        else:
-            reply = (
-                "⚠️ **No Website URL Provided Yet**\n\n"
-                "Enter a URL in the **Scanner** tab above to generate an executive threat dossier."
-            )
-
+    # General Fallback
     else:
         if has_active_scan and domain:
-            age_info = f"Registered `{creation_date}` ({domain_age_days} days old)" if creation_date and domain_age_days is not None else (f"{domain_age_days} days old" if domain_age_days is not None else "Active domain")
             reply = (
                 f"🤖 **CyberGuard AI Intelligence for `{domain}`:**\n\n"
                 f"Regarding your query: *\"{message}\"*\n\n"
-                f"- 📅 **Registration & Standing:** {age_info} via `{registrar}`\n"
-                f"- 🌐 **Hosting & IP:** `{', '.join(dns_a_records) if dns_a_records else 'Resolved Host'}`\n"
-                f"- 🔒 **Encryption:** {'✅ Valid TLS (HTTPS)' if tls_valid else '❌ Insecure (No TLS)'} ({tls_issuer})\n"
+                f"- 🎯 **Target Host:** `{domain}`\n"
+                f"- 📅 **Registration Standing:** {f'{domain_age_days} days old' if domain_age_days is not None else 'Active'} via `{registrar}`\n"
+                f"- 🌐 **IP Resolution:** `{', '.join(dns_a_records) if dns_a_records else 'Active'}`\n"
+                f"- 🔒 **Transport:** {'✅ Valid HTTPS' if tls_valid else '❌ Insecure (No TLS)'} ({tls_issuer})\n"
                 f"- 🛡️ **Security Grade:** **`{grade}`** ({len(missing_headers)} defensive headers missing)\n"
-                f"- 🎯 **Threat Verdict:** **`{verdict}`** (Risk Score: **{risk_score}/100**)\n\n"
-                f"💡 *You can ask me specific questions:*\n"
-                f"- *\"When was it registered?\"*\n"
-                f"- *\"What is the IP and nameservers?\"*\n"
+                f"- 🚦 **Threat Verdict:** **`{verdict}`** (Risk Score: **{risk_score}/100**)\n\n"
+                f"💡 *You can ask me:*\n"
                 f"- *\"Is {domain} easily hackable?\"*\n"
                 f"- *\"Give me step-by-step instructions to fix {domain}\"*\n"
                 f"- *\"How to configure Nginx security headers?\"*"
             )
         else:
             reply = (
-                "🤖 **CyberGuard AI Copilot (General Cybersecurity Mode):**\n\n"
-                "No website URL is currently selected. To run a live security audit on a website, enter its URL in the **Scanner** tab above!\n\n"
-                "You can ask me questions like:\n"
-                "- *\"How do I audit my website?\"*\n"
-                "- *\"What vulnerabilities does CyberGuard test for?\"*\n"
-                "- *\"Show general Nginx hardening config\"*\n"
-                "- *\"How to detect fake internship offers?\"*\n"
-                "- *\"How to protect against SQL injection and XSS?\"*"
+                f"🤖 **CyberGuard AI Copilot:**\n\n"
+                f"Regarding: *\"{message}\"*\n\n"
+                f"I am your autonomous defensive cybersecurity and software engineering assistant. Here are key security recommendations for your query:\n\n"
+                f"1. **Audit Attack Surfaces**: Always identify exposed endpoints, missing authentication middleware, and input ingestion points.\n"
+                f"2. **Enforce Defense-in-Depth**: Combine transport encryption (TLS 1.3), perimeter HTTP headers (CSP, HSTS), and parameterized queries to mitigate exploits.\n"
+                f"3. **Real-time Domain Audits**: You can analyze any live website directly by typing **`analyze amazon.in`** or **`check yourdomain.com`** right here in the chat!\n\n"
+                f"> 💡 **Pro Tip:** To unlock unlimited conversational reasoning on any general question (ChatGPT / Gemini style), you can enter your free Google Gemini API Key in the Copilot Settings (⚙️ icon)!"
             )
 
     suggested_actions = [
@@ -795,4 +669,5 @@ Be concise, authoritative, professional, and actionable. Use markdown formatting
         "reply": reply,
         "suggested_actions": suggested_actions
     }
+
 

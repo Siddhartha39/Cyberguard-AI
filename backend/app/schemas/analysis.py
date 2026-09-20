@@ -242,6 +242,7 @@ class ChatRequest(BaseModel):
     message: str
     report: Optional[Dict[str, Any]] = None
     history: Optional[List[ChatMessage]] = Field(default_factory=list)
+    api_key: Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str
