@@ -230,20 +230,19 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
   };
 
   const quickPrompts = hasScannedSite && domain ? [
-    { label: `Is ${domain} easily hackable?`, icon: <Shield size={12} color="#ef4444" /> },
-    { label: `Give steps to fix ${domain}`, icon: <Terminal size={12} color="#10b981" /> },
-    { label: `Hardening headers for ${domain}`, icon: <Terminal size={12} color="var(--accent-cyan)" /> },
-    { label: `Explain ${domain} risk score`, icon: <Zap size={12} color="#f59e0b" /> },
-    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" /> },
-    { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
-    { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
+    { label: `Is ${domain} easily hackable?`, icon: <Shield size={12} color="#ef4444" />, colorClass: 'copilot-chip-rose' },
+    { label: `Give steps to fix ${domain}`, icon: <Terminal size={12} color="#10b981" />, colorClass: 'copilot-chip-emerald' },
+    { label: `Hardening headers for ${domain}`, icon: <Terminal size={12} color="var(--accent-cyan)" />, colorClass: 'copilot-chip-cyan' },
+    { label: `Explain ${domain} risk score`, icon: <Zap size={12} color="#f59e0b" />, colorClass: 'copilot-chip-amber' },
+    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" />, colorClass: 'copilot-chip-purple' },
+    { label: 'Launch live Chromium sandbox', icon: <Sparkles size={12} color="#38bdf8" />, colorClass: 'copilot-chip-sky' }
   ] : [
-    { label: 'How do I audit my website?', icon: <Shield size={12} color="var(--accent-cyan)" /> },
-    { label: 'What vulnerabilities does CyberGuard test for?', icon: <Zap size={12} color="#f59e0b" /> },
-    { label: 'Show general Nginx hardening config', icon: <Terminal size={12} color="#10b981" /> },
-    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" /> },
-    { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" /> },
-    { label: 'What is Algorand x402 payment?', icon: <Sparkles size={12} color="#38bdf8" /> }
+    { label: 'How do I audit my website?', icon: <Shield size={12} color="var(--accent-cyan)" />, colorClass: 'copilot-chip-cyan' },
+    { label: 'What vulnerabilities does CyberGuard test for?', icon: <Zap size={12} color="#f59e0b" />, colorClass: 'copilot-chip-amber' },
+    { label: 'Show general Nginx hardening config', icon: <Terminal size={12} color="#10b981" />, colorClass: 'copilot-chip-emerald' },
+    { label: 'How to prevent code injection & SQLi?', icon: <Lock size={12} color="#a855f7" />, colorClass: 'copilot-chip-purple' },
+    { label: 'How to detect fake internship offers?', icon: <Briefcase size={12} color="#ec4899" />, colorClass: 'copilot-chip-rose' },
+    { label: 'Launch live Chromium sandbox', icon: <Sparkles size={12} color="#38bdf8" />, colorClass: 'copilot-chip-sky' }
   ];
 
   // Interactive Live Chromium Sandbox Component
@@ -705,53 +704,65 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         whileTap={{ scale: 0.95 }}
         onClick={onToggle}
         aria-label="Open CyberGuard AI Copilot"
+        className="copilot-launcher-btn"
         style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
           zIndex: 99995,
-          background: 'linear-gradient(135deg, #070a10 0%, #0d1525 100%)',
-          border: '1.5px solid var(--accent-cyan)',
-          borderRadius: '28px',
           padding: '10px 18px',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
+          gap: '12px',
           cursor: 'pointer',
-          boxShadow: '0 8px 30px rgba(0, 240, 255, 0.35), 0 0 15px rgba(37, 99, 235, 0.4)',
-          transition: 'box-shadow 0.3s'
+          border: 'none'
         }}
       >
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
-            padding: '7px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 12px rgba(0, 240, 255, 0.6)'
-          }}>
-            <Bot size={18} color="#070a10" />
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #00f0ff 0%, #6366f1 50%, #ec4899 100%)',
+              padding: '8px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 14px rgba(99, 102, 241, 0.6), 0 0 6px rgba(0, 240, 255, 0.8)'
+            }}
+          >
+            <Bot size={18} color="#ffffff" />
           </div>
-          <span style={{
-            position: 'absolute',
-            top: '-2px',
-            right: '-2px',
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: '#10b981',
-            boxShadow: '0 0 8px #10b981'
-          }} />
+          <span
+            style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              width: '9px',
+              height: '9px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+              boxShadow: '0 0 10px #10b981, 0 0 4px #ffffff'
+            }}
+          />
         </div>
 
         <div style={{ textAlign: 'left' }}>
-          <div className="cyber-font" style={{ fontSize: '0.82rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+          <div
+            className="cyber-font"
+            style={{
+              fontSize: '0.84rem',
+              fontWeight: 900,
+              background: 'linear-gradient(135deg, #00f0ff 0%, #818cf8 50%, #f472b6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '0.05em'
+            }}
+          >
             CYBER COPILOT
           </div>
-          <div style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', fontWeight: 700 }}>
-            {domain ? `Analyzing: ${domain}` : 'Ask AI Analyst'}
+          <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ color: 'var(--accent-cyan)' }}>●</span>
+            <span>{domain ? `Auditing: ${domain}` : 'AI Security Copilot'}</span>
           </div>
         </div>
       </motion.button>
@@ -765,7 +776,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 30, scale: 0.95 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="glass-panel"
+      className={isFullScreen ? '' : 'copilot-chat-window'}
       style={
         isFullScreen
           ? {
@@ -792,14 +803,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               bottom: '20px',
               right: '20px',
               zIndex: 99995,
-              width: '460px',
+              width: '470px',
               maxWidth: 'calc(100vw - 32px)',
-              height: isMinimized ? '60px' : '620px',
+              height: isMinimized ? '64px' : '630px',
               maxHeight: 'calc(100vh - 40px)',
-              background: 'var(--bg-card)',
-              border: '1.5px solid var(--border-focus)',
-              borderRadius: '16px',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25)',
+              borderRadius: '18px',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
@@ -807,6 +815,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             }
       }
     >
+      {/* Prismatic Top Light Bar */}
+      <div className="copilot-top-prismatic-bar" />
       {/* Gemini API Key Configuration Modal Overlay */}
       {showApiKeyModal && (
         <div
@@ -941,9 +951,9 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
 
       {/* Header */}
       <div
+        className="copilot-header-bar"
         style={{
-          padding: isFullScreen ? '14px 24px' : '12px 16px',
-          background: 'linear-gradient(90deg, rgba(7, 10, 16, 0.95) 0%, rgba(13, 21, 37, 0.95) 100%)',
+          padding: isFullScreen ? '14px 24px' : '12px 18px',
           borderBottom: isMinimized && !isFullScreen ? 'none' : '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
@@ -953,55 +963,67 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         }}
         onClick={isMinimized && !isFullScreen ? () => setIsMinimized(false) : undefined}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
-              background: 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
-              padding: '7px',
-              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #00f0ff 0%, #6366f1 50%, #ec4899 100%)',
+              padding: '8px',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 14px rgba(0, 240, 255, 0.5)'
+              boxShadow: '0 0 16px rgba(99, 102, 241, 0.5), 0 0 6px rgba(0, 240, 255, 0.7)'
             }}
           >
-            <Bot size={20} color="#070a10" />
+            <Bot size={20} color="#ffffff" />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="cyber-font" style={{ fontSize: isFullScreen ? '1rem' : '0.9rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                className="cyber-font"
+                style={{
+                  fontSize: isFullScreen ? '1.05rem' : '0.94rem',
+                  fontWeight: 900,
+                  background: 'linear-gradient(135deg, #00f0ff 0%, #818cf8 50%, #f472b6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '0.04em'
+                }}
+              >
                 CYBER COPILOT AI
               </span>
               <span
                 style={{
-                  width: '7px',
-                  height: '7px',
+                  width: '8px',
+                  height: '8px',
                   background: '#10b981',
                   borderRadius: '50%',
-                  boxShadow: '0 0 8px #10b981'
+                  boxShadow: '0 0 8px #10b981, 0 0 2px #ffffff'
                 }}
               />
               {geminiApiKey ? (
                 <span
                   style={{
-                    background: 'rgba(0, 240, 255, 0.15)',
+                    background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(139, 92, 246, 0.2) 100%)',
+                    border: '1px solid rgba(0, 240, 255, 0.4)',
                     color: 'var(--accent-cyan)',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.62rem',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    fontSize: '0.64rem',
                     fontWeight: 700
                   }}
                 >
-                  ⚡ Gemini 2.5 Flash
+                  ⚡ Gemini AI
                 </span>
               ) : (
                 <span
                   style={{
-                    background: 'rgba(16, 185, 129, 0.12)',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(6, 182, 212, 0.2) 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
                     color: '#10b981',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.62rem',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    fontSize: '0.64rem',
                     fontWeight: 700
                   }}
                 >
@@ -1140,8 +1162,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             <div
               style={{
                 padding: '8px 16px',
-                background: 'rgba(0, 240, 255, 0.06)',
-                borderBottom: '1px solid var(--border-color)',
+                background: 'linear-gradient(90deg, rgba(6, 182, 212, 0.12) 0%, rgba(99, 102, 241, 0.1) 50%, rgba(236, 72, 153, 0.08) 100%)',
+                borderBottom: '1px solid rgba(56, 189, 248, 0.22)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1158,7 +1180,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 {verdict && (
                   <span
                     className={verdict === 'PHISHING' ? 'badge-critical' : verdict === 'SUSPICIOUS' ? 'badge-high' : 'badge-safe'}
-                    style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800 }}
+                    style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.66rem', fontWeight: 800 }}
                   >
                     {verdict}
                   </span>
@@ -1170,9 +1192,10 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                       background: riskScore >= 70 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                       color: riskScore >= 70 ? '#ef4444' : '#10b981',
                       padding: '2px 8px',
-                      borderRadius: '4px',
+                      borderRadius: '6px',
                       fontWeight: 800,
-                      fontSize: '0.68rem'
+                      fontSize: '0.68rem',
+                      border: riskScore >= 70 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)'
                     }}
                   >
                     {riskScore}/100
@@ -1182,9 +1205,10 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                   <span
                     style={{
                       background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
                       color: 'var(--accent-cyan)',
                       padding: '2px 8px',
-                      borderRadius: '4px',
+                      borderRadius: '6px',
                       fontWeight: 800,
                       fontSize: '0.68rem'
                     }}
@@ -1198,8 +1222,8 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
             <div
               style={{
                 padding: '6px 16px',
-                background: 'rgba(56, 189, 248, 0.04)',
-                borderBottom: '1px solid var(--border-color)',
+                background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)',
+                borderBottom: '1px solid rgba(56, 189, 248, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -1234,14 +1258,14 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
 
           {/* Messages Body */}
           <div
+            className="copilot-messages-container"
             style={{
               flex: 1,
               overflowY: 'auto',
               padding: isFullScreen ? '20px 24px' : '14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '14px',
-              background: 'var(--bg-secondary)'
+              gap: '14px'
             }}
           >
             {messages.map((msg, idx) => {
@@ -1261,27 +1285,75 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     width: hasSandbox ? '100%' : 'auto'
                   }}
                 >
-                  <div
-                    style={{
-                      maxWidth: hasSandbox ? (isFullScreen ? '96%' : '98%') : (isFullScreen ? '82%' : '90%'),
-                      width: hasSandbox ? '100%' : 'auto',
-                      padding: isFullScreen ? '14px 18px' : '12px 16px',
-                      borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      background: isUser
-                        ? 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)'
-                        : 'var(--bg-card)',
-                      color: isUser ? '#ffffff' : 'var(--text-primary)',
-                      border: isUser ? 'none' : '1px solid var(--border-color)',
-                      boxShadow: isUser
-                        ? '0 4px 15px rgba(37, 99, 235, 0.3)'
-                        : '0 4px 15px rgba(0, 0, 0, 0.2)',
-                      fontSize: isFullScreen ? '0.9rem' : '0.84rem',
-                      lineHeight: '1.5',
-                      wordBreak: 'break-word'
-                    }}
-                  >
-                    {isUser ? msg.content : renderMessageContent(msg.content, idx)}
-                  </div>
+                  {isUser ? (
+                    <div
+                      className="copilot-user-bubble"
+                      style={{
+                        maxWidth: isFullScreen ? '82%' : '88%',
+                        padding: isFullScreen ? '14px 18px' : '12px 16px',
+                        fontSize: isFullScreen ? '0.9rem' : '0.84rem',
+                        lineHeight: '1.5',
+                        wordBreak: 'break-word'
+                      }}
+                    >
+                      {msg.content}
+                    </div>
+                  ) : (
+                    <div
+                      className="copilot-assistant-bubble"
+                      style={{
+                        maxWidth: hasSandbox ? (isFullScreen ? '96%' : '98%') : (isFullScreen ? '84%' : '92%'),
+                        width: hasSandbox ? '100%' : 'auto',
+                        padding: isFullScreen ? '16px 20px' : '14px 16px',
+                        fontSize: isFullScreen ? '0.9rem' : '0.84rem',
+                        lineHeight: '1.5',
+                        wordBreak: 'break-word'
+                      }}
+                    >
+                      {/* Micro Copilot Badge */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '10px',
+                          paddingBottom: '6px',
+                          borderBottom: '1px solid rgba(56, 189, 248, 0.18)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                          <div
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '6px',
+                              background: 'linear-gradient(135deg, #00f0ff 0%, #6366f1 50%, #ec4899 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 0 8px rgba(0, 240, 255, 0.4)'
+                            }}
+                          >
+                            <Bot size={11} color="#ffffff" />
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              background: 'linear-gradient(90deg, var(--accent-cyan) 0%, #a855f7 100%)',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              letterSpacing: '0.5px'
+                            }}
+                          >
+                            CYBER COPILOT
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AI Security Model</span>
+                      </div>
+                      {renderMessageContent(msg.content, idx)}
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -1290,12 +1362,11 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
+                className="copilot-assistant-bubble"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
                   padding: '10px 16px',
                   borderRadius: '14px',
                   width: 'fit-content',
@@ -1304,7 +1375,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 }}
               >
                 <div style={{ width: '14px', height: '14px', border: '2px solid var(--accent-cyan)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <span>Copilot is analyzing forensic telemetry...</span>
+                <span style={{ fontWeight: 600 }}>Copilot is analyzing forensic telemetry...</span>
               </motion.div>
             )}
             <div ref={messagesEndRef} />
@@ -1313,9 +1384,9 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
           {/* Interactive Quick Prompts Chips */}
           <div
             style={{
-              padding: isFullScreen ? '10px 20px' : '8px 12px',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
+              padding: isFullScreen ? '10px 20px' : '8px 14px',
+              borderTop: '1px solid rgba(56, 189, 248, 0.18)',
+              background: 'transparent',
               display: 'flex',
               gap: '8px',
               overflowX: 'auto',
@@ -1328,28 +1399,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                 key={sIdx}
                 onClick={() => handleSendMessage(sug.label)}
                 disabled={isLoading}
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '16px',
-                  padding: '6px 14px',
-                  fontSize: '0.74rem',
-                  color: 'var(--text-primary)',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-cyan)';
-                  e.currentTarget.style.color = 'var(--accent-cyan)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }}
+                className={`copilot-prompt-chip ${(sug as any).colorClass || 'copilot-chip-cyan'}`}
               >
                 {sug.icon}
                 <span>{sug.label}</span>
@@ -1363,10 +1413,9 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               e.preventDefault();
               handleSendMessage();
             }}
+            className="copilot-input-area"
             style={{
-              padding: isFullScreen ? '16px 24px' : '12px 14px',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--bg-primary)',
+              padding: isFullScreen ? '16px 24px' : '12px 16px',
               display: 'flex',
               gap: '10px',
               alignItems: 'center'
@@ -1379,36 +1428,28 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isLoading}
+              className="copilot-input-field"
               style={{
                 flex: 1,
-                background: 'var(--bg-card)',
-                border: '1.5px solid var(--border-color)',
-                borderRadius: '12px',
                 padding: isFullScreen ? '12px 18px' : '10px 14px',
                 fontSize: isFullScreen ? '0.92rem' : '0.85rem',
-                color: 'var(--text-primary)',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
-              onFocus={(e) => (e.target.style.borderColor = 'var(--accent-cyan)')}
-              onBlur={(e) => (e.target.style.borderColor = 'var(--border-color)')}
             />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={!inputValue.trim() || isLoading}
+              className="copilot-send-button"
               style={{
-                background: !inputValue.trim() || isLoading ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #00f0ff 0%, #2563eb 100%)',
-                color: !inputValue.trim() || isLoading ? 'var(--text-secondary)' : '#070a10',
-                border: 'none',
-                borderRadius: '12px',
                 padding: isFullScreen ? '12px 22px' : '10px 16px',
                 cursor: !inputValue.trim() || isLoading ? 'not-allowed' : 'pointer',
+                opacity: !inputValue.trim() || isLoading ? 0.45 : 1,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: !inputValue.trim() || isLoading ? 'none' : '0 0 14px rgba(0, 240, 255, 0.4)'
+                justifyContent: 'center'
               }}
             >
               <Send size={18} />
