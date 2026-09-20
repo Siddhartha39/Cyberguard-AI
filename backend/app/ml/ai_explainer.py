@@ -357,7 +357,19 @@ If the user asks any general cybersecurity, programming, or technical question, 
             f"💡 *Ask me: **\"Is {domain} easily hackable?\"** or **\"How to fix Security Grade {grade}\"** for more deep-dive forensics!*"
         )
 
-    # Greeting Check
+    # Greeting & Casual Chat Check
+    elif any(k in msg_lower for k in ["how are you", "how r u", "how are you doing", "hows it going", "how's it going", "whats up", "what's up", "wassup"]):
+        reply = (
+            "👋 **I'm doing great, thank you!** I am **CyberGuard AI Copilot**, your autonomous cybersecurity and full-stack technical AI assistant.\n\n"
+            "I can help you with:\n"
+            "- 🛡️ **Instant Live Audits**: Type `analyze amazon.in` or `check yoursite.com` to inspect vulnerabilities & risk scores.\n"
+            "- 🔒 **OWASP & Code Injection**: Fixing SQLi, XSS, CSRF, SSRF, IDOR, and auth flaws.\n"
+            "- 🛠️ **Production Hardening**: Securing Nginx, Apache, Express Helmet, and Next.js.\n"
+            "- 💻 **General Software Engineering**: Answering coding, architecture, and technology questions.\n\n"
+            + (f"*(Note: Scan context for `{domain}` is currently active if you'd like to inspect it.)*\n\n" if domain else "")
+            + "How can I assist you today?"
+        )
+
     elif any(re.match(rf"^{g}\b", msg_lower) for g in ["hi", "hello", "hey", "hola", "sup", "good morning", "good evening", "namaste", "yo"]) or msg_lower in ["hi", "hello", "hey"]:
         if has_active_scan and domain:
             reply = (
@@ -629,7 +641,8 @@ If the user asks any general cybersecurity, programming, or technical question, 
 
     # General Fallback
     else:
-        if has_active_scan and domain:
+        is_about_domain = bool(domain and any(k in msg_lower for k in [domain.lower(), "domain", "site", "target", "registered", "whois", "ip", "dns", "audit", "hackable", "score", "grade"]))
+        if has_active_scan and domain and is_about_domain:
             reply = (
                 f"🤖 **CyberGuard AI Intelligence for `{domain}`:**\n\n"
                 f"Regarding your query: *\"{message}\"*\n\n"
