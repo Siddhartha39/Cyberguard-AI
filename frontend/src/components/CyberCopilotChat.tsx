@@ -179,23 +179,24 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
 
     let currentContextReport = activeReport;
 
-    // Check if query is asking to audit a domain or contains a domain
+    // Check if query is asking to audit a domain or contains any domain
     const domainExtractRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][-a-zA-Z0-9]*\.(?:[a-zA-Z]{2,}|in|co|org|net|com|gov|edu|io|ai|xyz|top|shop|dev|app|cloud|site|tech|online|store)(?:\.[a-zA-Z]{2,})?)/i;
     const domainMatch = query.match(domainExtractRegex);
-    const isAnalyzeCommand = /\b(analyze|scan|check|inspect|audit|test|lookup|review)\b/i.test(query) || (domainMatch && query.trim().split(/\s+/).length <= 3);
 
-    if (domainMatch && isAnalyzeCommand) {
+    if (domainMatch) {
       const candidateDomain = domainMatch[1].toLowerCase().replace(/^www\./, '');
-      const currentActiveDomain = ((activeReport as any)?.canonical_domain || (activeReport as any)?.domain || '').toLowerCase();
+      const currentActiveDomain = ((currentContextReport as any)?.canonical_domain || (currentContextReport as any)?.domain || '').toLowerCase();
 
-      if (candidateDomain !== currentActiveDomain) {
+      if (candidateDomain && candidateDomain !== currentActiveDomain) {
         setStatusNotice(`Running live multi-signal forensic audit for ${candidateDomain}...`);
         try {
           const freshScanResult = await executeFreeScan(candidateDomain);
-          currentContextReport = freshScanResult;
-          setActiveReport(freshScanResult);
-          if (onScanReportLoaded) {
-            onScanReportLoaded(freshScanResult);
+          if (freshScanResult) {
+            currentContextReport = freshScanResult;
+            setActiveReport(freshScanResult);
+            if (onScanReportLoaded) {
+              onScanReportLoaded(freshScanResult);
+            }
           }
         } catch (e) {
           console.warn('Live scan error in chat:', e);

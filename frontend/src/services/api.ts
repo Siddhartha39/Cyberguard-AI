@@ -1481,6 +1481,17 @@ function generateClientChatResponse(message: string, report?: any): ChatResponse
   } else if (isGeneralGreeting) {
     reply = `👋 **Hello! I am CyberGuard AI Copilot**, your AI cybersecurity and engineering partner.\n\nYou can ask me to **audit any website** by typing \`analyze amazon.in\` or \`check yourdomain.com\`, or ask any question on:\n- 🛡️ **Vulnerabilities & Pentesting**: SQL Injection, XSS, CSRF, SSRF, IDOR, OWASP Top 10\n- 🛠️ **Production Hardening**: Nginx, Apache, Express Helmet, Next.js security headers\n- 🔒 **Authentication & Cryptography**: JWT security, OAuth2, Argon2 password hashing, SSL/TLS\n- 🌐 **Email & Network Integrity**: DNSSEC, SPF, DKIM, DMARC spoofing prevention\n\n${domain ? `*(Target \`${domain}\` is currently loaded)*\n\n` : ''}What would you like to inspect or learn today?`;
   } else if (
+    ['domain age', 'age of', 'when was', 'registered on', 'registration date', 'creation date', 'how old', 'whois', 'registrar'].some(k => msgLower.includes(k)) &&
+    (hasActiveScan && domain)
+  ) {
+    const ageText = domainAgeDays !== null ? `${domainAgeDays} days old` : 'Established';
+    reply = `📅 **Domain Registration & Age Intelligence for \`${domain}\`:**\n\n- **Target Host:** \`${domain}\`\n- **Registration Date:** \`${creationDate || 'Recorded'}\` (${ageText})\n- **Registrar:** \`${registrarName}\`\n- **Standing:** ${domainAgeDays !== null && domainAgeDays < 30 ? '⚠️ Newly Registered Domain (<30 days old)' : '✅ Established Domain'}\n- **DNS IP Resolution:** \`${dnsARecords.slice(0, 3).join(', ') || 'Active'}\`\n- **Verdict:** \`${verdict}\` (Risk Score: **${riskScore}/100**)\n\n💡 *Ask: **\"Is ${domain} easily hackable?\"** or **\"Analyze ${domain}\"** for the complete threat dossier.*`;
+  } else if (
+    ['nameserver', 'dns record', 'a record', 'mx record', 'hosting and ip', 'hosting & ip'].some(k => msgLower.includes(k)) &&
+    (hasActiveScan && domain)
+  ) {
+    reply = `🌐 **DNS & Hosting Telemetry for \`${domain}\`:**\n\n- **Target Host:** \`${domain}\`\n- **IP Addresses (A Records):** \`${dnsARecords.length ? dnsARecords.join(', ') : 'Active nameservers resolving'}\`\n- **Registrar:** \`${registrarName}\`\n- **SSL / TLS Encryption:** ${tlsValid ? '✅ Valid HTTPS' : '❌ Insecure (No TLS)'} (${tlsIssuer})\n- **Email DMARC:** ${hasDmarc ? '✅ DMARC Enforced' : '❌ Vulnerable to Email Spoofing'}`;
+  } else if (
     ['analyze', 'scan', 'check', 'audit', 'inspect', 'test', 'lookup', 'evaluate', 'review'].some(k => msgLower.includes(k)) &&
     (hasActiveScan && domain)
   ) {
