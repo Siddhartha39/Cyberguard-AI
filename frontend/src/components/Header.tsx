@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Activity, Database, Radar, Home, Puzzle, Sun, Moon, HelpCircle, Coins, History, LayoutDashboard, Terminal, Wallet, Mail, Link, BarChart2, Key, Globe, Bell } from 'lucide-react';
+import { Shield, Activity, Database, Radar, Home, Puzzle, Sun, Moon, HelpCircle, Coins, History, LayoutDashboard, Terminal, Wallet, Mail, Link, BarChart2, Key, Globe, Bell, Bot, User } from 'lucide-react';
 import { InfoTooltip } from './InfoTooltip';
 import { useAlgorandWallet } from '../context/AlgorandWalletContext';
+import type { UserProfile } from '../services/api';
 
 interface HeaderProps {
   activeTab: string;
@@ -14,6 +15,9 @@ interface HeaderProps {
   onOpenWalletModal?: () => void;
   onLaunchScanner?: () => void;
   hasActiveReport?: boolean;
+  onOpenCopilot?: () => void;
+  currentUser?: UserProfile | null;
+  onOpenAuthModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,7 +29,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAbout,
   onOpenWalletModal,
   onLaunchScanner,
-  hasActiveReport = false
+  hasActiveReport = false,
+  onOpenCopilot,
+  currentUser,
+  onOpenAuthModal
 }) => {
   const { isConnected, address, balanceAlgo } = useAlgorandWallet();
   
@@ -124,6 +131,62 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Global Controls & Theme Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+          {/* Copilot AI Launcher */}
+          {onOpenCopilot && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onOpenCopilot}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0, 240, 255, 0.45)',
+                background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%)',
+                color: 'var(--text-primary)',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 0 12px rgba(0, 240, 255, 0.25)',
+                whiteSpace: 'nowrap'
+              }}
+              title="Open CyberGuard AI Copilot"
+            >
+              <Bot size={15} color="#00f0ff" />
+              <span>Copilot AI</span>
+            </motion.button>
+          )}
+
+          {/* User Sign In / Cloud Profile */}
+          {onOpenAuthModal && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onOpenAuthModal}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: currentUser ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid var(--border-color)',
+                background: currentUser ? 'rgba(16, 185, 129, 0.12)' : 'var(--code-box-bg)',
+                color: currentUser ? '#10b981' : 'var(--text-primary)',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: currentUser ? '0 0 10px rgba(16, 185, 129, 0.25)' : 'none',
+                whiteSpace: 'nowrap'
+              }}
+              title={currentUser ? `Logged in as ${currentUser.username} (Cloud Sync Active)` : "Sign in to access history from anywhere"}
+            >
+              <User size={14} color={currentUser ? "#10b981" : "var(--accent-cyan)"} />
+              <span>{currentUser ? currentUser.username : "Sign In"}</span>
+            </motion.button>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.04 }}

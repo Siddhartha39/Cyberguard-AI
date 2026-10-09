@@ -336,3 +336,32 @@ class EmailScamAnalysisResponse(BaseModel):
     safety_recommendations: List[str]
     extracted_urls: List[str]
 
+class UserRegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class UserLoginRequest(BaseModel):
+    identifier: str
+    password: str
+
+class UserProfileResponse(BaseModel):
+    id: str
+    username: str
+    email: str
+    created_at: str
+
+class AuthResponse(BaseModel):
+    success: bool
+    user: UserProfileResponse
+    token: str
+    message: Optional[str] = None
+
+class SyncSessionsRequest(BaseModel):
+    sessions: List[Dict[str, Any]]
+
+class SyncSessionsResponse(BaseModel):
+    success: bool
+    sessions: List[Dict[str, Any]]
+
+

@@ -400,7 +400,7 @@ If the user asks any general cybersecurity, programming, or technical question, 
             "contents": contents,
             "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048}
         }
-        for model_id in ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]:
+        for model_id in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={effective_api_key}"
                 async with httpx.AsyncClient(timeout=10.0) as client:
@@ -744,6 +744,95 @@ If the user asks any general cybersecurity, programming, or technical question, 
             "4. **SQLmap**:\n"
             "   - Automated detection and exploitation of SQL injection flaws in web applications.\n\n"
             "⚠️ *Note: Always obtain written authorization before running active scans against third-party systems.*"
+        )
+
+    # Ransomware & Malware
+    elif any(k in msg_lower for k in ["ransomware", "ransom", "malware", "virus", "trojan", "worm", "c2", "payload"]):
+        reply = (
+            "☣️ **Ransomware & Malware Defense & Forensic Playbook:**\n\n"
+            "### 1. How Modern Ransomware Operates (LockBit, BlackCat, Akira)\n"
+            "- **Initial Access**: Phishing, stolen VPN/RDP credentials, or unpatched public CVEs.\n"
+            "- **Lateral Movement**: Cobalt Strike / Sliver beacons, dumping LSASS memory for credentials, Kerberoasting.\n"
+            "- **Data Exfiltration**: Double extortion (stealing corporate files to cloud storage before encrypting).\n"
+            "- **Encryption**: High-speed hybrid encryption (ChaCha20 / AES-256 with an asymmetric RSA/Curve25519 key).\n\n"
+            "### 2. Immediate Containment Steps\n"
+            "1. **Isolate Network**: Disconnect affected hosts physically from Ethernet and Wi-Fi immediately. Do NOT power off (preserve RAM volatility for memory forensics).\n"
+            "2. **Isolate Domain Controllers & Backups**: Revoke Active Directory service accounts and disconnect immutable backup repositories.\n"
+            "3. **Preserve Volatile Evidence**: Dump memory with `WinPmem` or `LiME` before rebooting.\n"
+            "4. **Check NoMoreRansom.org**: Many variants have leaked master keys or flawed encryption schemes with free decryptors.\n\n"
+            "### 3. Production Hardening\n"
+            "- Enforce **Immutable / Air-gapped Backups** (3-2-1 backup rule).\n"
+            "- Restrict PowerShell via **Constrained Language Mode** and WDAC application whitelisting.\n"
+            "- Implement **EDR (Endpoint Detection and Response)** with automated process isolation."
+        )
+
+    # Incident Response & SOC Triage
+    elif any(k in msg_lower for k in ["incident response", "breach", "soc", "triage", "playbook", "containment", "forensics"]):
+        reply = (
+            "🚨 **Enterprise SOC Incident Response Playbook (NIST SP 800-61 / SANS PICERL):**\n\n"
+            "### Phase 1: Identification & Triage (< 15 Minutes)\n"
+            "- Verify true positive vs. false positive using SIEM alerts and endpoint telemetry.\n"
+            "- Scope impacted systems, user accounts, and egress network connections.\n\n"
+            "### Phase 2: Containment\n"
+            "- **Short-Term**: Isolate affected host network interfaces at the switch or EDR level.\n"
+            "- **Long-Term**: Reset compromised credentials, rotate API keys, and block malicious C2 IP addresses/domains at firewall/DNS levels.\n\n"
+            "### Phase 3: Eradication\n"
+            "- Remove persistence mechanisms (scheduled tasks, registry run keys, cron jobs, unauthorized SSH keys).\n"
+            "- Patch the initial vulnerability vector that permitted ingress.\n\n"
+            "### Phase 4: Recovery\n"
+            "- Restore systems from clean, verified immutable backups.\n"
+            "- Monitor network traffic with enhanced logging for 72+ hours.\n\n"
+            "### Phase 5: Post-Incident Lessons Learned\n"
+            "- Document timeline, root cause analysis (RCA), and update defensive playbooks."
+        )
+
+    # Docker & Cloud Security
+    elif any(k in msg_lower for k in ["docker", "kubernetes", "k8s", "container", "cloud security", "aws", "s3"]):
+        reply = (
+            "🐳 **Docker & Container Hardening (CIS Benchmark Guidelines):**\n\n"
+            "### 1. Production Dockerfile Best Practices:\n"
+            "```dockerfile\n"
+            "# Use minimal alpine / distroless base image\n"
+            "FROM node:20-alpine AS runner\n"
+            "WORKDIR /app\n\n"
+            "# Run as non-privileged unmapped user (NEVER root!)\n"
+            "RUN addgroup -S appgroup && adduser -S appuser -G appgroup\n"
+            "USER appuser\n\n"
+            "# Copy only required files\n"
+            "COPY --chown=appuser:appgroup dist ./dist\n\n"
+            "EXPOSE 3000\n"
+            "CMD [\"node\", \"dist/index.js\"]\n"
+            "```\n\n"
+            "### 2. Secure Container Runtime Flags:\n"
+            "```bash\n"
+            "docker run -d \\\n"
+            "  --read-only \\\n"
+            "  --cap-drop=ALL \\\n"
+            "  --cap-add=NET_BIND_SERVICE \\\n"
+            "  --security-opt=no-new-privileges:true \\\n"
+            "  --memory=\"512m\" --cpus=\"1.0\" \\\n"
+            "  my-secure-app:latest\n"
+            "```\n\n"
+            "### 3. AWS S3 Bucket Hardening Checklist:\n"
+            "- Enforce **Block Public Access** on all buckets.\n"
+            "- Attach bucket policy requiring **HTTPS (aws:SecureTransport)**.\n"
+            "- Enable **Server-Side Encryption with KMS (SSE-KMS)** and Object Versioning."
+        )
+
+    # Active Directory & Kerberos
+    elif any(k in msg_lower for k in ["active directory", "kerberos", "kerberoast", "mimikatz", "golden ticket", "bloodhound"]):
+        reply = (
+            "🏰 **Active Directory & Identity Threat Defense:**\n\n"
+            "### 1. Kerberoasting Explained & Remediated\n"
+            "- **Mechanism**: Any authenticated domain user can request a Kerberos TGS ticket for any service account with a Service Principal Name (SPN). The ticket is encrypted with the service account's password hash and can be cracked offline with Hashcat.\n"
+            "- **Defense**: Use **Group Managed Service Accounts (gMSA)** with 128-character automatically rotating complex passwords, or set service account passwords to 25+ characters.\n\n"
+            "### 2. Critical Event IDs to Monitor in SIEM:\n"
+            "- **Event ID 4769**: Kerberos Service Ticket requested with `0x17` (RC4 encryption - typical of Kerberoasting).\n"
+            "- **Event ID 4624 (Type 3 / 10)**: Network and Remote Desktop logins.\n"
+            "- **Event ID 4672**: Special privileges assigned to new logon (Privilege Escalation).\n"
+            "- **Event ID 7045**: New service installed (Common persistence mechanism).\n\n"
+            "### 3. Tiered Administration Model (Tier 0 / 1 / 2)\n"
+            "Domain Admins (Tier 0) must NEVER log into workstations (Tier 2) to prevent credential dumping from LSASS."
         )
 
     # General Fallback

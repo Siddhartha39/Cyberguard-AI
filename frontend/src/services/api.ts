@@ -1406,7 +1406,7 @@ ${targetDomain ? `Current Target Website Telemetry in view: Domain=${targetDomai
 
 User Question: ${message}`;
 
-      const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
       for (const modelId of modelsToTry) {
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${effectiveApiKey}`, {
@@ -1570,12 +1570,26 @@ function generateClientChatResponse(message: string, report?: any): ChatResponse
   ) {
     reply = `🔒 **Immunizing Applications Against Code Injection & OWASP Vulnerabilities:**\n\n### **1. SQL Injection (SQLi) Immunization**\nSQLi occurs when untrusted input alters database query structure. **Always use parameterized queries**:\n\`\`\`python\n# ❌ VULNERABLE: cursor.execute(f"SELECT * FROM users WHERE username = '{user}'")\n# ✅ IMMUNIZED:\ncursor.execute("SELECT id, password_hash FROM users WHERE username = %s", (user,))\n\`\`\`\n\n### **2. Cross-Site Scripting (XSS) Immunization**\nXSS allows attackers to execute unauthorized JavaScript in victims' browsers.\n- **Content-Security-Policy (CSP)**: Completely stops inline script execution:\n\`\`\`http\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https:; object-src 'none';\n\`\`\`\n- **Frontend Sanitization (DOMPurify)**:\n\`\`\`javascript\nimport DOMPurify from 'dompurify';\nconst safeHTML = DOMPurify.sanitize(untrustedInput);\n\`\`\``;
   } else if (['password', 'bcrypt', 'argon2', 'jwt', 'token', 'oauth', 'mfa', 'hash'].some(k => msgLower.includes(k))) {
-    reply = `🔐 **Password Storage & Authentication Security Architecture:**\n\n### 1. Password Hashing (Argon2id vs. bcrypt)\nNever use MD5, SHA-1, or plain SHA-256 for passwords.\n- **Argon2id**: Memory-hard, resistant to GPU/ASIC cracking.\n- **bcrypt**: Work-factor based adaptive hashing (recommended cost factor: 12).\n\n\`\`\`python\nfrom argon2 import PasswordHasher\nph = PasswordHasher()\nhash = ph.hash('user_password')\nph.verify(hash, 'user_password') # True\n\`\`\`\n\n### 2. JWT (JSON Web Token) Security Rules\n1. Store JWTs in \`HttpOnly; Secure; SameSite=Strict\` cookies.\n2. Explicitly validate the \`alg\` header (reject \`none\`).`;
+    reply = `🔐 **Password Storage & Authentication Security Architecture:**\n\n### 1. Password Hashing (Argon2id vs. bcrypt)\nNever use MD5, SHA-1, or plain SHA-256 for passwords. Modern GPUs compute billions of SHA-256 hashes per second.\n- **Argon2id**: Memory-hard, resistant to GPU/ASIC cracking.\n- **bcrypt**: Work-factor based adaptive hashing (recommended cost factor: 12).\n\n\`\`\`python\nfrom argon2 import PasswordHasher\nph = PasswordHasher()\nhash = ph.hash('user_password')\nph.verify(hash, 'user_password') # True\n\`\`\`\n\n### 2. JWT (JSON Web Token) Security Rules\n1. Store JWTs in \`HttpOnly; Secure; SameSite=Strict\` cookies to eliminate XSS token theft.\n2. Explicitly validate the \`alg\` header (reject the \`none\` algorithm exploit).\n3. Keep access tokens short-lived (5-15 mins) and enforce rotating refresh token families.`;
+  } else if (['ransomware', 'ransom', 'malware', 'virus', 'trojan', 'worm', 'payload', 'c2', 'command and control'].some(k => msgLower.includes(k))) {
+    reply = `☣️ **Ransomware & Malware Defense & Forensic Playbook:**\n\n### 1. How Modern Ransomware Operates (LockBit, BlackCat, Akira)\n- **Initial Access**: Phishing, stolen VPN/RDP credentials, or unpatched public CVEs (e.g., Citrix, Fortinet).\n- **Lateral Movement**: Cobalt Strike / Sliver beacons, dumping LSASS memory for credentials, Kerberoasting.\n- **Data Exfiltration**: Double extortion (exfiltrating sensitive corporate files to Mega/S3 before encrypting).\n- **Encryption**: High-speed hybrid encryption (ChaCha20 / AES-256 with an asymmetric RSA/Curve25519 public key).\n\n### 2. Immediate Containment Steps (If Infected)\n1. **Isolate Network**: Disconnect affected hosts physically from Ethernet and Wi-Fi immediately. Do NOT power off (preserve RAM volatility for memory forensics).\n2. **Isolate Domain Controllers & Backups**: Revoke Active Directory service accounts and disconnect immutable backup repositories.\n3. **Preserve Volatile Evidence**: Dump memory with \`WinPmem\` or \`LiME\` before rebooting.\n4. **Check NoMoreRansom.org**: Many ransomware variants have leaked master private keys or flawed encryption schemes with free decryptors.\n\n### 3. Production Hardening\n- Enforce **Immutable / Air-gapped Backups** (3-2-1 backup rule).\n- Restrict PowerShell via **Constrained Language Mode** and AppLocker / WDAC application whitelisting.\n- Implement **EDR (Endpoint Detection and Response)** with automated process isolation.`;
+  } else if (['zero trust', 'defense in depth', 'micro-segmentation', 'nist', 'least privilege'].some(k => msgLower.includes(k))) {
+    reply = `🛡️ **Zero Trust Architecture (ZTA) Framework (NIST SP 800-207):**\n\n### Core Tenet: *"Never Trust, Always Verify"*\nIn Zero Trust, network location (inside the corporate VPN or perimeter) conveys zero inherent trust. Every access request is continuously authenticated, authorized, and encrypted.\n\n### 3 Pillars of Implementation:\n1. **Identity-Driven Access**: Continuous MFA, device posture checking (MDM compliance, OS patches), and risk-based dynamic access control.\n2. **Micro-Segmentation**: Isolate workloads so that a compromise in one web server cannot pivot laterally to the database or payment processing subnet.\n3. **End-to-End Encryption**: Mutual TLS (mTLS) between all microservices and databases.\n\n### Comparison Table:\n| Feature | Legacy Perimeter (Castle & Moat) | Modern Zero Trust |\n| :--- | :--- | :--- |\n| **Trust Boundary** | Network perimeter (VPN) | Individual Identity & Device |\n| **Lateral Movement** | Free once inside firewall | Blocked by micro-segmentation |\n| **Verification** | One-time login | Continuous per-request telemetry |`;
+  } else if (['incident response', 'breach', 'soc', 'triage', 'playbook', 'containment', 'forensics'].some(k => msgLower.includes(k))) {
+    reply = `🚨 **Enterprise SOC Incident Response Playbook (NIST SP 800-61 / SANS PICERL):**\n\n### Phase 1: Identification & Triage (< 15 Minutes)\n- Verify true positive vs. false positive using SIEM alerts and endpoint telemetry.\n- Scope impacted systems, user accounts, and egress network connections.\n\n### Phase 2: Containment\n- **Short-Term**: Isolate affected host network interfaces at the switch or EDR level.\n- **Long-Term**: Reset compromised credentials, rotate API keys, and block malicious C2 IP addresses/domains at firewall/DNS levels.\n\n### Phase 3: Eradication\n- Remove persistence mechanisms (scheduled tasks, registry run keys, cron jobs, unauthorized SSH keys).\n- Patch the initial vulnerability vector that permitted ingress.\n\n### Phase 4: Recovery\n- Restore systems from clean, verified immutable backups.\n- Monitor network traffic with enhanced logging for 72+ hours.\n\n### Phase 5: Post-Incident Lessons Learned\n- Document timeline, root cause analysis (RCA), and update defensive playbooks.`;
+  } else if (['firewall', 'iptables', 'ufw', 'pfsense', 'ddos', 'rate limit', 'waf', 'snort', 'suricata'].some(k => msgLower.includes(k))) {
+    reply = `🧱 **Firewall, WAF & Network Perimeter Hardening Blueprint:**\n\n### 1. Essential Linux UFW Hardening Commands:\n\`\`\`bash\n# Default deny all incoming, allow outgoing\nsudo ufw default deny incoming\nsudo ufw default allow outgoing\n\n# Allow SSH on non-standard port or rate-limit\nsudo ufw limit 22/tcp\n\n# Allow HTTPS & HTTP\nsudo ufw allow 80/tcp\nsudo ufw allow 443/tcp\n\n# Enable firewall & check status\nsudo ufw enable\nsudo ufw status verbose\n\`\`\`\n\n### 2. Nginx DDoS & Rate Limiting Defense:\n\`\`\`nginx\n# Define zone: 10 requests per second per IP\nlimit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;\nlimit_conn_zone $binary_remote_addr zone=addr_limit:10m;\n\nserver {\n    location /api/ {\n        limit_req zone=api_limit burst=20 nodelay;\n        limit_conn addr_limit 10;\n    }\n}\n\`\`\`\n\n### 3. Web Application Firewall (WAF) Rules:\nDeploy ModSecurity with the OWASP Core Rule Set (CRS) or Cloudflare WAF to inspect L7 HTTP payloads for SQLi, XSS, and path traversal before hitting backend code.`;
+  } else if (['docker', 'kubernetes', 'k8s', 'container', 'cloud security', 'aws', 's3'].some(k => msgLower.includes(k))) {
+    reply = `🐳 **Docker & Container Hardening (CIS Benchmark Guidelines):**\n\n### 1. Production Dockerfile Best Practices:\n\`\`\`dockerfile\n# Use minimal alpine / distroless base image\nFROM node:20-alpine AS runner\nWORKDIR /app\n\n# Run as non-privileged unmapped user (NEVER root!)\nRUN addgroup -S appgroup && adduser -S appuser -G appgroup\nUSER appuser\n\n# Copy only required files\nCOPY --chown=appuser:appgroup dist ./dist\n\n# Read-only root filesystem when running\nEXPOSE 3000\nCMD ["node", "dist/index.js"]\n\`\`\`\n\n### 2. Secure Container Runtime Flags:\n\`\`\`bash\ndocker run -d \\\n  --read-only \\\n  --cap-drop=ALL \\\n  --cap-add=NET_BIND_SERVICE \\\n  --security-opt=no-new-privileges:true \\\n  --memory="512m" --cpus="1.0" \\\n  my-secure-app:latest\n\`\`\`\n\n### 3. AWS S3 Bucket Hardening Checklist:\n- Enforce **Block Public Access** on all buckets.\n- Attach bucket policy requiring **HTTPS (aws:SecureTransport)**.\n- Enable **Server-Side Encryption with KMS (SSE-KMS)** and Object Versioning.`;
+  } else if (['active directory', 'kerberos', 'kerberoast', 'mimikatz', 'golden ticket', 'bloodhound'].some(k => msgLower.includes(k))) {
+    reply = `🏰 **Active Directory & Identity Threat Defense:**\n\n### 1. Kerberoasting Explained & Remediated\n- **Mechanism**: Any authenticated domain user can request a Kerberos TGS ticket for any service account with a Service Principal Name (SPN). The ticket is encrypted with the service account's password hash and can be cracked offline with Hashcat.\n- **Defense**: Use **Group Managed Service Accounts (gMSA)** with 128-character automatically rotating complex passwords, or set service account passwords to 25+ characters.\n\n### 2. Critical Event IDs to Monitor in SIEM:\n- **Event ID 4769**: Kerberos Service Ticket requested with \`0x17\` (RC4 encryption - typical of Kerberoasting).\n- **Event ID 4624 (Type 3 / 10)**: Network and Remote Desktop logins.\n- **Event ID 4672**: Special privileges assigned to new logon (Privilege Escalation).\n- **Event ID 7045**: New service installed (Common persistence mechanism).\n\n### 3. Tiered Administration Model (Tier 0 / 1 / 2)\nDomain Admins (Tier 0) must NEVER log into workstations (Tier 2) to prevent credential dumping from LSASS.`;
+  } else if (['nmap', 'burp', 'wireshark', 'metasploit', 'sqlmap', 'tools', 'pentest'].some(k => msgLower.includes(k))) {
+    reply = `🛠️ **Essential Penetration Testing & Defense Toolchain:**\n\n1. **Nmap (Network Reconnaissance)**:\n   \`\`\`bash\n   # Fast SYN stealth scan with version detection and default safe scripts\n   nmap -sS -sV -sC -T4 -p- target.com -oN scan_results.txt\n   \`\`\`\n2. **Burp Suite / OWASP ZAP**:\n   - Industry standard for web application security testing, proxying traffic, fuzzing parameters, and auditing APIs.\n3. **Wireshark / TShark**:\n   - Deep packet inspection for TLS handshakes, DNS exfiltration tunnels, and TCP retransmissions.\n4. **SQLmap**:\n   \`\`\`bash\n   sqlmap -u "https://target.com/api/item?id=1" --batch --dbs --random-agent\n   \`\`\`\n5. **Nikto / Nuclei**:\n   - Fast template-based vulnerability scanners for detecting outdated software and known CVEs.`;
   } else if (['who are you', 'what can you do', 'help me', 'about copilot'].some(k => msgLower.includes(k))) {
     reply = `🤖 **About CyberGuard AI Copilot**\n\nI am an autonomous defensive cybersecurity agent and full-stack engineer.\n\n**Key Capabilities:**\n1. 🛡️ **Autonomous Website Audits**: Analyze website hackability, missing defensive headers, and attack surfaces on any domain (e.g. \`analyze amazon.in\`).\n2. 🛠️ **Server Hardening Blueprints**: Provide copy-paste configs for Nginx, Express, Next.js, Apache, and Cloudflare.\n3. 🔒 **Code Injection Immunity**: Guide parameterization, CSP nonces, and input sanitization (SQLi/XSS/CSRF).\n4. 💡 **Conversational AI**: Answer questions on DevSecOps, cloud architecture, and development.`;
   } else {
     // Helpful, non-robotic fallback
-    reply = `🤖 **CyberGuard AI Copilot:**\n\nRegarding your question: *"${message}"*\n\nHere are some actions I can perform:\n- 🛡️ **Scan Any Domain**: Type **\`analyze amazon.in\`** or **\`check yoursite.com\`** to run an immediate forensic audit.\n- 🖥️ **Interactive Sandbox**: Type **\`open sandbox\`** to launch the isolated live Chromium viewport.\n- 🔒 **Security Inquiries**: Ask about SQLi, XSS, CSRF, Nginx headers, password hashing, Zero Trust, Docker, or Python.`;
+    reply = `🤖 **CyberGuard AI Copilot:**\n\nRegarding your inquiry: *"${message}"*\n\nHere are actionable security guidelines and actions you can run:\n\n1. 🛡️ **Audit Any Live Website**: Type **\`analyze amazon.in\`** or **\`check yoursite.com\`** to run an instant forensic audit on DNS, SSL, and security headers.\n2. 🖥️ **Live Isolated Sandbox**: Type **\`open sandbox\`** to preview any website inside our isolated Chromium viewport right here in the chat.\n3. 🔒 **Cybersecurity Playbooks**: Ask me about **Ransomware containment**, **Zero Trust architecture**, **Active Directory defense**, **Docker hardening**, or **OWASP code injection immunity**.\n4. 🛠️ **Server Hardening**: Request **Nginx, Express, Next.js, or Apache** security configuration blueprints.\n\nWhat specific system or problem would you like to investigate?`;
   }
 
   const suggestedActions = hasActiveScan && domain ? [
@@ -1968,4 +1982,169 @@ export async function analyzeEmailScam(
     extracted_urls: []
   };
 }
+
+// -----------------------------------------------------------------------------------
+// User Authentication & Cross-Device Cloud Sync Services
+// -----------------------------------------------------------------------------------
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user: UserProfile;
+  token: string;
+  message?: string;
+}
+
+const AUTH_TOKEN_KEY = 'cyberguard_auth_token_v1';
+const AUTH_USER_KEY = 'cyberguard_auth_user_v1';
+
+export function getStoredAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function getStoredUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredAuth(token: string, user: UserProfile) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+}
+
+export function clearStoredAuth() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+}
+
+export async function registerUser(username: string, email: string, password: string): Promise<AuthResponse> {
+  const res = await apiFetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Registration failed');
+  }
+  const data = await res.json();
+  if (data.token && data.user) {
+    setStoredAuth(data.token, data.user);
+  }
+  return data;
+}
+
+export async function loginUser(identifier: string, password: string): Promise<AuthResponse> {
+  const res = await apiFetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Login failed. Please check your credentials.');
+  }
+  const data = await res.json();
+  if (data.token && data.user) {
+    setStoredAuth(data.token, data.user);
+  }
+  return data;
+}
+
+export async function fetchCurrentUser(): Promise<UserProfile | null> {
+  const token = getStoredAuthToken();
+  if (!token) return null;
+  try {
+    const res = await apiFetch('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const user = await res.json();
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+      return user;
+    }
+  } catch {}
+  return getStoredUser();
+}
+
+export async function fetchCloudSessions(): Promise<any[]> {
+  const token = getStoredAuthToken();
+  if (!token) return [];
+  try {
+    const res = await apiFetch('/auth/sessions', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.sessions || [];
+    }
+  } catch (err) {
+    console.warn('Failed to fetch cloud sessions:', err);
+  }
+  return [];
+}
+
+export async function syncCloudSessions(sessions: any[]): Promise<any[]> {
+  const token = getStoredAuthToken();
+  if (!token) return sessions;
+  try {
+    const res = await apiFetch('/auth/sessions/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sessions }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.sessions || sessions;
+    }
+  } catch (err) {
+    console.warn('Failed to sync cloud sessions:', err);
+  }
+  return sessions;
+}
+
+export async function deleteCloudSession(sessionId: string): Promise<boolean> {
+  const token = getStoredAuthToken();
+  if (!token) return true;
+  try {
+    const res = await apiFetch(`/auth/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function clearAllCloudSessions(): Promise<boolean> {
+  const token = getStoredAuthToken();
+  if (!token) return true;
+  try {
+    const res = await apiFetch('/auth/sessions', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 

@@ -46,6 +46,7 @@ import type {
   BenchmarkSample
 } from './types';
 
+import { AuthModal } from './components/AuthModal';
 import {
   analyzeDomain,
   executeFreeScan,
@@ -55,7 +56,10 @@ import {
   fetchDiscoveryFeed,
   fetchBenchmarkSamples,
   submitAnalystFeedback,
-  escalateCandidate
+  escalateCandidate,
+  fetchCurrentUser,
+  getStoredUser,
+  type UserProfile
 } from './services/api';
 
 const DEFAULT_PIPELINE_STEPS: PipelineStep[] = [
@@ -99,6 +103,21 @@ export function App() {
   const [showCopilotChat, setShowCopilotChat] = useState<boolean>(false);
   const [pendingCopilotPrompt, setPendingCopilotPrompt] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getStoredUser());
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  // Validate authentication session on mount
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((user) => {
+        if (user) setCurrentUser(user);
+      })
+      .catch((err) => {
+        console.warn('Auth check skipped:', err);
+      });
+  }, []);
 
   const handleLaunchScanner = () => {
     setShowHackerOverlay(true);
@@ -376,6 +395,9 @@ export function App() {
           onOpenWalletModal={() => setShowWalletModal(true)}
           onLaunchScanner={handleLaunchScanner}
           hasActiveReport={!!report}
+          onOpenCopilot={() => setShowCopilotChat(true)}
+          currentUser={currentUser}
+          onOpenAuthModal={() => setShowAuthModal(true)}
         />
 
         {/* Main Content Area */}
@@ -688,6 +710,16 @@ export function App() {
           onClearPendingPrompt={() => setPendingCopilotPrompt(null)}
           onOpenAboutTopic={handleOpenAboutTopic}
           onScanReportLoaded={(newReport) => setFreeScanResult(newReport as any)}
+          currentUser={currentUser}
+          onOpenAuthModal={() => setShowAuthModal(true)}
+        />
+
+        {/* User Authentication & Cloud Sync Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          currentUser={currentUser}
+          onAuthSuccess={(user) => setCurrentUser(user)}
         />
       </div>
     </AlgorandWalletProvider>

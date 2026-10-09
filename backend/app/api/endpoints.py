@@ -34,7 +34,13 @@ from app.schemas.analysis import (
     WatchlistItem,
     RedFlagItem,
     EmailScamAnalysisRequest,
-    EmailScamAnalysisResponse
+    EmailScamAnalysisResponse,
+    UserRegisterRequest,
+    UserLoginRequest,
+    UserProfileResponse,
+    AuthResponse,
+    SyncSessionsRequest,
+    SyncSessionsResponse
 )
 import re
 import asyncio
@@ -1297,4 +1303,88 @@ async def analyze_email_scam(req: EmailScamAnalysisRequest):
         safety_recommendations=recommendations,
         extracted_urls=extracted_urls
     )
+
+# -----------------------------------------------------------------------------------
+# User Authentication & Cross-Device Cloud Sync Endpoints
+# -----------------------------------------------------------------------------------
+def get_current_user_from_header(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authentication required. Please sign in.")
+    token = authorization.replace("Bearer ", "").strip()
+    user = db_manager.get_user_by_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired session token. Please sign in again.")
+    return user
+
+@router.post("/auth/register", response_model=AuthResponse)
+def register_user(req: UserRegisterRequest):
+    try:
+        user_data = db_manager.create_user(req.username, req.email, req.password)
+        return AuthResponse(
+            success=True,
+            user=UserProfileResponse(
+                id=user_data["id"],
+                username=user_data["username"],
+                email=user_data["email"],
+                created_at=user_data["created_at"]
+            ),
+            token=user_data["token"],
+            message="Account created successfully! Your sessions and threat reports are now cloud synced."
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to create user account.")
+
+@router.post("/auth/login", response_model=AuthResponse)
+def login_user(req: UserLoginRequest):
+    user_data = db_manager.authenticate_user(req.identifier, req.password)
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Invalid username/email or password.")
+    return AuthResponse(
+        success=True,
+        user=UserProfileResponse(
+            id=user_data["id"],
+            username=user_data["username"],
+            email=user_data["email"],
+            created_at=user_data["created_at"]
+        ),
+        token=user_data["token"],
+        message="Signed in successfully. Syncing cloud history."
+    )
+
+@router.get("/auth/me", response_model=UserProfileResponse)
+def get_me(authorization: Optional[str] = Header(None)):
+    user = get_current_user_from_header(authorization)
+    return UserProfileResponse(
+        id=user["id"],
+        username=user["username"],
+        email=user["email"],
+        created_at=user["created_at"]
+    )
+
+@router.get("/auth/sessions", response_model=SyncSessionsResponse)
+def get_user_sessions(authorization: Optional[str] = Header(None)):
+    user = get_current_user_from_header(authorization)
+    sessions = db_manager.get_user_chat_sessions(user["id"])
+    return SyncSessionsResponse(success=True, sessions=sessions)
+
+@router.post("/auth/sessions/sync", response_model=SyncSessionsResponse)
+def sync_user_sessions(req: SyncSessionsRequest, authorization: Optional[str] = Header(None)):
+    user = get_current_user_from_header(authorization)
+    merged = db_manager.sync_user_chat_sessions(user["id"], req.sessions)
+    return SyncSessionsResponse(success=True, sessions=merged)
+
+@router.delete("/auth/sessions/{session_id}")
+def delete_user_session(session_id: str, authorization: Optional[str] = Header(None)):
+    user = get_current_user_from_header(authorization)
+    success = db_manager.delete_user_chat_session(user["id"], session_id)
+    return {"success": success}
+
+@router.delete("/auth/sessions")
+def clear_user_sessions(authorization: Optional[str] = Header(None)):
+    user = get_current_user_from_header(authorization)
+    db_manager.clear_user_chat_sessions(user["id"])
+    return {"success": True, "message": "All cloud chat sessions cleared."}
+
 
