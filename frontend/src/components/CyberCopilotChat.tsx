@@ -1606,13 +1606,13 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div
+              className="copilot-sidebar"
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: isFullScreen ? 280 : 250, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
               style={{
                 borderRight: '1px solid var(--border-color)',
-                background: 'rgba(7, 10, 16, 0.75)',
                 display: 'flex',
                 flexDirection: 'column',
                 flexShrink: 0,
@@ -1707,6 +1707,7 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                     return (
                       <div
                         key={session.id}
+                        className={`copilot-history-item ${isActive ? 'active' : ''}`}
                         onClick={() => !isEditing && handleSelectSession(session)}
                         style={{
                           display: 'flex',
@@ -1715,11 +1716,6 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
                           padding: '7px 9px',
                           borderRadius: '8px',
                           cursor: isEditing ? 'default' : 'pointer',
-                          background: isActive
-                            ? 'linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(59, 130, 246, 0.12) 100%)'
-                            : 'transparent',
-                          border: isActive ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid transparent',
-                          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontSize: '0.75rem',
                           fontWeight: isActive ? 700 : 500,
                           transition: 'all 0.15s'

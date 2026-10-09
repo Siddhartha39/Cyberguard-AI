@@ -815,18 +815,74 @@ body.light-theme .copilot-input-field:focus {
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2), 0 0 12px rgba(99, 102, 241, 0.15) !important;
 }
 
-/* Send Button */
-.copilot-send-button {
-  background: linear-gradient(135deg, #00f0ff 0%, #6366f1 50%, #ec4899 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4), 0 0 10px rgba(0, 240, 255, 0.3);
-  transition: all 0.2s ease;
+/* Copilot Sidebar Styles */
+.copilot-sidebar {
+  background: rgba(7, 10, 16, 0.88);
+  border-right: 1px solid var(--border-color);
 }
 
-.copilot-send-button:hover:not(:disabled) {
-  box-shadow: 0 6px 24px rgba(236, 72, 153, 0.5), 0 0 16px rgba(0, 240, 255, 0.6);
-  transform: scale(1.04);
+[data-theme="light"] .copilot-sidebar,
+body.light-theme .copilot-sidebar {
+  background: #f8fafc !important;
+  border-right: 1px solid #cbd5e1 !important;
 }
+
+[data-theme="light"] .copilot-sidebar button,
+body.light-theme .copilot-sidebar button {
+  color: #0f172a;
+}
+
+[data-theme="light"] .copilot-sidebar input,
+body.light-theme .copilot-sidebar input {
+  color: #0f172a !important;
+}
+
+/* Copilot History Items */
+.copilot-history-item {
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.copilot-history-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .copilot-history-item,
+body.light-theme .copilot-history-item {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .copilot-history-item:hover,
+body.light-theme .copilot-history-item:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.copilot-history-item.active {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .copilot-history-item.active,
+body.light-theme .copilot-history-item.active {
+  background: #ffffff !important;
+  border: 1.5px solid #0284c7 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15) !important;
+}
+
+/* Light Theme Header bar & footer for Copilot */
+[data-theme="light"] .copilot-header-bar,
+body.light-theme .copilot-header-bar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .copilot-window-body,
+body.light-theme .copilot-window-body {
+  background: #ffffff !important;
+}
+
 
