@@ -78,6 +78,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMsg('Google sign-in popup was closed before completion.');
       } else if (err.code === 'auth/cancelled-popup-request') {
         setErrorMsg('Sign-in cancelled.');
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+        setErrorMsg(`Unauthorized Domain: Please add "${currentHost}" to Firebase Console > Authentication > Settings > Authorized Domains.`);
       } else {
         setErrorMsg(err.message || 'Google Sign-In failed. Please try again or use email.');
       }
