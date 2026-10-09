@@ -508,16 +508,18 @@ If the user asks any general cybersecurity, programming, or technical question, 
         "hackable", "easily hackable", "can it be hacked", "can my site be hacked",
         "can someone hack", "vulnerab", "exploit", "pentest", "penetration",
         "is my website safe", "is my site safe", "how safe is my", "how hackable",
-        "attack surface", "audit my", "security audit"
+        "attack surface", "audit my", "security audit",
+        "secure or not", "is it secure", "it is secure", "safe or not", "is it safe", "it is safe",
+        "is secure", "is safe", "security status", "security posture"
     ]):
         if has_active_scan and domain:
             if verdict == "PHISHING" or is_contradiction or risk_score >= 70:
                 reply = (
-                    f"🚨 **HACKABILITY AUDIT: CRITICAL THREAT ENVIRONMENT FOR `{domain}`**\n\n"
+                    f"🚨 **SECURITY ASSESSMENT: `{domain}` IS NOT SECURE — CRITICAL THREAT DETECTED**\n\n"
                     f"- **Verdict:** `{verdict}` (Risk Score: **{risk_score}/100**)\n"
                     f"- **Brand Target:** {brand_matched or 'Unauthorized Brand Spoofing'}\n"
                     f"- **Contradiction:** {'Severe Trademark Mismatch Detected' if is_contradiction else 'Malicious infrastructure'}\n\n"
-                    f"**Adversary Exposure:** This domain is classified as active deceptive adversary infrastructure operating as a credential harvesting portal designed to steal user passwords and sensitive tokens."
+                    f"**Adversary Exposure:** This domain is classified as active deceptive adversary infrastructure operating as a credential harvesting portal designed to steal user passwords and sensitive tokens. Do not enter credentials."
                 )
             elif len(missing_headers) > 0 or grade in ["B", "B-", "C", "C+", "C-", "D", "F"] or not dmarc_enforced:
                 missing_str = ", ".join(missing_headers) if missing_headers else "Multiple perimeter headers"
