@@ -1990,6 +1990,7 @@ export interface UserProfile {
   id: string;
   username: string;
   email: string;
+  photoURL?: string;
   created_at: string;
 }
 

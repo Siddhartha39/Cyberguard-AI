@@ -203,9 +203,29 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     }
   }, [activeSessionId]);
 
-  // Cloud Sync: Fetch & merge cloud sessions whenever currentUser signs in
+  // Cloud Sync: Fetch & merge cloud sessions whenever currentUser signs in (Firestore + Backend API)
   useEffect(() => {
     if (currentUser) {
+      // 1. Fetch from Firestore
+      import('../services/firebase').then(({ fetchChatSessionsFromFirestore }) => {
+        fetchChatSessionsFromFirestore(currentUser.id).then((fsSessions) => {
+          if (Array.isArray(fsSessions) && fsSessions.length > 0) {
+            setSessions((prev) => {
+              const map = new Map<string, ChatSession>();
+              prev.forEach((s) => map.set(s.id, s));
+              fsSessions.forEach((s) => {
+                const existing = map.get(s.id);
+                if (!existing || (s.updatedAt || 0) >= (existing.updatedAt || 0)) {
+                  map.set(s.id, s);
+                }
+              });
+              return Array.from(map.values());
+            });
+          }
+        });
+      }).catch(() => {});
+
+      // 2. Fetch from backend SQLite as well
       fetchCloudSessions().then((cloudSessions) => {
         if (Array.isArray(cloudSessions) && cloudSessions.length > 0) {
           setSessions((prev) => {
@@ -224,11 +244,16 @@ export const CyberCopilotChat: React.FC<CyberCopilotChatProps> = ({
     }
   }, [currentUser]);
 
-  // Cloud Sync: Automatically sync sessions to cloud when logged in
+  // Cloud Sync: Automatically sync sessions to Firestore & backend when logged in
   useEffect(() => {
     if (currentUser && sessions.length > 0) {
       const timer = setTimeout(() => {
+        // Sync to backend SQLite
         syncCloudSessions(sessions);
+        // Sync to Firebase Firestore
+        import('../services/firebase').then(({ syncChatSessionsToFirestore }) => {
+          syncChatSessionsToFirestore(currentUser.id, sessions);
+        }).catch(() => {});
       }, 800);
       return () => clearTimeout(timer);
     }

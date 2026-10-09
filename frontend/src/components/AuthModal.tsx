@@ -1,7 +1,31 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, User, Lock, Mail, CheckCircle2, AlertCircle, X, LogOut, Cloud, Sparkles, RefreshCw } from 'lucide-react';
-import { loginUser, registerUser, clearStoredAuth, getStoredUser, type UserProfile } from '../services/api';
+import { 
+  Shield, 
+  User, 
+  Lock, 
+  Mail, 
+  CheckCircle2, 
+  AlertCircle, 
+  X, 
+  LogOut, 
+  Cloud, 
+  Sparkles, 
+  RefreshCw 
+} from 'lucide-react';
+import { 
+  signInWithGoogle, 
+  signInEmailPassword, 
+  registerEmailPassword, 
+  firebaseSignOut 
+} from '../services/firebase';
+import { 
+  loginUser, 
+  registerUser, 
+  clearStoredAuth, 
+  setStoredAuth, 
+  type UserProfile 
+} from '../services/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,33 +46,106 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  // Google Sign-In Flow
+  const handleGoogleSignIn = async () => {
+    setErrorMsg(null);
+    setIsGoogleLoading(true);
+    try {
+      const fbUser = await signInWithGoogle();
+      const profile: UserProfile = {
+        id: fbUser.id,
+        username: fbUser.username,
+        email: fbUser.email,
+        photoURL: fbUser.photoURL,
+        created_at: fbUser.created_at
+      };
+      setStoredAuth(fbUser.id, profile);
+      setSuccessMsg(`Welcome, ${profile.username}! Signed in with Google.`);
+      setTimeout(() => {
+        onAuthSuccess(profile);
+        onClose();
+      }, 700);
+    } catch (err: any) {
+      console.error('Google auth error:', err);
+      // Give readable error message
+      if (err.code === 'auth/popup-closed-by-user') {
+        setErrorMsg('Google sign-in popup was closed before completion.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        setErrorMsg('Sign-in cancelled.');
+      } else {
+        setErrorMsg(err.message || 'Google Sign-In failed. Please try again or use email.');
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  // Email / Password Login Flow (Firebase primary, backend fallback)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      setErrorMsg('Please enter your username/email and password.');
+      setErrorMsg('Please enter your email and password.');
       return;
     }
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const res = await loginUser(identifier.trim(), password);
-      setSuccessMsg(`Welcome back, ${res.user.username}! Syncing cloud history.`);
-      setTimeout(() => {
-        onAuthSuccess(res.user);
-        onClose();
-      }, 700);
+      // If identifier looks like email, try Firebase first
+      const isEmail = identifier.includes('@');
+      let profile: UserProfile | null = null;
+      let token: string | null = null;
+
+      if (isEmail) {
+        try {
+          const fbUser = await signInEmailPassword(identifier.trim(), password);
+          profile = {
+            id: fbUser.id,
+            username: fbUser.username,
+            email: fbUser.email,
+            photoURL: fbUser.photoURL,
+            created_at: fbUser.created_at
+          };
+          token = fbUser.id;
+        } catch (fbErr: any) {
+          console.warn('Firebase login attempt:', fbErr?.code || fbErr?.message);
+          // If user exists on legacy backend, fallback to backend login
+          const res = await loginUser(identifier.trim(), password);
+          profile = res.user;
+          token = res.token;
+        }
+      } else {
+        // Username login via backend database
+        const res = await loginUser(identifier.trim(), password);
+        profile = res.user;
+        token = res.token;
+      }
+
+      if (profile && token) {
+        setStoredAuth(token, profile);
+        setSuccessMsg(`Welcome back, ${profile.username}! Syncing cloud history.`);
+        setTimeout(() => {
+          onAuthSuccess(profile);
+          onClose();
+        }, 700);
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setErrorMsg('Invalid email or password. Please try again.');
+      } else {
+        setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Registration Flow (Firebase Auth with backend mirror)
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !email.trim() || !password) {
@@ -62,20 +159,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const res = await registerUser(username.trim(), email.trim(), password);
-      setSuccessMsg(`Account created! Welcome, ${res.user.username}.`);
-      setTimeout(() => {
-        onAuthSuccess(res.user);
-        onClose();
-      }, 700);
+      let profile: UserProfile | null = null;
+      let token: string | null = null;
+
+      // 1. Register with Firebase Auth
+      try {
+        const fbUser = await registerEmailPassword(username.trim(), email.trim(), password);
+        profile = {
+          id: fbUser.id,
+          username: fbUser.username,
+          email: fbUser.email,
+          photoURL: fbUser.photoURL,
+          created_at: fbUser.created_at
+        };
+        token = fbUser.id;
+      } catch (fbErr: any) {
+        console.warn('Firebase registration error, attempting fallback:', fbErr);
+        // Fallback to backend registration if Firebase fails
+        const res = await registerUser(username.trim(), email.trim(), password);
+        profile = res.user;
+        token = res.token;
+      }
+
+      // Also register on local backend in background for hybrid DB sync
+      registerUser(username.trim(), email.trim(), password).catch(() => {});
+
+      if (profile && token) {
+        setStoredAuth(token, profile);
+        setSuccessMsg(`Account created! Welcome, ${profile.username}.`);
+        setTimeout(() => {
+          onAuthSuccess(profile);
+          onClose();
+        }, 700);
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Registration failed.');
+      if (err.code === 'auth/email-already-in-use') {
+        setErrorMsg('This email address is already registered. Please sign in instead.');
+      } else if (err.code === 'auth/weak-password') {
+        setErrorMsg('Password should be at least 6 characters.');
+      } else {
+        setErrorMsg(err.message || 'Registration failed.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSignOut = () => {
+  // Sign Out
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut();
+    } catch (e) {
+      console.warn('Firebase signout error:', e);
+    }
     clearStoredAuth();
     onAuthSuccess(null);
     setSuccessMsg('Signed out successfully.');
@@ -100,52 +236,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        initial={{ opacity: 0, scale: 0.94, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        exit={{ opacity: 0, scale: 0.94, y: 15 }}
+        transition={{ duration: 0.25 }}
         style={{
           background: 'var(--bg-card)',
           border: '1.5px solid var(--accent-cyan)',
-          borderRadius: '18px',
-          maxWidth: '440px',
+          borderRadius: '16px',
           width: '100%',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 240, 255, 0.25)',
-          overflow: 'hidden'
+          maxWidth: '430px',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(0,240,255,0.25)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Header */}
+        {/* Modal Header */}
         <div
           style={{
-            padding: '18px 22px',
+            padding: '16px 20px',
             borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.02)'
+            background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
-                padding: '7px',
-                borderRadius: '10px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(0, 240, 255, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 12px rgba(0, 240, 255, 0.4)'
+                border: '1px solid var(--accent-cyan)'
               }}
             >
-              <Shield size={20} color="#070a10" strokeWidth={2.5} />
+              <Shield size={18} color="var(--accent-cyan)" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)', margin: 0, letterSpacing: '0.02em' }}>
-                {currentUser ? 'CYBERGUARD ACCOUNT' : 'SIGN IN & CLOUD SYNC'}
-              </h2>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Cloud size={11} color="var(--accent-cyan)" />
-                <span>Access your threat audits and chats from anywhere</span>
+              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.02em' }}>
+                {currentUser ? 'CyberGuard Operator Profile' : 'Operator Authentication'}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
+                Firebase Cloud Sync &amp; Access Control
               </div>
             </div>
           </div>
@@ -172,22 +311,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 gap: '14px'
               }}
             >
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #00f0ff 0%, #818cf8 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#070a10',
-                  fontWeight: 900,
-                  fontSize: '1.1rem'
-                }}
-              >
-                {currentUser.username.substring(0, 1).toUpperCase()}
-              </div>
+              {currentUser.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={currentUser.username}
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    border: '1.5px solid var(--accent-cyan)',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #00f0ff 0%, #818cf8 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#070a10',
+                    fontWeight: 900,
+                    fontSize: '1.1rem'
+                  }}
+                >
+                  {currentUser.username.substring(0, 1).toUpperCase()}
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   {currentUser.username}
@@ -197,7 +350,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
                 <div style={{ fontSize: '0.66rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                   <CheckCircle2 size={11} />
-                  <span>Cloud Sync Active (Chats &amp; Audits preserved)</span>
+                  <span>Firebase &amp; Firestore Cloud Synced</span>
                 </div>
               </div>
             </div>
@@ -251,7 +404,64 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
         ) : (
-          <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Google One-Click Login Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading || isLoading}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '9px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#1e293b',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                cursor: (isGoogleLoading || isLoading) ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s'
+              }}
+            >
+              {isGoogleLoading ? (
+                <RefreshCw size={15} className="spinning" color="#1e293b" />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                  />
+                </svg>
+              )}
+              <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+            </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                or with email
+              </span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+            </div>
+
             {/* Tab Switcher */}
             <div
               style={{
@@ -267,8 +477,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onClick={() => { setTab('login'); setErrorMsg(null); }}
                 style={{
                   flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
+                  padding: '7px',
+                  borderRadius: '7px',
                   border: 'none',
                   background: tab === 'login' ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%)' : 'transparent',
                   color: tab === 'login' ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -284,8 +494,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onClick={() => { setTab('register'); setErrorMsg(null); }}
                 style={{
                   flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
+                  padding: '7px',
+                  borderRadius: '7px',
                   border: 'none',
                   background: tab === 'register' ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%)' : 'transparent',
                   color: tab === 'register' ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -337,10 +547,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             {tab === 'login' ? (
-              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                    Username or Email
+                    Email or Username
                   </label>
                   <div
                     style={{
@@ -356,7 +566,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <User size={14} color="var(--text-secondary)" />
                     <input
                       type="text"
-                      placeholder="e.g. analyst or you@company.com"
+                      placeholder="analyst@domain.com or username"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.82rem', width: '100%', outline: 'none' }}
@@ -394,7 +604,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="submit"
                   disabled={isLoading}
                   style={{
-                    marginTop: '6px',
+                    marginTop: '4px',
                     padding: '10px',
                     borderRadius: '8px',
                     background: 'linear-gradient(135deg, var(--accent-cyan) 0%, #3b82f6 100%)',
@@ -403,7 +613,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     fontSize: '0.82rem',
                     fontWeight: 800,
                     cursor: isLoading ? 'default' : 'pointer',
-                    boxShadow: '0 0 14px rgba(0, 240, 255, 0.4)',
+                    boxShadow: '0 0 14px rgba(0, 240, 255, 0.35)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -411,14 +621,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                 >
                   {isLoading && <RefreshCw size={13} className="spinning" />}
-                  <span>{isLoading ? 'Signing In...' : 'Sign In & Sync'}</span>
+                  <span>{isLoading ? 'Authenticating...' : 'Sign In'}</span>
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                    Choose Username
+                    Operator Handle / Username
                   </label>
                   <div
                     style={{
@@ -498,7 +708,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="submit"
                   disabled={isLoading}
                   style={{
-                    marginTop: '6px',
+                    marginTop: '4px',
                     padding: '10px',
                     borderRadius: '8px',
                     background: 'linear-gradient(135deg, var(--accent-cyan) 0%, #3b82f6 100%)',

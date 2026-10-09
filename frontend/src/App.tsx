@@ -108,8 +108,20 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getStoredUser());
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  // Validate authentication session on mount
+  // Validate authentication session on mount (Firebase Auth + backend)
   useEffect(() => {
+    import('./services/firebase').then(({ auth, onAuthStateChanged, mapFirebaseUser }) => {
+      onAuthStateChanged(auth, (fbUser) => {
+        if (fbUser) {
+          const profile = mapFirebaseUser(fbUser);
+          setCurrentUser(profile);
+          import('./services/api').then(({ setStoredAuth }) => {
+            setStoredAuth(fbUser.uid, profile);
+          });
+        }
+      });
+    }).catch(() => {});
+
     fetchCurrentUser()
       .then((user) => {
         if (user) setCurrentUser(user);
