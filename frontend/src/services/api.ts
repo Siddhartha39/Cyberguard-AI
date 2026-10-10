@@ -871,12 +871,16 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
 
   // If registered, evaluate risk
   const brandLookalikes: Array<{ brand: string; legit: string[] }> = [
-    { brand: 'icloud', legit: ['icloud.com', 'apple.com'] },
-    { brand: 'apple', legit: ['apple.com', 'icloud.com'] },
-    { brand: 'paypal', legit: ['paypal.com'] },
-    { brand: 'microsoft', legit: ['microsoft.com', 'live.com', 'office.com', 'outlook.com'] },
+    { brand: 'icloud', legit: ['icloud.com', 'apple.com', '.apple'] },
+    { brand: 'apple', legit: ['apple.com', 'icloud.com', '.apple'] },
+    { brand: 'paypal', legit: ['paypal.com', 'paypal.me'] },
+    { brand: 'microsoft', legit: ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'azure.com'] },
+    { brand: 'google', legit: [
+      'google.com', '.google', '.goog', 'google.co.in', 'google.co.uk', 'google.ca', 'google.de',
+      'googleapis.com', 'gstatic.com', 'googleusercontent.com', 'youtube.com', 'gmail.com', 'withgoogle.com'
+    ] },
     { brand: 'netflix', legit: ['netflix.com'] },
-    { brand: 'amazon', legit: ['amazon.com', 'amazon.in'] },
+    { brand: 'amazon', legit: ['amazon.com', 'amazon.in', '.amazon'] },
     { brand: 'chase', legit: ['chase.com'] },
     { brand: 'binance', legit: ['binance.com'] },
     { brand: 'coinbase', legit: ['coinbase.com'] },
@@ -890,7 +894,12 @@ async function generateClientFreeScan(inputUrl: string): Promise<FreeScanResult>
   let brandSpoofed: string | null = null;
   for (const b of brandLookalikes) {
     if (domain.includes(b.brand)) {
-      const isLegit = b.legit.some(legitDom => domain === legitDom || domain.endsWith('.' + legitDom));
+      const isLegit = b.legit.some(legitDom => {
+        if (legitDom.startsWith('.')) {
+          return domain.endsWith(legitDom);
+        }
+        return domain === legitDom || domain.endsWith('.' + legitDom);
+      });
       if (!isLegit) {
         brandSpoofed = b.brand;
         break;

@@ -323,13 +323,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Comprehensive brand lookalike mapping aligned with backend
   const POPUP_BRAND_LOOKALIKES_MAP = {
-    'icloud': ['icloud.com', 'apple.com'],
-    'apple': ['apple.com', 'icloud.com'],
-    'paypal': ['paypal.com'],
-    'microsoft': ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'msn.com'],
-    'google': ['google.com'],
+    'icloud': ['icloud.com', 'apple.com', '.apple'],
+    'apple': ['apple.com', 'icloud.com', '.apple'],
+    'paypal': ['paypal.com', 'paypal.me'],
+    'microsoft': ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'msn.com', 'microsoftonline.com', 'azure.com'],
+    'google': [
+      'google.com', '.google', '.goog', 'google.co.in', 'google.co.uk', 'google.ca', 'google.de',
+      'google.fr', 'google.it', 'google.es', 'google.co.jp', 'google.com.au', 'google.com.br',
+      'googleapis.com', 'gstatic.com', 'googleusercontent.com', 'googlevideo.com', 'youtube.com',
+      'gmail.com', 'withgoogle.com', '1e100.net', 'deepmind.google', 'android.com', 'chrome.com'
+    ],
     'netflix': ['netflix.com'],
-    'amazon': ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.ca', 'amazon.es', 'amazon.it'],
+    'amazon': ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.ca', 'amazon.es', 'amazon.it', '.amazon'],
     'chase': ['chase.com'],
     'wellsfargo': ['wellsfargo.com'],
     'bankofamerica': ['bankofamerica.com'],
@@ -368,9 +373,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     for (const [brand, authorizedDomains] of Object.entries(POPUP_BRAND_LOOKALIKES_MAP)) {
       if (hostLower.includes(brand)) {
-        const isAuthorized = authorizedDomains.some(auth =>
-          regDomain === auth || regDomain.endsWith('.' + auth)
-        );
+        const isAuthorized = authorizedDomains.some(auth => {
+          if (auth.startsWith('.')) {
+            // Matches official brand TLDs (e.g. '.google' matches 'antigravity.google')
+            return hostLower.endsWith(auth) || regDomain.endsWith(auth);
+          }
+          return regDomain === auth || regDomain.endsWith('.' + auth);
+        });
         if (!isAuthorized) {
           return {
             isSpoof: true,

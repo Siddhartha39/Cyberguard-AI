@@ -27,12 +27,18 @@ TARGET_BRAND_KEYWORDS = [
 ]
 
 BRAND_LOOKALIKES_MAP = {
-    "icloud": ["icloud.com", "apple.com"],
-    "apple": ["apple.com", "icloud.com"],
-    "paypal": ["paypal.com"],
-    "microsoft": ["microsoft.com", "live.com", "office.com", "outlook.com", "office365.com", "msn.com"],
+    "icloud": ["icloud.com", "apple.com", ".apple"],
+    "apple": ["apple.com", "icloud.com", ".apple"],
+    "paypal": ["paypal.com", "paypal.me"],
+    "microsoft": ["microsoft.com", "live.com", "office.com", "outlook.com", "office365.com", "msn.com", "microsoftonline.com", "azure.com"],
+    "google": [
+        "google.com", ".google", ".goog", "google.co.in", "google.co.uk", "google.ca", "google.de",
+        "google.fr", "google.it", "google.es", "google.co.jp", "google.com.au", "google.com.br",
+        "googleapis.com", "gstatic.com", "googleusercontent.com", "googlevideo.com", "youtube.com",
+        "gmail.com", "withgoogle.com", "1e100.net", "deepmind.google", "android.com", "chrome.com"
+    ],
     "netflix": ["netflix.com"],
-    "amazon": ["amazon.com", "amazon.in", "amazon.co.uk", "amazon.de"],
+    "amazon": ["amazon.com", "amazon.in", "amazon.co.uk", "amazon.de", ".amazon"],
     "chase": ["chase.com"],
     "wellsfargo": ["wellsfargo.com"],
     "bankofamerica": ["bankofamerica.com"],
@@ -144,7 +150,12 @@ def extract_lexical_features(url: str) -> Dict[str, Any]:
     reg_dom_lower = registrable_domain.lower()
     for b, legits in BRAND_LOOKALIKES_MAP.items():
         if b in reg_dom_lower:
-            is_authorized = any(reg_dom_lower == d or reg_dom_lower.endswith("." + d) for d in legits)
+            is_authorized = any(
+                reg_dom_lower == d or
+                reg_dom_lower.endswith("." + d) or
+                (d.startswith(".") and reg_dom_lower.endswith(d))
+                for d in legits
+            )
             if not is_authorized:
                 brand_in_domain = 1.0
                 detected_spoofed_brand = b

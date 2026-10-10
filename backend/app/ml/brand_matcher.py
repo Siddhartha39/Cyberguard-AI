@@ -56,7 +56,10 @@ def match_brand(
     # 1. Immediate Official Domain Recognition for Catalog Brands
     for brand_id, brand in BRAND_CATALOG.items():
         is_official = any(
-            reg_dom_lower == auth_dom or reg_dom_lower.endswith("." + auth_dom) or url_lower.startswith(f"https://{auth_dom}")
+            reg_dom_lower == auth_dom or
+            reg_dom_lower.endswith("." + auth_dom) or
+            (auth_dom.startswith(".") and reg_dom_lower.endswith(auth_dom)) or
+            url_lower.startswith(f"https://{auth_dom}")
             for auth_dom in brand.authorized_domains
         )
         if is_official:
