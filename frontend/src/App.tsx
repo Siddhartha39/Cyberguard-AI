@@ -425,6 +425,7 @@ export function App() {
         {/* Page 1: Overview & Product Landing */}
         {activeTab === 'overview' && (
           <LandingPage
+            theme={theme}
             onLaunchScanner={handleLaunchScanner}
             onOpenExtension={() => setActiveTab('extension')}
             onOpenDiscovery={() => setActiveTab('discovery')}

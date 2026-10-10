@@ -17,9 +17,9 @@
   --threat-medium: #eab308;
   --threat-safe: #10b981;
   
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
 
   --panel-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   --panel-shadow-hover: 0 12px 40px 0 rgba(0, 0, 0, 0.7), 0 0 15px rgba(6, 182, 212, 0.15);
@@ -48,7 +48,7 @@
   --threat-safe: #16a34a;
 
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
 
   --panel-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
@@ -391,23 +391,37 @@ body.light-theme .cyber-gradient-text {
   animation: ambient-drift 22s ease-in-out infinite reverse;
 }
 
-/* Card Scroll Stacking Effects */
+/* Capability Module Card Styles */
 .card-stack-container {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
 .card-stack-item {
-  position: sticky;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 .card-stack-item:hover {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 240, 255, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25);
+}
+
+[data-theme="light"] .card-stack-item,
+body.light-theme .card-stack-item {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .card-stack-item:hover,
+body.light-theme .card-stack-item:hover {
+  border-color: #0284c7 !important;
+  box-shadow: 0 14px 34px rgba(2, 132, 199, 0.15) !important;
 }
 
 /* Custom Scrollbar */

@@ -21,6 +21,7 @@ import {
 import { InfoTooltip } from './InfoTooltip';
 
 export interface LandingPageProps {
+  theme?: 'dark' | 'light';
   onLaunchScanner: () => void;
   onOpenExtension: () => void;
   onOpenDiscovery: () => void;
@@ -28,11 +29,13 @@ export interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
+  theme = 'dark',
   onLaunchScanner,
   onOpenExtension,
   onOpenDiscovery,
   onScanUrl
 }) => {
+  const isLight = theme === 'light';
   const [quickUrl, setQuickUrl] = useState('');
   const [activePipelineStep, setActivePipelineStep] = useState<number>(0);
   const [cardViewMode, setCardViewMode] = useState<'stack' | 'grid'>('stack');
@@ -123,13 +126,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: 'Visual & Identity Verification',
       badge: 'PROPRIETARY',
       description: 'Detects when a page imitates the logos and visual identity of trusted brands (e.g. PayPal, Apple, Microsoft, Chase) while operating on an unauthorized, deceptive domain.',
-      icon: <AlertTriangle size={24} color="#ef4444" />,
-      iconBg: 'rgba(239, 68, 68, 0.15)',
-      iconBorder: 'rgba(239, 68, 68, 0.4)',
-      glowColor: 'rgba(239, 68, 68, 0.25)',
+      iconDark: <AlertTriangle size={24} color="#f87171" />,
+      iconLight: <AlertTriangle size={24} color="#dc2626" />,
+      iconBgDark: 'rgba(239, 68, 68, 0.15)',
+      iconBgLight: '#fee2e2',
+      iconBorderDark: 'rgba(239, 68, 68, 0.4)',
+      iconBorderLight: '#fca5a5',
+      glowColorDark: 'rgba(239, 68, 68, 0.25)',
       quote: '"Imitates Bank of America, but domain is unauthorized .xyz"',
-      quoteColor: '#ef4444',
-      quoteBorder: '#ef4444',
+      quoteColorDark: '#fca5a5',
+      quoteColorLight: '#991b1b',
+      quoteBgLight: '#fef2f2',
+      quoteBorderDark: '#ef4444',
+      quoteBorderLight: '#dc2626',
+      subtitleColorDark: '#f87171',
+      subtitleColorLight: '#b91c1c',
       tags: ['pHash 64-bit DCT', 'Visual Logo Catalog', 'Domain Impersonation', 'Brand Spoof Guard'],
       tooltip: {
         title: 'Brand-Domain Contradiction',
@@ -145,13 +156,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: '7-Stage Forensic Path',
       badge: 'FORENSICS',
       description: 'Reconstructs a step-by-step forensic graph linking Ingress → DNS Infrastructure → Redirects → Landing DOM → Credential Forms → Exfiltration channels.',
-      icon: <GitCommit size={24} color="var(--accent-cyan)" />,
-      iconBg: 'rgba(0, 240, 255, 0.15)',
-      iconBorder: 'rgba(0, 240, 255, 0.4)',
-      glowColor: 'rgba(0, 240, 255, 0.25)',
+      iconDark: <GitCommit size={24} color="#38bdf8" />,
+      iconLight: <GitCommit size={24} color="#0284c7" />,
+      iconBgDark: 'rgba(56, 189, 248, 0.15)',
+      iconBgLight: '#e0f2fe',
+      iconBorderDark: 'rgba(56, 189, 248, 0.4)',
+      iconBorderLight: '#bae6fd',
+      glowColorDark: 'rgba(56, 189, 248, 0.25)',
       quote: 'Step 1 (Ingress) → Step 5 (Credential Hook) → Step 7 (Verdict)',
-      quoteColor: 'var(--accent-cyan)',
-      quoteBorder: 'var(--accent-cyan)',
+      quoteColorDark: '#7dd3fc',
+      quoteColorLight: '#0369a1',
+      quoteBgLight: '#f0f9ff',
+      quoteBorderDark: '#38bdf8',
+      quoteBorderLight: '#0284c7',
+      subtitleColorDark: '#38bdf8',
+      subtitleColorLight: '#0284c7',
       tags: ['Ingress Link', 'Google DoH DNS', 'HTTP Redirect Bounces', 'Credential Form Traps'],
       tooltip: {
         title: '7-Stage Attack Chain Reconstruction',
@@ -167,13 +186,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: '0-100 Probability Vector',
       badge: 'ML CALIBRATION',
       description: 'Fuses 5 independent vectors: Lexical ML features, Domain Age & DNS, DOM password forms, Visual Brand confidence, and Threat Intel into a unified 0–100 risk score.',
-      icon: <Layers size={24} color="#3b82f6" />,
-      iconBg: 'rgba(59, 130, 246, 0.15)',
-      iconBorder: 'rgba(59, 130, 246, 0.4)',
-      glowColor: 'rgba(59, 130, 246, 0.25)',
+      iconDark: <Layers size={24} color="#60a5fa" />,
+      iconLight: <Layers size={24} color="#2563eb" />,
+      iconBgDark: 'rgba(59, 130, 246, 0.15)',
+      iconBgLight: '#eff6ff',
+      iconBorderDark: 'rgba(59, 130, 246, 0.4)',
+      iconBorderLight: '#bfdbfe',
+      glowColorDark: 'rgba(59, 130, 246, 0.25)',
       quote: 'Weighted contribution breakdown (+/- pts) for every signal',
-      quoteColor: 'var(--accent-green)',
-      quoteBorder: 'var(--accent-green)',
+      quoteColorDark: '#86efac',
+      quoteColorLight: '#166534',
+      quoteBgLight: '#f0fdf4',
+      quoteBorderDark: '#22c55e',
+      quoteBorderLight: '#16a34a',
+      subtitleColorDark: '#4ade80',
+      subtitleColorLight: '#15803d',
       tags: ['24-D Lexical Tensor', 'Platt Scaling Calibration', 'Shannon Entropy', 'Point Scoring Breakdown'],
       tooltip: {
         title: 'Calibrated Risk Scoring (0–100)',
@@ -189,13 +216,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: 'Defensive Posture Rating',
       badge: 'WEBSITE DEFENSE',
       description: 'Website owners can check their own domain defense posture: Clickjacking immunity (X-Frame-Options), Email spoofing resistance (SPF/DMARC), CSP, and HSTS.',
-      icon: <Lock size={24} color="var(--accent-green)" />,
-      iconBg: 'rgba(0, 255, 136, 0.15)',
-      iconBorder: 'rgba(0, 255, 136, 0.4)',
-      glowColor: 'rgba(0, 255, 136, 0.25)',
+      iconDark: <Lock size={24} color="#4ade80" />,
+      iconLight: <Lock size={24} color="#16a34a" />,
+      iconBgDark: 'rgba(34, 197, 94, 0.15)',
+      iconBgLight: '#f0fdf4',
+      iconBorderDark: 'rgba(34, 197, 94, 0.4)',
+      iconBorderLight: '#bbf7d0',
+      glowColorDark: 'rgba(34, 197, 94, 0.25)',
       quote: 'Security Grades (A+ to F) + Actionable Developer Fixes',
-      quoteColor: '#f59e0b',
-      quoteBorder: '#f59e0b',
+      quoteColorDark: '#fde047',
+      quoteColorLight: '#854d0e',
+      quoteBgLight: '#fffbeb',
+      quoteBorderDark: '#eab308',
+      quoteBorderLight: '#d97706',
+      subtitleColorDark: '#fbbf24',
+      subtitleColorLight: '#b45309',
       actionText: 'Audit Your Own Domain',
       onAction: onLaunchScanner,
       tags: ['HSTS & CSP Headers', 'Clickjacking Immune', 'SPF/DMARC Spoof Defense', 'Executive Security Grade'],
@@ -213,13 +248,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: 'High-Throughput Early-Warning',
       badge: 'STREAM FEED',
       description: 'High-throughput early-warning stream prioritizing unknown candidates hitting DNS logs and Certificate Transparency feeds before phishing campaigns go viral.',
-      icon: <Activity size={24} color="#f97316" />,
-      iconBg: 'rgba(249, 115, 22, 0.15)',
-      iconBorder: 'rgba(249, 115, 22, 0.4)',
-      glowColor: 'rgba(249, 115, 22, 0.25)',
+      iconDark: <Activity size={24} color="#fb923c" />,
+      iconLight: <Activity size={24} color="#ea580c" />,
+      iconBgDark: 'rgba(249, 115, 22, 0.15)',
+      iconBgLight: '#fff7ed',
+      iconBorderDark: 'rgba(249, 115, 22, 0.4)',
+      iconBorderLight: '#fed7aa',
+      glowColorDark: 'rgba(249, 115, 22, 0.25)',
       quote: '< 10ms lexical triage + one-click escalation sandbox',
-      quoteColor: '#f97316',
-      quoteBorder: '#f97316',
+      quoteColorDark: '#fdba74',
+      quoteColorLight: '#9a3412',
+      quoteBgLight: '#fff7ed',
+      quoteBorderDark: '#f97316',
+      quoteBorderLight: '#ea580c',
+      subtitleColorDark: '#fb923c',
+      subtitleColorLight: '#c2410c',
       actionText: 'Explore NRD Stream',
       onAction: onOpenDiscovery,
       tags: ['CertStream Feed', '< 30d Quarantine', 'Sub-10ms Triage', 'Playwright Sandbox Escalation'],
@@ -237,13 +280,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       subtitle: 'Endpoint Client Protection',
       badge: 'ENDPOINT AGENT',
       description: 'Manifest V3 sidecar auditing active tabs in real-time. Displays threat warning banners, visual trust gauges, and seamless 1-click inspection routing.',
-      icon: <Puzzle size={24} color="#c084fc" />,
-      iconBg: 'rgba(192, 132, 252, 0.15)',
-      iconBorder: 'rgba(192, 132, 252, 0.4)',
-      glowColor: 'rgba(192, 132, 252, 0.25)',
+      iconDark: <Puzzle size={24} color="#c084fc" />,
+      iconLight: <Puzzle size={24} color="#9333ea" />,
+      iconBgDark: 'rgba(192, 132, 252, 0.15)',
+      iconBgLight: '#faf5ff',
+      iconBorderDark: 'rgba(192, 132, 252, 0.4)',
+      iconBorderLight: '#e9d5ff',
+      glowColorDark: 'rgba(192, 132, 252, 0.25)',
       quote: 'Active browser background monitoring & instant badge telemetry',
-      quoteColor: '#c084fc',
-      quoteBorder: '#c084fc',
+      quoteColorDark: '#d8b4fe',
+      quoteColorLight: '#581c87',
+      quoteBgLight: '#faf5ff',
+      quoteBorderDark: '#a855f7',
+      quoteBorderLight: '#9333ea',
+      subtitleColorDark: '#c084fc',
+      subtitleColorLight: '#7e22ce',
       actionText: 'Download Extension',
       onAction: onOpenExtension,
       tags: ['Manifest V3 Sidecar', 'Silent Tab Audit', 'Visual Trust Gauge', 'Instant Deep-Dive Routing'],
@@ -772,34 +823,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '18px' }}>
           {/* Legitimate Brand Card */}
-          <div style={{ background: 'rgba(0, 255, 136, 0.05)', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: '10px', padding: '18px' }}>
+          <div style={{
+            background: isLight ? '#f0fdf4' : 'rgba(0, 255, 136, 0.08)',
+            border: `1.5px solid ${isLight ? '#86efac' : 'rgba(0, 255, 136, 0.35)'}`,
+            borderRadius: '12px',
+            padding: '20px',
+            boxShadow: isLight ? '0 2px 8px rgba(15, 23, 42, 0.04)' : 'none'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span className="mono cyber-font" style={{ fontSize: '0.75rem', color: '#00ff88', fontWeight: 800 }}>AUTHORIZED OFFICIAL SITE</span>
-              <span className="mono badge-safe" style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '6px' }}>100% MATCH</span>
+              <span className="mono cyber-font" style={{ fontSize: '0.78rem', color: isLight ? '#15803d' : '#00ff88', fontWeight: 900 }}>AUTHORIZED OFFICIAL SITE</span>
+              <span className="mono badge-safe" style={{ fontSize: '0.64rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>100% MATCH</span>
             </div>
-            <div className="mono" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '6px' }}>
+            <div className="mono" style={{ fontSize: '0.92rem', color: isLight ? '#0f172a' : 'var(--text-primary)', fontWeight: 800, marginBottom: '8px' }}>
               https://www.paypal.com/signin
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              • Rendered Visual: <strong>PayPal</strong> logo verified<br />
-              • Domain Match: <strong>paypal.com</strong> (Officially Authorized)<br />
-              • Verdict: <strong style={{ color: '#00ff88' }}>SAFE (Risk: 2.4/100)</strong>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, fontWeight: 500 }}>
+              • Rendered Visual: <strong style={{ color: 'var(--text-primary)' }}>PayPal</strong> logo verified<br />
+              • Domain Match: <strong style={{ color: 'var(--text-primary)' }}>paypal.com</strong> (Officially Authorized)<br />
+              • Verdict: <strong style={{ color: isLight ? '#15803d' : '#00ff88', fontWeight: 800 }}>SAFE (Risk: 2.4/100)</strong>
             </div>
           </div>
 
           {/* Adversary Impersonator Card */}
-          <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '10px', padding: '18px' }}>
+          <div style={{
+            background: isLight ? '#fef2f2' : 'rgba(239, 68, 68, 0.1)',
+            border: `1.5px solid ${isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.45)'}`,
+            borderRadius: '12px',
+            padding: '20px',
+            boxShadow: isLight ? '0 2px 8px rgba(15, 23, 42, 0.04)' : 'none'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span className="mono cyber-font" style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 800 }}>ADVERSARY PHISHING HARVESTER</span>
-              <span className="mono badge-critical" style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '6px' }}>CRITICAL CONTRADICTION</span>
+              <span className="mono cyber-font" style={{ fontSize: '0.78rem', color: isLight ? '#b91c1c' : '#f87171', fontWeight: 900 }}>ADVERSARY PHISHING HARVESTER</span>
+              <span className="mono badge-critical" style={{ fontSize: '0.64rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>CRITICAL CONTRADICTION</span>
             </div>
-            <div className="mono" style={{ fontSize: '0.9rem', color: '#ef4444', fontWeight: 700, marginBottom: '6px' }}>
+            <div className="mono" style={{ fontSize: '0.92rem', color: isLight ? '#b91c1c' : '#f87171', fontWeight: 800, marginBottom: '8px' }}>
               https://login-paypal-security-verify.xyz
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              • Rendered Visual: <strong>PayPal</strong> logo matched via pHash (99.4%)<br />
-              • Domain Match: <strong>login-paypal-security-verify.xyz</strong> (UNAUTHORIZED)<br />
-              • Verdict: <strong style={{ color: '#ef4444' }}>BLOCKED (Risk: 96.2/100 | Phish)</strong>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, fontWeight: 500 }}>
+              • Rendered Visual: <strong style={{ color: 'var(--text-primary)' }}>PayPal</strong> logo matched via pHash (99.4%)<br />
+              • Domain Match: <strong style={{ color: isLight ? '#b91c1c' : '#f87171' }}>login-paypal-security-verify.xyz</strong> (UNAUTHORIZED)<br />
+              • Verdict: <strong style={{ color: isLight ? '#b91c1c' : '#f87171', fontWeight: 800 }}>BLOCKED (Risk: 96.2/100 | Phish)</strong>
             </div>
           </div>
         </div>
@@ -879,7 +942,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Quick Jump Navigator Pills */}
       {cardViewMode === 'stack' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '14px', marginBottom: '24px', flexWrap: 'nowrap' }}>
-          <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, flexShrink: 0 }}>
+          <span className="mono" style={{ fontSize: '0.72rem', color: isLight ? '#475569' : '#94a3b8', fontWeight: 800, flexShrink: 0 }}>
             QUICK SCROLL JUMP:
           </span>
           {capabilityCards.map((c, idx) => (
@@ -892,17 +955,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }}
               style={{
-                background: 'var(--code-box-bg)',
-                border: `1px solid ${c.iconBorder}`,
-                color: c.quoteColor,
+                background: isLight ? '#ffffff' : 'var(--code-box-bg)',
+                border: `1.5px solid ${isLight ? c.iconBorderLight : c.iconBorderDark}`,
+                color: isLight ? c.quoteColorLight : c.quoteColorDark,
                 borderRadius: '16px',
-                padding: '5px 14px',
-                fontSize: '0.74rem',
+                padding: '6px 14px',
+                fontSize: '0.76rem',
                 fontWeight: 800,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
-                boxShadow: `0 0 10px ${c.glowColor}`,
+                boxShadow: isLight ? '0 2px 8px rgba(15, 23, 42, 0.06)' : `0 0 10px ${c.glowColorDark}`,
                 transition: 'all 0.2s'
               }}
             >
@@ -915,266 +978,312 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* 6. Card Scroll Animation Stacking Deck or Grid */}
       {cardViewMode === 'stack' ? (
         <div className="card-stack-container" style={{ position: 'relative', marginTop: '10px' }}>
-          {capabilityCards.map((card, index) => (
-            <motion.div
-              id={`stack-card-${card.id}`}
-              key={card.id}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-50px' }}
-              transition={{ duration: 0.5, delay: index * 0.04 }}
-              className="glass-panel card-stack-item"
-              style={{
-                top: `${95 + index * 20}px`,
-                zIndex: 10 + index,
-                background: `radial-gradient(circle at 50% 0%, ${card.glowColor} 0%, rgba(13, 19, 31, 0.97) 85%)`,
-                border: `1px solid ${card.iconBorder}`,
-                borderRadius: '20px',
-                padding: '32px 28px',
-                marginBottom: index === capabilityCards.length - 1 ? '60px' : '40px',
-                boxShadow: `0 24px 60px rgba(0, 0, 0, 0.92), 0 0 30px ${card.glowColor}`
-              }}
-            >
-              {/* Card Header Row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{
-                    background: card.iconBg,
-                    border: `1px solid ${card.iconBorder}`,
-                    padding: '12px',
-                    borderRadius: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: `0 0 16px ${card.glowColor}`
-                  }}>
-                    {card.icon}
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="mono cyber-font" style={{ fontSize: '0.78rem', color: card.quoteColor, fontWeight: 900 }}>
-                        MODULE // 0{index + 1} OF 06
-                      </span>
-                      <span className="mono badge-info" style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '8px' }}>
-                        {card.badge}
-                      </span>
-                    </div>
-                    <h3 className="cyber-font" style={{ fontSize: '1.28rem', fontWeight: 900, color: 'var(--text-primary)', marginTop: '4px' }}>
-                      {card.title}
-                    </h3>
-                  </div>
-                </div>
+          {capabilityCards.map((card, index) => {
+            const cardBg = isLight
+              ? '#ffffff'
+              : `radial-gradient(circle at 50% 0%, ${card.glowColorDark} 0%, rgba(13, 19, 31, 0.98) 85%)`;
+            const cardBorder = isLight
+              ? card.iconBorderLight
+              : card.iconBorderDark;
+            const cardShadow = isLight
+              ? '0 10px 30px rgba(15, 23, 42, 0.08), 0 1px 4px rgba(15, 23, 42, 0.04)'
+              : `0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px ${card.glowColorDark}`;
+            const iconBg = isLight ? card.iconBgLight : card.iconBgDark;
+            const iconBorder = isLight ? card.iconBorderLight : card.iconBorderDark;
+            const iconElement = isLight ? card.iconLight : card.iconDark;
+            const subtitleColor = isLight ? card.subtitleColorLight : card.subtitleColorDark;
+            const quoteColor = isLight ? card.quoteColorLight : card.quoteColorDark;
+            const quoteBg = isLight ? card.quoteBgLight : 'rgba(0, 0, 0, 0.65)';
+            const quoteBorder = isLight ? card.quoteBorderLight : card.quoteBorderDark;
+            const rightBoxBg = isLight ? '#f8fafc' : 'rgba(7, 10, 16, 0.75)';
+            const rightBoxBorder = isLight ? '1px solid #e2e8f0' : '1px solid var(--border-color)';
+            const tagBg = isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)';
+            const tagBorder = isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.16)';
+            const labelColor = isLight ? '#475569' : '#94a3b8';
 
-                <InfoTooltip
-                  title={card.tooltip.title}
-                  description={card.tooltip.description}
-                  securityImpact={card.tooltip.securityImpact}
-                  goodVsBad={card.tooltip.goodVsBad}
-                  position="bottom"
-                />
-              </div>
-
-              {/* Card Body - 2 Columns */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', alignItems: 'start' }}>
-                {/* Left Side: Subtitle, Description & Tags */}
-                <div>
-                  <div className="mono" style={{ fontSize: '0.76rem', color: card.quoteColor, fontWeight: 800, marginBottom: '8px' }}>
-                    // {card.subtitle.toUpperCase()}
-                  </div>
-                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '18px' }}>
-                    {card.description}
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-                    {card.tags?.map((tag, tIdx) => (
-                      <span key={tIdx} className="mono" style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        padding: '3px 10px',
-                        fontSize: '0.68rem',
-                        color: 'var(--text-primary)'
-                      }}>
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    • Status: <span style={{ color: '#00ff88', fontWeight: 700 }}>ACTIVE FORENSIC LAYER</span> // Latency: <span style={{ color: 'var(--accent-cyan)' }}>Sub-second</span>
-                  </div>
-                </div>
-
-                {/* Right Side: Adversary Quote, Impact & Action */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'var(--code-box-bg)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                  <div>
-                    <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      THREAT INTERCEPTION CRITERIA:
-                    </div>
-                    <div className="mono" style={{
-                      fontSize: '0.78rem',
-                      color: card.quoteColor,
-                      padding: '10px 14px',
-                      background: 'rgba(0, 0, 0, 0.5)',
-                      borderRadius: '8px',
-                      borderLeft: `3px solid ${card.quoteBorder}`
+            return (
+              <motion.div
+                id={`stack-card-${card.id}`}
+                key={card.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.45, delay: index * 0.04 }}
+                className="glass-panel card-stack-item"
+                style={{
+                  position: 'relative',
+                  background: cardBg,
+                  border: `1.5px solid ${cardBorder}`,
+                  borderRadius: '20px',
+                  padding: '30px 28px',
+                  marginBottom: '28px',
+                  boxShadow: cardShadow
+                }}
+              >
+                {/* Card Header Row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: isLight ? '1px solid #e2e8f0' : '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      background: iconBg,
+                      border: `1.5px solid ${iconBorder}`,
+                      padding: '12px',
+                      borderRadius: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: isLight ? '0 2px 8px rgba(15, 23, 42, 0.06)' : `0 0 16px ${card.glowColorDark}`
                     }}>
-                      {card.quote}
+                      {iconElement}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="mono cyber-font" style={{ fontSize: '0.8rem', color: subtitleColor, fontWeight: 900 }}>
+                          MODULE // 0{index + 1} OF 06
+                        </span>
+                        <span className="mono badge-info" style={{ fontSize: '0.64rem', padding: '2px 8px', borderRadius: '8px', fontWeight: 800 }}>
+                          {card.badge}
+                        </span>
+                      </div>
+                      <h3 className="cyber-font" style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-primary)', marginTop: '4px' }}>
+                        {card.title}
+                      </h3>
                     </div>
                   </div>
 
-                  <div>
-                    <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                      SECURITY IMPACT:
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      {card.tooltip.securityImpact}
-                    </div>
-                  </div>
-
-                  {card.actionText && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => card.onAction && card.onAction()}
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(2, 132, 199, 0.2) 100%)',
-                        border: '1px solid var(--accent-cyan)',
-                        color: 'var(--accent-cyan)',
-                        borderRadius: '10px',
-                        padding: '10px 18px',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginTop: '4px',
-                        boxShadow: '0 0 14px rgba(0, 240, 255, 0.2)'
-                      }}
-                    >
-                      <span className="cyber-font">{card.actionText}</span>
-                      <ArrowRight size={15} />
-                    </motion.button>
-                  )}
+                  <InfoTooltip
+                    title={card.tooltip.title}
+                    description={card.tooltip.description}
+                    securityImpact={card.tooltip.securityImpact}
+                    goodVsBad={card.tooltip.goodVsBad}
+                    position="bottom"
+                  />
                 </div>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Card Body - 2 Columns */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', alignItems: 'start' }}>
+                  {/* Left Side: Subtitle, Description & Tags */}
+                  <div>
+                    <div className="mono" style={{ fontSize: '0.8rem', color: subtitleColor, fontWeight: 800, marginBottom: '10px' }}>
+                      // {card.subtitle.toUpperCase()}
+                    </div>
+                    <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: '18px', fontWeight: 500 }}>
+                      {card.description}
+                    </p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                      {card.tags?.map((tag, tIdx) => (
+                        <span key={tIdx} className="mono" style={{
+                          background: tagBg,
+                          border: tagBorder,
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)'
+                        }}>
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mono" style={{ fontSize: '0.74rem', color: labelColor, fontWeight: 600 }}>
+                      • Status: <span style={{ color: isLight ? '#15803d' : '#00ff88', fontWeight: 800 }}>ACTIVE FORENSIC LAYER</span> // Latency: <span style={{ color: isLight ? '#0284c7' : 'var(--accent-cyan)', fontWeight: 800 }}>Sub-second</span>
+                    </div>
+                  </div>
+
+                  {/* Right Side: Adversary Quote, Impact & Action */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: rightBoxBg, padding: '20px', borderRadius: '14px', border: rightBoxBorder }}>
+                    <div>
+                      <div className="mono" style={{ fontSize: '0.72rem', color: labelColor, fontWeight: 800, marginBottom: '6px', letterSpacing: '0.04em' }}>
+                        THREAT INTERCEPTION CRITERIA:
+                      </div>
+                      <div className="mono" style={{
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        color: quoteColor,
+                        padding: '12px 16px',
+                        background: quoteBg,
+                        borderRadius: '10px',
+                        borderLeft: `4px solid ${quoteBorder}`,
+                        border: isLight ? `1px solid ${quoteBorder}` : '1px solid rgba(255, 255, 255, 0.08)',
+                        lineHeight: 1.55
+                      }}>
+                        {card.quote}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mono" style={{ fontSize: '0.72rem', color: labelColor, fontWeight: 800, marginBottom: '4px', letterSpacing: '0.04em' }}>
+                        SECURITY IMPACT:
+                      </div>
+                      <div style={{ fontSize: '0.86rem', color: 'var(--text-primary)', lineHeight: 1.55, fontWeight: 500 }}>
+                        {card.tooltip.securityImpact}
+                      </div>
+                    </div>
+
+                    {card.actionText && (
+                      <motion.button
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => card.onAction && card.onAction()}
+                        style={{
+                          background: isLight
+                            ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                            : 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(2, 132, 199, 0.2) 100%)',
+                          border: isLight ? 'none' : '1px solid var(--accent-cyan)',
+                          color: isLight ? '#ffffff' : 'var(--accent-cyan)',
+                          borderRadius: '10px',
+                          padding: '11px 18px',
+                          fontSize: '0.84rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginTop: '4px',
+                          boxShadow: isLight
+                            ? '0 4px 14px rgba(2, 132, 199, 0.25)'
+                            : '0 0 14px rgba(0, 240, 255, 0.2)'
+                        }}
+                      >
+                        <span className="cyber-font">{card.actionText}</span>
+                        <ArrowRight size={15} />
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       ) : (
         /* Expanded 3D Grid View */
         <div className="feature-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {capabilityCards.map((card, index) => (
-            <motion.div
-              key={card.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.45, delay: index * 0.08 }}
-              whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
-              className="glass-panel cyber-card-hover"
-              style={{
-                padding: '24px',
-                borderRadius: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                position: 'relative'
-              }}
-            >
-              <div>
-                {/* Card Top Row */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      background: card.iconBg,
-                      border: `1px solid ${card.iconBorder}`,
-                      padding: '9px',
+          {capabilityCards.map((card, index) => {
+            const iconBg = isLight ? card.iconBgLight : card.iconBgDark;
+            const iconBorder = isLight ? card.iconBorderLight : card.iconBorderDark;
+            const iconElement = isLight ? card.iconLight : card.iconDark;
+            const subtitleColor = isLight ? card.subtitleColorLight : card.subtitleColorDark;
+            const quoteColor = isLight ? card.quoteColorLight : card.quoteColorDark;
+            const quoteBg = isLight ? card.quoteBgLight : 'var(--code-box-bg)';
+            const quoteBorder = isLight ? card.quoteBorderLight : card.quoteBorderDark;
+
+            return (
+              <motion.div
+                key={card.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.45, delay: index * 0.08 }}
+                whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.2 } }}
+                className="glass-panel cyber-card-hover"
+                style={{
+                  background: isLight ? '#ffffff' : undefined,
+                  border: isLight ? `1.5px solid ${card.iconBorderLight}` : undefined,
+                  boxShadow: isLight ? '0 8px 24px rgba(15, 23, 42, 0.06)' : undefined,
+                  padding: '24px',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  position: 'relative'
+                }}
+              >
+                <div>
+                  {/* Card Top Row */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        background: iconBg,
+                        border: `1.5px solid ${iconBorder}`,
+                        padding: '10px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: isLight ? '0 2px 8px rgba(15, 23, 42, 0.06)' : `0 0 10px ${card.glowColorDark}`
+                      }}>
+                        {iconElement}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                          <h3 style={{ fontSize: '1.04rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                            {card.title}
+                          </h3>
+                          <InfoTooltip
+                            title={card.tooltip.title}
+                            description={card.tooltip.description}
+                            securityImpact={card.tooltip.securityImpact}
+                            goodVsBad={card.tooltip.goodVsBad}
+                            position="bottom"
+                          />
+                        </div>
+                        <div className="mono" style={{ fontSize: '0.72rem', color: subtitleColor, fontWeight: 700, marginTop: '2px' }}>
+                          {card.subtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className="mono badge-info" style={{
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
                       borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: `0 0 10px ${card.glowColor}`
+                      letterSpacing: '0.04em'
                     }}>
-                      {card.icon}
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                        <h3 style={{ fontSize: '1.02rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}>
-                          {card.title}
-                        </h3>
-                        <InfoTooltip
-                          title={card.tooltip.title}
-                          description={card.tooltip.description}
-                          securityImpact={card.tooltip.securityImpact}
-                          goodVsBad={card.tooltip.goodVsBad}
-                          position="bottom"
-                        />
-                      </div>
-                      <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        {card.subtitle}
-                      </div>
-                    </div>
+                      {card.badge}
+                    </span>
                   </div>
 
-                  <span className="mono badge-info" style={{
-                    fontSize: '0.6rem',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    letterSpacing: '0.04em'
-                  }}>
-                    {card.badge}
-                  </span>
+                  {/* Description */}
+                  <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '16px', fontWeight: 500 }}>
+                    {card.description}
+                  </p>
                 </div>
 
-                {/* Description */}
-                <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '16px' }}>
-                  {card.description}
-                </p>
-              </div>
-
-              <div>
-                {/* Quote */}
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: '0.72rem',
-                    color: card.quoteColor,
-                    background: 'var(--code-box-bg)',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    borderLeft: `3px solid ${card.quoteBorder}`,
-                    marginBottom: card.actionText ? '12px' : '0'
-                  }}
-                >
-                  {card.quote}
-                </div>
-
-                {/* Action Button */}
-                {card.actionText && (
-                  <motion.div
-                    whileHover={{ x: 4 }}
-                    onClick={() => card.onAction && card.onAction()}
+                <div>
+                  {/* Quote */}
+                  <div
+                    className="mono"
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      color: 'var(--accent-cyan)',
-                      fontSize: '0.78rem',
+                      fontSize: '0.76rem',
                       fontWeight: 700,
-                      cursor: 'pointer',
-                      marginTop: '8px'
+                      color: quoteColor,
+                      background: quoteBg,
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      borderLeft: `4px solid ${quoteBorder}`,
+                      border: isLight ? `1px solid ${quoteBorder}` : undefined,
+                      marginBottom: card.actionText ? '12px' : '0'
                     }}
                   >
-                    <span>{card.actionText}</span>
-                    <ArrowRight size={14} />
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                    {card.quote}
+                  </div>
+
+                  {/* Action Button */}
+                  {card.actionText && (
+                    <motion.div
+                      whileHover={{ x: 4 }}
+                      onClick={() => card.onAction && card.onAction()}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: isLight ? '#0284c7' : 'var(--accent-cyan)',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        marginTop: '10px'
+                      }}
+                    >
+                      <span>{card.actionText}</span>
+                      <ArrowRight size={14} />
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>
