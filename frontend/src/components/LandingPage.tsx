@@ -1005,18 +1005,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <motion.div
                 id={`stack-card-${card.id}`}
                 key={card.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.45, delay: index * 0.04 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: index * 0.04 }}
                 className="glass-panel card-stack-item"
                 style={{
-                  position: 'relative',
+                  top: `${90 + index * 24}px`,
+                  zIndex: 10 + index,
                   background: cardBg,
                   border: `1.5px solid ${cardBorder}`,
                   borderRadius: '20px',
                   padding: '30px 28px',
-                  marginBottom: '28px',
+                  marginBottom: index === capabilityCards.length - 1 ? '70px' : '45px',
                   boxShadow: cardShadow
                 }}
               >

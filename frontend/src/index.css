@@ -396,18 +396,18 @@ body.light-theme .cyber-gradient-text {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 32px;
 }
 
 .card-stack-item {
-  position: relative;
+  position: sticky;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 .card-stack-item:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.25);
 }
 
