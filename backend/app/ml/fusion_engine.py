@@ -75,15 +75,26 @@ def calculate_multi_signal_fusion(
         ))
     else:
         if domain_intel.is_newly_registered:
-            infra_risk += 0.40
-            evidence_list.append(EvidenceItem(
-                category="Domain Intelligence",
-                name="Newly Registered / Young Domain (NRD)",
-                weight=0.25,
-                contribution=+25.0,
-                summary=f"Domain registered recently ({domain_intel.domain_age_days} days ago). Young domains under 90 days are a primary vehicle for phishing and malware campaigns.",
-                severity="HIGH"
-            ))
+            if has_contradiction or not domain_intel.tls_valid or score_lexical > 0.35:
+                infra_risk += 0.40
+                evidence_list.append(EvidenceItem(
+                    category="Domain Intelligence",
+                    name="Weaponized Newly Registered Domain (NRD)",
+                    weight=0.25,
+                    contribution=+25.0,
+                    summary=f"Domain registered recently ({domain_intel.domain_age_days} days ago) on unverified or suspicious infrastructure.",
+                    severity="HIGH"
+                ))
+            else:
+                infra_risk += 0.10
+                evidence_list.append(EvidenceItem(
+                    category="Domain Intelligence",
+                    name="Newly Registered Domain (Clean Telemetry)",
+                    weight=0.10,
+                    contribution=+5.0,
+                    summary=f"Domain registered recently ({domain_intel.domain_age_days} days ago) with verified public TLS handshake and active hosting.",
+                    severity="LOW"
+                ))
         elif domain_intel.domain_age_days is not None and domain_intel.domain_age_days > 180 and domain_intel.tls_valid:
             evidence_list.append(EvidenceItem(
                 category="Domain Intelligence",
@@ -220,19 +231,22 @@ def calculate_multi_signal_fusion(
             raw_score = max(raw_score, 88.0)
         elif has_contradiction and domain_intel.is_newly_registered:
             raw_score = max(raw_score, 82.0)
-        elif not has_contradiction and not domain_intel.is_newly_registered:
+        elif not has_contradiction:
             # If it's a verified authentic brand on its official domain (e.g. Google, Apple, Microsoft, PayPal)
             if brand_match.matched_brand:
                 raw_score = 0.0
-            # If all threat vectors are clean, TLS is cryptographically valid, and domain is established
+            # If all threat vectors are clean and TLS is cryptographically valid
             elif (
-                score_lexical < 0.15 
+                score_lexical < 0.20 
                 and domain_intel.tls_valid is True 
-                and not domain_intel.tls_is_self_signed 
-                and (domain_intel.domain_age_days or 0) > 180
-                and score_infrastructure == 0.0
+                and not domain_intel.tls_is_self_signed
             ):
-                raw_score = 0.0
+                if domain_intel.is_newly_registered:
+                    raw_score = min(raw_score, 10.0)
+                elif (domain_intel.domain_age_days or 0) > 180 and score_infrastructure == 0.0:
+                    raw_score = 0.0
+                else:
+                    raw_score = min(raw_score, 5.0)
             elif raw_score < 4.0 and score_content == 0.0 and score_visual == 0.0 and domain_intel.tls_valid is True:
                 raw_score = 0.0
 

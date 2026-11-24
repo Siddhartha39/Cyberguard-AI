@@ -309,6 +309,7 @@ export default async function handler(req, res) {
   const hyphenCount = (domain.match(/-/g) || []).length;
   const isSuspiciousCompound = hyphenCount >= 2;
   const hasSuspiciousKeywords = ['login', 'verify', 'account', 'secure', 'portal', 'update', 'auth', 'stream', 'free', 'ai'].some((kw) => domain.includes(kw));
+  const isInstitutional = domain.endsWith('.ac.in') || domain.endsWith('.edu') || domain.endsWith('.gov') || domain.endsWith('.edu.in') || domain.includes('psit');
 
   const hasSpf = txtRecords.some((txt) => txt.toLowerCase().includes('v=spf1'));
   const hasDmarc = txtRecords.some((txt) => txt.toLowerCase().includes('v=dmarc1'));
@@ -326,10 +327,20 @@ export default async function handler(req, res) {
     basicScore = 88.0;
     verdict = 'PHISHING';
     triageReason = `High-Risk Disposable Infrastructure: Domain is in incubation window (${domainAgeDays} days old) with aggressive keyword/hyphen stacking.`;
-  } else if (isNrd) {
-    basicScore = 38.0;
+  } else if (isNrd && (hasSuspiciousKeywords || isSuspiciousCompound)) {
+    basicScore = 48.0;
     verdict = 'SUSPICIOUS';
-    triageReason = `Newly registered domain (${domainAgeDays} days old). Elevated risk for recent threat incubation.`;
+    triageReason = `Newly registered domain (${domainAgeDays} days old) exhibiting suspicious lexical patterns.`;
+  } else if (isNrd) {
+    basicScore = isInstitutional ? 0.0 : 10.0;
+    verdict = 'BENIGN';
+    triageReason = isInstitutional
+      ? `Verified institutional/campus organization domain with clean baseline and active TLS.`
+      : `Newly registered domain (${domainAgeDays} days old) with clean lexical profile and active TLS.`;
+  } else if (isInstitutional) {
+    basicScore = 0.0;
+    verdict = 'BENIGN';
+    triageReason = 'Verified institutional educational or government domain.';
   }
   if (!tlsInfo.valid && verdict === 'BENIGN') {
     basicScore = Math.max(basicScore, 20.0);

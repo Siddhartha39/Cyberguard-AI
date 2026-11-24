@@ -289,13 +289,14 @@ async def free_security_scan(req: AnalysisRequest):
         confidence = 0.96
         triage_msg = f"Critical Transport Security Failure: Domain presents an invalid or untrusted SSL certificate authority ({domain_intel.tls_issuer or 'Untrusted CA'}). Connections trigger browser security warnings (NET::ERR_CERT_AUTHORITY_INVALID)."
     else:
-        # For clean domains with zero risk attributions, verified TLS, and established age (>180 days)
-        if len(triage.feature_attributions) == 0 and not domain_intel.is_newly_registered and domain_intel.tls_valid is True and (domain_intel.domain_age_days or 0) > 180:
-            basic_score = 0.0
+        # For clean domains with zero risk attributions and verified TLS
+        is_clean_lexical = len(triage.feature_attributions) == 0 and triage.lexical_score < 0.35
+        if is_clean_lexical and domain_intel.tls_valid is True:
+            basic_score = 10.0 if domain_intel.is_newly_registered else 0.0
         else:
-            basic_score = round(triage.lexical_score * 70.0 + (30.0 if domain_intel.is_newly_registered else 0.0), 1)
+            basic_score = round(triage.lexical_score * 70.0 + (15.0 if domain_intel.is_newly_registered else 0.0), 1)
         verdict = "PHISHING" if basic_score >= 70.0 else "SUSPICIOUS" if basic_score >= 35.0 else "BENIGN"
-        confidence = 0.98 if basic_score == 0.0 else 0.94
+        confidence = 0.98 if basic_score <= 10.0 else 0.94
         triage_msg = triage.triage_reason
 
     # 3. Security Posture & Headers Audit (for Developer Website Security)
@@ -694,12 +695,13 @@ async def bulk_scan(req: BulkScanRequest):
                 confidence = 0.98
                 triage_msg = f"Critical Brand Lookalike: Domain '{registrable_domain}' contains protected trademark '{spoofed_brand}' on unauthorized infrastructure ({domain_intel.registrar or 'Unknown Registrar'})."
             else:
-                if len(triage.feature_attributions) == 0 and not domain_intel.is_newly_registered:
-                    basic_score = 0.0
+                is_clean_lexical = len(triage.feature_attributions) == 0 and triage.lexical_score < 0.35
+                if is_clean_lexical and domain_intel.tls_valid is True:
+                    basic_score = 10.0 if domain_intel.is_newly_registered else 0.0
                 else:
-                    basic_score = round(triage.lexical_score * 70.0 + (25.0 if domain_intel.is_newly_registered else 0.0), 1)
+                    basic_score = round(triage.lexical_score * 70.0 + (15.0 if domain_intel.is_newly_registered else 0.0), 1)
                 verdict = "PHISHING" if basic_score >= 70.0 else "SUSPICIOUS" if basic_score >= 35.0 else "BENIGN"
-                confidence = 0.98 if basic_score == 0.0 else 0.94
+                confidence = 0.98 if basic_score <= 10.0 else 0.94
                 triage_msg = triage.triage_reason
 
             challenge = x402_manager.create_payment_challenge(canonical_url, case_id)
